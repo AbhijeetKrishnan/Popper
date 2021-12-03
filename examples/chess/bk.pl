@@ -22,30 +22,95 @@ square(6,1). square(6,2). square(6,3). square(6,4). square(6,5). square(6,6). sq
 square(7,1). square(7,2). square(7,3). square(7,4). square(7,5). square(7,6). square(7,7). square(7,8).
 square(8,1). square(8,2). square(8,3). square(8,4). square(8,5). square(8,6). square(8,7). square(8,8).
 
+sameRow(X1,Y1,X2,Y2) :-
+    square(X1,Y1),
+    square(X2,Y2),
+    X1 == X2.
+
+sameCol(X1,Y1,X2,Y2) :-
+    square(X1,Y1),
+    square(X2,Y2),
+    Y1 == Y2.
+
 side(white).
 side(black).
+other_side(white,black).
+other_side(black,white).
 
 piece(Piece) :-
     member(Piece, [pawn, knight, bishop, rook, queen, king]).
 
-contents(Side,Piece,square(X,Y)) :-
+contents(Side,Piece,X,Y) :-
     side(Side),
     piece(Piece),
     square(X,Y).
 
-move(Side,Piece,square(X,Y),square(NewX,NewY)) :-
-    side(Side),
+move(FromX,FromY,ToX,ToY) :-
+    square(FromX,FromY),
+    square(ToX,ToY).
+
+can_move(Piece, FromX, FromY, ToX, ToY) :-
     piece(Piece),
-    square(X,Y),
-    square(NewX,NewY).
+    square(FromX, FromY),
+    square(ToX, ToY),
+    DelX is ToX - FromX,
+    DelY is ToY - FromY,
+    allowed_del(Piece, DelX, DelY).
+
+allowed_del(knight, -1, 2).
+allowed_del(knight, 1, 2).
+allowed_del(knight, -2, 1).
+allowed_del(knight, 2, 1).
+allowed_del(knight, -2, -1).
+allowed_del(knight, 2, -1).
+allowed_del(knight, -1, -2).
+allowed_del(knight, 1, -2).
+
+allowed_del(king, -1, 0).
+allowed_del(king, -1, 1).
+allowed_del(king, 0, 1).
+allowed_del(king, 1, 1).
+allowed_del(king, 1, 0).
+allowed_del(king, 1, -1).
+allowed_del(king, 0, -1).
+allowed_del(king, -1, -1).
+
+attacks(FromX,FromY,ToX,ToY,Pos) :-
+    member(contents(Side,Piece,FromX,FromY), Pos),
+    member(contents(OtherSide,OtherPiece,ToX,ToY), Pos),
+    other_side(Side, OtherSide),
+    piece(Piece),
+    piece(OtherPiece),
+    can_move(Piece, FromX, FromY, ToX, ToY).
+
+different_pos(X1, Y1, X2, Y2) :-
+    square(X1, Y1),
+    square(X2, Y2),
+    ( 
+        X1 =\= X2 -> true ;
+        Y1 =\= Y2 -> true ;
+        false
+    ).
+
+fork(Pos, FromX, FromY, ToX, ToY) :-
+    make_move(FromX, FromY, ToX, ToY, Pos, NewPos),
+    attacks(X, Y, X1, Y1, NewPos),
+    attacks(X, Y, X2, Y2, NewPos),
+    different_pos(X1, Y1, X2, Y2).
 
 % TODO: design a "state" property
 
 % legal move is one where piece of move color exists at move location
 % TODO: turn this into an actual legal_move property calculator?
 % if I have this working correctly, I don't need to pass in all the legal moves in the target relation
-legal_move(Side,Piece,square(X,Y),square(NewX,NewY)) :-
-    move(Side,Piece,square(X,Y),square(NewX,NewY)),
-    contents(Side,Piece,square(X,Y)).
+legal_move(FromX,FromY,ToX,ToY,Pos) :-
+    member(contents(_,Piece,FromX,FromY),Pos), % piece to be moved exists
+    can_move(Piece,FromX,FromY,ToX,ToY). % move for the piece is theoretically permitted (if board was empty)
+    
+make_move(FromX,FromY,ToX,ToY,Pos, NewPos) :-
+    legal_move(FromX,FromY,ToX,ToY,Pos),
+    member(contents(Side,Piece,FromX,FromY),Pos),
+    delete(Pos, contents(Side,Piece,FromX,FromY), TmpPos),
+    append(TmpPos, [contents(Side, Piece, ToX, ToY)], NewPos).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

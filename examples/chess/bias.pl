@@ -1,12 +1,14 @@
-max_clauses(4).
-max_vars(4).
-max_body(3).
+max_clauses(1).
+max_vars(7).
+max_body(4).
 
-head_pred(f,3).
+head_pred(f,5).
 
-body_pred(contents,3).
-body_pred(piece,1).
-body_pred(side,1).
-body_pred(square,2).
+body_pred(make_move,6).
+body_pred(attacks,5).
+body_pred(different_pos,4).
 
-allow_singletons.
+type(f, (list, element, element, element, element)).
+type(make_move, (element, element, element, element, list, list)).
+type(attacks, (element, element, element, element, list)).
+type(different_pos, (element, element, element, element)).
