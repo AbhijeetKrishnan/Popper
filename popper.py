@@ -44,9 +44,9 @@ def ground_rules(grounder, max_clauses, max_vars, clauses):
             out.add(Grounding.ground_clause((head, body), assignment))
     return out
 
-def pprint(program):
+def pprint(program, settings):
     for clause in program:
-        print(Clause.to_code(clause))
+        print(Clause.to_code(clause, settings.argmap))
 
 def decide_outcome(conf_matrix):
     tp, fn, tn, fp = conf_matrix
@@ -175,7 +175,7 @@ def popper(settings, stats, args):
 
                 if settings.info:
                     print(f'NEW BEST PROG {stats.total_programs}:')
-                    pprint(program)
+                    pprint(program, settings)
                     print_conf_matrix(conf_matrix)
                     print('')
 
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     if PROG_KEY in args:
         print(f'BEST PROG {stats.total_programs}:')
         (program, conf_matrix) = args[PROG_KEY]
-        pprint(program)
+        pprint(program, settings)
         print_conf_matrix(conf_matrix)
         print('')
     if settings.stats:

@@ -1,4 +1,5 @@
 import signal
+import string
 import argparse
 from time import perf_counter
 from contextlib import contextmanager
@@ -24,9 +25,10 @@ def parse_args():
     parser.add_argument('--test-all', default=TEST_ALL, action='store_true', help='Test all examples')
     parser.add_argument('--debug', default=DEBUG, action='store_true', help='Print debugging information to stderr')
     parser.add_argument('--info', default=INFO, action='store_true', help='Print useful info information to stderr')
-    parser.add_argument('--stats', default= STATS, action='store_true', help='Print statistics at end of execution')
+    parser.add_argument('--stats', default=STATS, action='store_true', help='Print statistics at end of execution')
     parser.add_argument('--functional-test', default=FUNCTIONAL_TEST, action='store_true', help='Run custom functional test')
     parser.add_argument('--clingo-args', type=str, default=CLINGO_ARGS, help='Arguments to pass to Clingo')
+    parser.add_argument('--custom-vars', type=str, help='Custom variables used when printing the target relation')
     return parser.parse_args()
 
 def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
@@ -108,3 +110,7 @@ class Settings:
             # self.max_solutions = args.max_solutions
             self.functional_test = args.functional_test
             self.clingo_args = [] if not args.clingo_args else args.clingo_args.split(' ')
+            # TODO: check if input argmap matches # of vars in target relation
+            # TODO: only modify placeholder vars present in both clause head and body, not ones
+            # only in body
+            self.argmap = {} if not args.custom_vars else {string.ascii_uppercase[i]: var for i, var in enumerate(args.custom_vars.split())}

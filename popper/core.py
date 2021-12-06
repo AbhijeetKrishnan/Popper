@@ -68,8 +68,8 @@ class Literal:
         self.outputs = frozenset(arg for direction, arg in zip(self.directions, self.arguments) if direction == '-')
 
     @staticmethod
-    def to_code(literal):
-        args = ','.join(literal.arguments)
+    def to_code(literal, argmap={}):
+        args = ','.join(argmap.get(var, var) for var in literal.arguments)
         return f'{literal.predicate}({args})'
 
     # AC: TODO - REFACTOR
@@ -116,12 +116,12 @@ class Literal:
 
 class Clause:
     @staticmethod
-    def to_code(clause):
+    def to_code(clause, argmap={}):
         (head, body) = clause
         head_str = ''
         if head:
-            head_str = Literal.to_code(head)
-        body_str = ','.join(Literal.to_code(literal) for literal in body)
+            head_str = Literal.to_code(head, argmap)
+        body_str = ','.join(Literal.to_code(literal, argmap) for literal in body)
         return head_str + ':-' + body_str
 
     @staticmethod
