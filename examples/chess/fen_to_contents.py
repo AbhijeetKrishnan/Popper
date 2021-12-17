@@ -20,5 +20,5 @@ def fen_to_contents(fen: str) -> str:
 
 if __name__ == '__main__':
     fen = sys.argv[1]
-    fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+    # fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
     print(fen_to_contents(fen))

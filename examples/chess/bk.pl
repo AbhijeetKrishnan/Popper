@@ -40,6 +40,9 @@ other_side(black,white).
 piece(Piece) :-
     member(Piece, [pawn, knight, bishop, rook, queen, king]).
 
+sliding_piece(Piece) :-
+    member(Piece, [bishop, rook, queen]).
+
 contents(Side,Piece,X,Y) :-
     side(Side),
     piece(Piece),
@@ -75,6 +78,64 @@ allowed_del(king, 1, -1).
 allowed_del(king, 0, -1).
 allowed_del(king, -1, -1).
 
+allowed_del(rook, 0, 1).
+allowed_del(rook, 0, 2).
+allowed_del(rook, 0, 3).
+allowed_del(rook, 0, 4).
+allowed_del(rook, 0, 5).
+allowed_del(rook, 0, 6).
+allowed_del(rook, 0, 7).
+allowed_del(rook, 0, -1).
+allowed_del(rook, 0, -2).
+allowed_del(rook, 0, -3).
+allowed_del(rook, 0, -4).
+allowed_del(rook, 0, -5).
+allowed_del(rook, 0, -6).
+allowed_del(rook, 0, -7).
+allowed_del(rook, 1, 0).
+allowed_del(rook, 2, 0).
+allowed_del(rook, 3, 0).
+allowed_del(rook, 4, 0).
+allowed_del(rook, 5, 0).
+allowed_del(rook, 6, 0).
+allowed_del(rook, 7, 0).
+allowed_del(rook, -1, 0).
+allowed_del(rook, -2, 0).
+allowed_del(rook, -3, 0).
+allowed_del(rook, -4, 0).
+allowed_del(rook, -5, 0).
+allowed_del(rook, -6, 0).
+allowed_del(rook, -7, 0).
+
+allowed_del(queen, 0, 1).
+allowed_del(queen, 0, 2).
+allowed_del(queen, 0, 3).
+allowed_del(queen, 0, 4).
+allowed_del(queen, 0, 5).
+allowed_del(queen, 0, 6).
+allowed_del(queen, 0, 7).
+allowed_del(queen, 0, -1).
+allowed_del(queen, 0, -2).
+allowed_del(queen, 0, -3).
+allowed_del(queen, 0, -4).
+allowed_del(queen, 0, -5).
+allowed_del(queen, 0, -6).
+allowed_del(queen, 0, -7).
+allowed_del(queen, 1, 0).
+allowed_del(queen, 2, 0).
+allowed_del(queen, 3, 0).
+allowed_del(queen, 4, 0).
+allowed_del(queen, 5, 0).
+allowed_del(queen, 6, 0).
+allowed_del(queen, 7, 0).
+allowed_del(queen, -1, 0).
+allowed_del(queen, -2, 0).
+allowed_del(queen, -3, 0).
+allowed_del(queen, -4, 0).
+allowed_del(queen, -5, 0).
+allowed_del(queen, -6, 0).
+allowed_del(queen, -7, 0).
+
 attacks(FromX,FromY,ToX,ToY,Pos) :-
     member(contents(Side,Piece,FromX,FromY), Pos),
     member(contents(OtherSide,OtherPiece,ToX,ToY), Pos),
@@ -92,11 +153,28 @@ different_pos(X1, Y1, X2, Y2) :-
         false
     ).
 
+pieceAt(X, Y, Pos, Side, Piece) :-
+    member(contents(Side, Piece, X, Y), Pos).
+
 fork(Pos, FromX, FromY, ToX, ToY) :-
     make_move(FromX, FromY, ToX, ToY, Pos, NewPos),
     attacks(X, Y, X1, Y1, NewPos),
     attacks(X, Y, X2, Y2, NewPos),
     different_pos(X1, Y1, X2, Y2).
+
+behind(FrontX, FrontY, MiddleX, MiddleY, BackX, BackY, Pos) :-
+    attacks(FrontX, FrontY, MiddleX, MiddleY, Pos),
+    attacks(FrontX, FrontY, BackX, BackY, Pos),
+    pieceAt(FrontX, FrontY, Pos, _, Piece),
+    sliding_piece(Piece).
+
+pin(Pos, FromX, FromY, ToX, ToY) :-
+    make_move(FromX, FromY, ToX, ToY, Pos, NewPos),
+    behind(ToX, ToY, MiddleX, MiddleY, BackX, BackY, NewPos),
+    pieceAt(ToX, ToY, NewPos, SameSide, _),
+    pieceAt(MiddleX, MiddleY, NewPos, OppSide, _),
+    pieceAt(BackX, BackY, NewPos, OppSide, _),
+    other_side(SameSide, OppSide).
 
 % TODO: design a "state" property
 
