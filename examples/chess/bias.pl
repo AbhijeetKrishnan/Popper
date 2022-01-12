@@ -1,8 +1,8 @@
-max_clauses(1).
+max_clauses(5).
 max_vars(7).
 max_body(4).
 
-enable_pi.
+% enable_pi.
 
 head_pred(f,5).
 
@@ -20,4 +20,3 @@ type(different_pos, (element, element, element, element)).
 type(behind, (element, element, element, element, element, element, list)).
 type(pieceAt, (element, element, list, element, element)).
 type(other_side, (element, element)).
-type(make_move, (element, element, element, element, list, list)).
