@@ -1,0 +1,1 @@
+`python popper.py examples/chess --info`
