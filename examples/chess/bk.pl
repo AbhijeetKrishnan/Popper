@@ -94,37 +94,29 @@ allowed_del(rook, 5, 0). allowed_del(rook, -5, 0).
 allowed_del(rook, 6, 0). allowed_del(rook, -6, 0).
 allowed_del(rook, 7, 0). allowed_del(rook, -7, 0).
 
-allowed_del(queen, 0, 1). allowed_del(queen, 0, -1).
-allowed_del(queen, 0, 2). allowed_del(queen, 0, -2).
-allowed_del(queen, 0, 3). allowed_del(queen, 0, -3).
-allowed_del(queen, 0, 4). allowed_del(queen, 0, -4).
-allowed_del(queen, 0, 5). allowed_del(queen, 0, -5).
-allowed_del(queen, 0, 6). allowed_del(queen, 0, -6).
-allowed_del(queen, 0, 7). allowed_del(queen, 0, -7).
+allowed_del(queen, -1, 1). allowed_del(queen, 0, 1). allowed_del(queen, 1, 1).
+allowed_del(queen, -2, 2). allowed_del(queen, 0, 2). allowed_del(queen, 2, 2).
+allowed_del(queen, -3, 3). allowed_del(queen, 0, 3). allowed_del(queen, 3, 3).
+allowed_del(queen, -4, 4). allowed_del(queen, 0, 4). allowed_del(queen, 4, 4).
+allowed_del(queen, -5, 5). allowed_del(queen, 0, 5). allowed_del(queen, 5, 5).
+allowed_del(queen, -6, 6). allowed_del(queen, 0, 6). allowed_del(queen, 6, 6).
+allowed_del(queen, -7, 7). allowed_del(queen, 0, 7). allowed_del(queen, 7, 7).
 
-allowed_del(queen, 1, 0). allowed_del(queen, -1, 0).
-allowed_del(queen, 2, 0). allowed_del(queen, -2, 0).
-allowed_del(queen, 3, 0). allowed_del(queen, -3, 0).
-allowed_del(queen, 4, 0). allowed_del(queen, -4, 0).
-allowed_del(queen, 5, 0). allowed_del(queen, -5, 0).
-allowed_del(queen, 6, 0). allowed_del(queen, -6, 0).
-allowed_del(queen, 7, 0). allowed_del(queen, -7, 0).
+allowed_del(queen, -1, 0).                           allowed_del(queen, 1, 0).  
+allowed_del(queen, -2, 0).                           allowed_del(queen, 2, 0).  
+allowed_del(queen, -3, 0).                           allowed_del(queen, 3, 0).  
+allowed_del(queen, -4, 0).                           allowed_del(queen, 4, 0).  
+allowed_del(queen, -5, 0).                           allowed_del(queen, 5, 0).  
+allowed_del(queen, -6, 0).                           allowed_del(queen, 6, 0).  
+allowed_del(queen, -7, 0).                           allowed_del(queen, 7, 0).  
 
-allowed_del(queen, 1, 1). allowed_del(queen, -1, -1).
-allowed_del(queen, 2, 2). allowed_del(queen, -2, -2).
-allowed_del(queen, 3, 3). allowed_del(queen, -3, -3).
-allowed_del(queen, 4, 4). allowed_del(queen, -4, -4).
-allowed_del(queen, 5, 5). allowed_del(queen, -5, -5).
-allowed_del(queen, 6, 6). allowed_del(queen, -6, -6).
-allowed_del(queen, 7, 7). allowed_del(queen, -7, -7).
-
-allowed_del(queen, -1, 1). allowed_del(queen, 1, -1).
-allowed_del(queen, -2, 2). allowed_del(queen, 2, -2).
-allowed_del(queen, -3, 3). allowed_del(queen, 3, -3).
-allowed_del(queen, -4, 4). allowed_del(queen, 4, -4).
-allowed_del(queen, -5, 5). allowed_del(queen, 5, -5).
-allowed_del(queen, -6, 6). allowed_del(queen, 6, -6).
-allowed_del(queen, -7, 7). allowed_del(queen, 7, -7).
+allowed_del(queen, -1, -1). allowed_del(queen, 0, -1). allowed_del(queen, 1, -1).
+allowed_del(queen, -2, -2). allowed_del(queen, 0, -2). allowed_del(queen, 2, -2).
+allowed_del(queen, -3, -3). allowed_del(queen, 0, -3). allowed_del(queen, 3, -3).
+allowed_del(queen, -4, -4). allowed_del(queen, 0, -4). allowed_del(queen, 4, -4).
+allowed_del(queen, -5, -5). allowed_del(queen, 0, -5). allowed_del(queen, 5, -5).
+allowed_del(queen, -6, -6). allowed_del(queen, 0, -6). allowed_del(queen, 6, -6).
+allowed_del(queen, -7, -7). allowed_del(queen, 0, -7). allowed_del(queen, 7, -7).
 
 attacks(FromX,FromY,ToX,ToY,Pos) :-
     member(contents(Side,Piece,FromX,FromY), Pos),
