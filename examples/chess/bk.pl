@@ -162,8 +162,6 @@ fork(Pos, FromX, FromY, ToX, ToY) :-
     attacks(ToX, ToY, X2, Y2, NewPos),
     different_pos(X1, Y1, X2, Y2).
 
-fork1(A,B,C,D,E):-make_move(B,C,D,E,A,F),make_move(D,E,B,C,F,A).
-
 behind(FrontX, FrontY, MiddleX, MiddleY, BackX, BackY, Pos) :-
     attacks(FrontX, FrontY, MiddleX, MiddleY, Pos),
     attacks(FrontX, FrontY, BackX, BackY, Pos),
