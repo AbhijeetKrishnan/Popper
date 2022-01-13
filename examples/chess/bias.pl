@@ -1,5 +1,5 @@
-max_clauses(3).
-max_vars(7).
+max_clauses(1).
+max_vars(8).
 max_body(4).
 
 %enable_pi.

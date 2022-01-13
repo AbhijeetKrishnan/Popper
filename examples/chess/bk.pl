@@ -158,9 +158,11 @@ pieceAt(X, Y, Pos, Side, Piece) :-
 
 fork(Pos, FromX, FromY, ToX, ToY) :-
     make_move(FromX, FromY, ToX, ToY, Pos, NewPos),
-    attacks(X, Y, X1, Y1, NewPos),
-    attacks(X, Y, X2, Y2, NewPos),
+    attacks(ToX, ToY, X1, Y1, NewPos),
+    attacks(ToX, ToY, X2, Y2, NewPos),
     different_pos(X1, Y1, X2, Y2).
+
+fork1(A,B,C,D,E):-make_move(B,C,D,E,A,F),make_move(D,E,B,C,F,A).
 
 behind(FrontX, FrontY, MiddleX, MiddleY, BackX, BackY, Pos) :-
     attacks(FrontX, FrontY, MiddleX, MiddleY, Pos),
