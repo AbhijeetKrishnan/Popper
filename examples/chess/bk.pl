@@ -156,6 +156,7 @@ pin(Pos, FromX, FromY, ToX, ToY) :-
     pieceAt(ToX, ToY, NewPos, SameSide, _),
     pieceAt(MiddleX, MiddleY, NewPos, OppSide, _),
     pieceAt(BackX, BackY, NewPos, OppSide, _),
+    different_pos(MiddleX, MiddleY, BackX, BackY),
     other_side(SameSide, OppSide).
 
 % TODO: design a "state" property
