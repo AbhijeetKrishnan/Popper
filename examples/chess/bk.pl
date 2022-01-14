@@ -69,6 +69,22 @@ allowed_del(knight, 2, -1).
 allowed_del(knight, -1, -2).
 allowed_del(knight, 1, -2).
 
+allowed_del(bishop, -1, 1). allowed_del(bishop, 1, 1).
+allowed_del(bishop, -2, 2). allowed_del(bishop, 2, 2).
+allowed_del(bishop, -3, 3). allowed_del(bishop, 3, 3).
+allowed_del(bishop, -4, 4). allowed_del(bishop, 4, 4).
+allowed_del(bishop, -5, 5). allowed_del(bishop, 5, 5).
+allowed_del(bishop, -6, 6). allowed_del(bishop, 6, 6).
+allowed_del(bishop, -7, 7). allowed_del(bishop, 7, 7).
+
+allowed_del(bishop, -1, -1). allowed_del(bishop, 1, -1).
+allowed_del(bishop, -2, -2). allowed_del(bishop, 2, -2).
+allowed_del(bishop, -3, -3). allowed_del(bishop, 3, -3).
+allowed_del(bishop, -4, -4). allowed_del(bishop, 4, -4).
+allowed_del(bishop, -5, -5). allowed_del(bishop, 5, -5).
+allowed_del(bishop, -6, -6). allowed_del(bishop, 6, -6).
+allowed_del(bishop, -7, -7). allowed_del(bishop, 7, -7).
+
 allowed_del(king, -1, 0).
 allowed_del(king, -1, 1).
 allowed_del(king, 0, 1).
