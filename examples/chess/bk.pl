@@ -134,7 +134,74 @@ allowed_del(queen, -5, -5). allowed_del(queen, 0, -5). allowed_del(queen, 5, -5)
 allowed_del(queen, -6, -6). allowed_del(queen, 0, -6). allowed_del(queen, 6, -6).
 allowed_del(queen, -7, -7). allowed_del(queen, 0, -7). allowed_del(queen, 7, -7).
 
-attacks(FromX,FromY,ToX,ToY,Pos) :-
+to_coords(a1, 1, 1).
+to_coords(a2, 1, 2).
+to_coords(a3, 1, 3).
+to_coords(a4, 1, 4).
+to_coords(a5, 1, 5).
+to_coords(a6, 1, 6).
+to_coords(a7, 1, 7).
+to_coords(a8, 1, 8).
+to_coords(b1, 2, 1).
+to_coords(b2, 2, 2).
+to_coords(b3, 2, 3).
+to_coords(b4, 2, 4).
+to_coords(b5, 2, 5).
+to_coords(b6, 2, 6).
+to_coords(b7, 2, 7).
+to_coords(b8, 2, 8).
+to_coords(c1, 3, 1).
+to_coords(c2, 3, 2).
+to_coords(c3, 3, 3).
+to_coords(c4, 3, 4).
+to_coords(c5, 3, 5).
+to_coords(c6, 3, 6).
+to_coords(c7, 3, 7).
+to_coords(c8, 3, 8).
+to_coords(d1, 4, 1).
+to_coords(d2, 4, 2).
+to_coords(d3, 4, 3).
+to_coords(d4, 4, 4).
+to_coords(d5, 4, 5).
+to_coords(d6, 4, 6).
+to_coords(d7, 4, 7).
+to_coords(d8, 4, 8).
+to_coords(e1, 5, 1).
+to_coords(e2, 5, 2).
+to_coords(e3, 5, 3).
+to_coords(e4, 5, 4).
+to_coords(e5, 5, 5).
+to_coords(e6, 5, 6).
+to_coords(e7, 5, 7).
+to_coords(e8, 5, 8).
+to_coords(f1, 6, 1).
+to_coords(f2, 6, 2).
+to_coords(f3, 6, 3).
+to_coords(f4, 6, 4).
+to_coords(f5, 6, 5).
+to_coords(f6, 6, 6).
+to_coords(f7, 6, 7).
+to_coords(f8, 6, 8).
+to_coords(g1, 7, 1).
+to_coords(g2, 7, 2).
+to_coords(g3, 7, 3).
+to_coords(g4, 7, 4).
+to_coords(g5, 7, 5).
+to_coords(g6, 7, 6).
+to_coords(g7, 7, 7).
+to_coords(g8, 7, 8).
+to_coords(h1, 8, 1).
+to_coords(h2, 8, 2).
+to_coords(h3, 8, 3).
+to_coords(h4, 8, 4).
+to_coords(h5, 8, 5).
+to_coords(h6, 8, 6).
+to_coords(h7, 8, 7).
+to_coords(h8, 8, 8).
+
+attacks(From,To,Pos) :-
+    to_coords(From, FromX, FromY),
+    to_coords(To, ToX, ToY),
     member(contents(Side,Piece,FromX,FromY), Pos),
     member(contents(OtherSide,OtherPiece,ToX,ToY), Pos),
     other_side(Side, OtherSide),
@@ -142,7 +209,9 @@ attacks(FromX,FromY,ToX,ToY,Pos) :-
     piece(OtherPiece),
     can_move(Piece, FromX, FromY, ToX, ToY).
 
-different_pos(X1, Y1, X2, Y2) :-
+different_pos(S1, S2) :-
+    to_coords(S1, X1, Y1),
+    to_coords(S2, X2, Y2),
     square(X1, Y1),
     square(X2, Y2),
     ( 
@@ -151,28 +220,29 @@ different_pos(X1, Y1, X2, Y2) :-
         false
     ).
 
-pieceAt(X, Y, Pos, Side, Piece) :-
+pieceAt(S, Pos, Side, Piece) :-
+    to_coords(S, X, Y),
     member(contents(Side, Piece, X, Y), Pos).
 
-fork(Pos, FromX, FromY, ToX, ToY) :-
-    make_move(FromX, FromY, ToX, ToY, Pos, NewPos),
-    attacks(ToX, ToY, X1, Y1, NewPos),
-    attacks(ToX, ToY, X2, Y2, NewPos),
-    different_pos(X1, Y1, X2, Y2).
+fork(Pos, From, To) :-
+    make_move(From, To, Pos, NewPos),
+    attacks(To, S1, NewPos),
+    attacks(To, S2, NewPos),
+    different_pos(S1, S2).
 
-behind(FrontX, FrontY, MiddleX, MiddleY, BackX, BackY, Pos) :-
-    attacks(FrontX, FrontY, MiddleX, MiddleY, Pos),
-    attacks(FrontX, FrontY, BackX, BackY, Pos),
-    pieceAt(FrontX, FrontY, Pos, _, Piece),
+behind(Front, Middle, Back, Pos) :-
+    attacks(Front, Middle, Pos),
+    attacks(Front, Back, Pos),
+    pieceAt(Front, Pos, _, Piece),
     sliding_piece(Piece).
 
-pin(Pos, FromX, FromY, ToX, ToY) :-
-    make_move(FromX, FromY, ToX, ToY, Pos, NewPos),
-    behind(ToX, ToY, MiddleX, MiddleY, BackX, BackY, NewPos),
-    pieceAt(ToX, ToY, NewPos, SameSide, _),
-    pieceAt(MiddleX, MiddleY, NewPos, OppSide, _),
-    pieceAt(BackX, BackY, NewPos, OppSide, _),
-    different_pos(MiddleX, MiddleY, BackX, BackY),
+pin(Pos, From, To) :-
+    make_move(From, To, Pos, NewPos),
+    behind(To, Middle, Back, NewPos),
+    pieceAt(To, NewPos, SameSide, _),
+    pieceAt(Middle, NewPos, OppSide, _),
+    pieceAt(Back, NewPos, OppSide, _),
+    different_pos(Middle, Back),
     other_side(SameSide, OppSide).
 
 % TODO: design a "state" property
@@ -184,7 +254,9 @@ legal_move(FromX,FromY,ToX,ToY,Pos) :-
     member(contents(_,Piece,FromX,FromY),Pos), % piece to be moved exists
     can_move(Piece,FromX,FromY,ToX,ToY). % move for the piece is theoretically permitted (if board was empty)
     
-make_move(FromX,FromY,ToX,ToY,Pos, NewPos) :-
+make_move(From, To ,Pos, NewPos) :-
+    to_coords(From, FromX, FromY),
+    to_coords(To, ToX, ToY),
     legal_move(FromX,FromY,ToX,ToY,Pos),
     member(contents(Side,Piece,FromX,FromY),Pos),
     delete(Pos, contents(Side,Piece,FromX,FromY), TmpPos),
