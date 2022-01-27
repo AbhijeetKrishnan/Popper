@@ -230,8 +230,6 @@ pin(Pos, From, To) :-
     different_pos(Middle, Back),
     other_side(SameSide, OppSide).
 
-fork2(A,B,C):-different_pos(D,F),different_pos(D,C),make_move(F,D,A,E),attacks(B,D,E).
-
 % TODO: design a "state" property
 
 % legal move is one where piece of move color exists at move location
