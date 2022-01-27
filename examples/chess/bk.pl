@@ -1,18 +1,3 @@
-cons(A,B,C):-
-    append([A],B,C).
-tail([_|T],T).
-head([H|_],H).
-empty([]).
-
-element([X|_],X):-!.
-element([_|T],X):-
-    element(T,X).
-
-is_list([]).
-is_list([_|_]).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 square(1,1). square(1,2). square(1,3). square(1,4). square(1,5). square(1,6). square(1,7). square(1,8).
 square(2,1). square(2,2). square(2,3). square(2,4). square(2,5). square(2,6). square(2,7). square(2,8).
 square(3,1). square(3,2). square(3,3). square(3,4). square(3,5). square(3,6). square(3,7). square(3,8).
@@ -245,6 +230,8 @@ pin(Pos, From, To) :-
     different_pos(Middle, Back),
     other_side(SameSide, OppSide).
 
+fork2(A,B,C):-different_pos(D,F),different_pos(D,C),make_move(F,D,A,E),attacks(B,D,E).
+
 % TODO: design a "state" property
 
 % legal move is one where piece of move color exists at move location
@@ -254,12 +241,18 @@ legal_move(FromX,FromY,ToX,ToY,Pos) :-
     member(contents(_,Piece,FromX,FromY),Pos), % piece to be moved exists
     can_move(Piece,FromX,FromY,ToX,ToY). % move for the piece is theoretically permitted (if board was empty)
     
-make_move(From, To ,Pos, NewPos) :-
+make_move(From, To, Pos, NewPos) :-
     to_coords(From, FromX, FromY),
     to_coords(To, ToX, ToY),
     legal_move(FromX,FromY,ToX,ToY,Pos),
     member(contents(Side,Piece,FromX,FromY),Pos),
     delete(Pos, contents(Side,Piece,FromX,FromY), TmpPos),
-    append(TmpPos, [contents(Side, Piece, ToX, ToY)], NewPos).
+    append(TmpPos, [contents(Side, Piece, ToX, ToY)], TmpNewUnsortedPos),
+    (
+        ground(NewPos) ->
+        sort(TmpNewUnsortedPos, NewSortedPos),
+        sort(NewPos, NewSortedPos)
+    ;   sort(TmpNewUnsortedPos, NewPos)
+    ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

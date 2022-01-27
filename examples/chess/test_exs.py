@@ -18,6 +18,8 @@ class bcolors:
 pos = []
 neg = []
 
+tp, tn, fp, fn = 0, 0, 0, 0
+
 with open('exs.pl') as examples_file:
     for line in examples_file:
         line = line.strip()
@@ -38,12 +40,17 @@ for example in pos:
     result = list(prolog.query(f'distinct({target_reln}{example})'))
     if len(result) > 0:
         print(f'{bcolors.OKGREEN}pos({target_reln}{example}){bcolors.ENDC}')
+        tp += 1
     else:
         print(f'{bcolors.FAIL}pos({target_reln}{example}){bcolors.ENDC}')
+        fn += 1
 
 for example in neg:
     result = list(prolog.query(f'distinct({target_reln}{example})'))
     if len(result) > 0:
         print(f'{bcolors.FAIL}neg({target_reln}{example}){bcolors.ENDC}')
+        fp += 1
     else:
         print(f'{bcolors.OKGREEN}neg({target_reln}{example}){bcolors.ENDC}')
+        tn += 1
+print(f'TP:{tp}, FN:{fn}, TN:{tn}, FP:{fp}, Total:{tp + fn + tn + fp}')
