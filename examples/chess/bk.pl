@@ -240,6 +240,7 @@ legal_move(FromX,FromY,ToX,ToY,Pos) :-
     can_move(Piece,FromX,FromY,ToX,ToY). % move for the piece is theoretically permitted (if board was empty)
     
 make_move(From, To, Pos, NewPos) :-
+    \+ ground(NewPos),
     to_coords(From, FromX, FromY),
     to_coords(To, ToX, ToY),
     legal_move(FromX,FromY,ToX,ToY,Pos),
