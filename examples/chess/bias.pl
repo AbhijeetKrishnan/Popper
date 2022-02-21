@@ -11,18 +11,18 @@ direction(f, (in, in, in)).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %body_pred(make_move, 4).
-%body_pred(attacks, 3).
+body_pred(attacks, 3).
 %body_pred(different_pos, 2).
 
 %body_pred(fork,3).
 
 %type(fork, (list, element, element)).
 %type(make_move, (element, element, list, list)).
-%type(attacks, (element, element, list)).
+type(attacks, (element, element, list)).
 %type(different_pos, (element, element)).
 
 %direction(make_move, (in, in, in, out)).
-%direction(attacks, (in, out, out)).
+direction(attacks, (in, out, out)).
 %direction(different_pos, (out, out)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
