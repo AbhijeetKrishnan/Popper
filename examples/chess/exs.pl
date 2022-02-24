@@ -12,7 +12,6 @@ neg(f([contents(white, knight, 7, 1), contents(white, pawn, 5, 2), contents(blac
 neg(f([contents(white, queen, 4, 1), contents(white, king, 5, 1), contents(black, king, 5, 8)], d1, d8)).
 neg(f([contents(white, knight, 5, 1), contents(white, king, 1, 5), contents(black, king, 5, 8), contents(black, bishop, 8, 8)], h8, c3)).
 neg(f([contents(white, knight, 4, 2), contents(white, king, 1, 5), contents(black, king, 5, 8), contents(black, bishop, 8, 8)], h8, c3)).
-
 pos(f([contents(black, king, 5, 7), contents(black, rook, 3, 7), contents(white, king, 1, 1), contents(white, knight, 6, 4)], f4, d5)).
 pos(f([contents(black, king, 1, 8), contents(black, queen, 3, 8), contents(white, king, 5, 1), contents(white, knight, 1, 4)], a4, b6)).
 pos(f([contents(black, king, 1, 8), contents(black, queen, 4, 7), contents(white, king, 5, 1), contents(white, knight, 4, 5)], d5, b6)).
