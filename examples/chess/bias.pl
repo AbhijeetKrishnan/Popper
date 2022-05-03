@@ -39,13 +39,13 @@ body_pred(other_side, 2).
 
 
 %type(pin, (list, element, element)).
-type(f, (list, element, element)).
-type(attacks, (element, element, list)).
-type(make_move, (element, element, list, list)).
-type(different_pos, (element, element)).
-type(behind, (element, element, element, list)).
-type(piece_at, (element, list, element, element)).
-type(other_side, (element, element)).
+type(f, (pos, sq, sq)).
+type(attacks, (sq, sq, pos)).
+type(make_move, (sq, sq, pos, pos)).
+type(different_pos, (sq, sq)).
+type(behind, (sq, sq, sq, pos)).
+type(piece_at, (sq, pos, side, piece)).
+type(other_side, (side, side)).
 
 direction(f, (in, in, in)).
 direction(attacks, (in, out, out)).

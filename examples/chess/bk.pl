@@ -26,6 +26,7 @@ piece(Piece) :-
     member(Piece, [pawn, knight, bishop, rook, queen, king]).
 
 sliding_piece(Piece) :-
+    piece(Piece),
     member(Piece, [bishop, rook, queen]).
 
 contents(Side,Piece,X,Y) :-

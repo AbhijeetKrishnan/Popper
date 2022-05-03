@@ -65,22 +65,27 @@ def decide_outcome(conf_matrix):
 
     return (positive_outcome, negative_outcome)
 
-def build_rules(settings, stats, constrainer, tester, program, before, min_clause, outcome):
+def build_rules(settings, stats, constrainer, tester, program, before, min_clause, outcome, conf_matrix):
     (positive_outcome, negative_outcome) = outcome
     # RM: If you don't use these two lines you need another three entries in the OUTCOME_TO_CONSTRAINTS table (one for every positive outcome combined with negative outcome ALL).
     if negative_outcome == Outcome.ALL:
          negative_outcome = Outcome.SOME
 
     rules = set()
-    for constraint_type in OUTCOME_TO_CONSTRAINTS[(positive_outcome, negative_outcome)]:
-        if constraint_type == Con.GENERALISATION:
-            rules.update(constrainer.generalisation_constraint(program, before, min_clause))
-        elif constraint_type == Con.SPECIALISATION:
-            rules.update(constrainer.specialisation_constraint(program, before, min_clause))
-        elif constraint_type == Con.REDUNDANCY:
-            rules.update(constrainer.redundancy_constraint(program, before, min_clause))
-        elif constraint_type == Con.BANISH:
-            rules.update(constrainer.banish_constraint(program, before, min_clause))
+
+    tp, fn, tn, fp = conf_matrix
+    if tp + fp > 0:
+        rules.update(constrainer.specialisation_constraint(program, before, min_clause))
+
+    # for constraint_type in OUTCOME_TO_CONSTRAINTS[(positive_outcome, negative_outcome)]:
+    #     if constraint_type == Con.GENERALISATION:
+    #         rules.update(constrainer.generalisation_constraint(program, before, min_clause))
+    #     elif constraint_type == Con.SPECIALISATION:
+    #         rules.update(constrainer.specialisation_constraint(program, before, min_clause))
+    #     elif constraint_type == Con.REDUNDANCY:
+    #         rules.update(constrainer.redundancy_constraint(program, before, min_clause))
+    #     elif constraint_type == Con.BANISH:
+    #         rules.update(constrainer.banish_constraint(program, before, min_clause))
 
     if settings.functional_test and tester.is_non_functional(program):
         rules.update(constrainer.generalisation_constraint(program, before, min_clause))
@@ -124,50 +129,68 @@ def popper(settings, stats):
     grounder = ClingoGrounder()
     constrainer = Constrain()
     best_score = None
+    update_solver = False
 
     for size in range(1, settings.max_literals + 1):
         stats.update_num_literals(size)
         solver.update_number_of_literals(size)
+        solver.solver.configuration.solve.models = 0
 
         print(f'% searching programs of size:{size}')
 
         while True:
-            # GENERATE HYPOTHESIS
-            with stats.duration('generate'):
-                model = solver.get_model()
-                if not model:
-                    break
-                program, before, min_clause = generate_program(model)
+            with solver.solver.solve(yield_ = True) as handle:
+                for m in handle:
+                    model = m.symbols(shown = True)
 
-            # TEST HYPOTHESIS
-            with stats.duration('test'):
-                conf_matrix = tester.test(program)
-                outcome = decide_outcome(conf_matrix)
-                score = calc_score(conf_matrix)
+                    # GENERATE HYPOTHESIS
+                    with stats.duration('generate'):
+                        program, before, min_clause = generate_program(model)
+                        print(format_program(program))
 
-            stats.register_program(program, conf_matrix)
+                    # TEST HYPOTHESIS
+                    with stats.duration('test'):
+                        conf_matrix = tester.test(program)
+                        outcome = decide_outcome(conf_matrix)
+                        score = calc_score(conf_matrix)
 
-            # UPDATE BEST PROGRAM
-            if best_score == None or score > best_score:
-                best_score = score
+                    stats.register_program(program, conf_matrix)
 
-                if outcome == (Outcome.ALL, Outcome.NONE):
-                    stats.register_solution(program, conf_matrix)
-                    return stats.solution.code
+                    # # UPDATE BEST PROGRAM
+                    # if best_score == None or score > best_score:
+                    #     best_score = score
 
-                stats.register_best_program(program, conf_matrix)
+                    #     if outcome == (Outcome.ALL, Outcome.NONE):
+                    #         stats.register_solution(program, conf_matrix)
+                    #         return stats.solution.code
 
-            # BUILD RULES
-            with stats.duration('build'):
-                rules = build_rules(settings, stats, constrainer, tester, program, before, min_clause, outcome)
+                    #     stats.register_best_program(program, conf_matrix)
 
-            # GROUND RULES
-            with stats.duration('ground'):
-                rules = ground_rules(stats, grounder, solver.max_clauses, solver.max_vars, rules)
+                    # BUILD RULES
+                    with stats.duration('build'):
+                        rules = build_rules(settings, stats, constrainer, tester, program, before, min_clause, outcome, conf_matrix)
+
+                    # GROUND RULES
+                    with stats.duration('ground'):
+                        rules = ground_rules(stats, grounder, solver.max_clauses, solver.max_vars, rules)
+
+                    # if we generate constraints, we need to update the solver. So break out of the model loop
+                    if rules:
+                        update_solver = True
+                        break
 
             # UPDATE SOLVER
-            with stats.duration('add'):
-                solver.add_ground_clauses(rules)
+            if update_solver:
+                update_solver = False
+                with stats.duration('add'):
+                    print(rules)
+                    if rules:
+                        solver.add_ground_clauses(rules)
+                # generated constraints, restart model loop with new solve call
+                continue
+
+            # all models of this size exhausted, restart with new size
+            break
 
     stats.register_completion()
     return stats.best_program.code if stats.best_program else None
