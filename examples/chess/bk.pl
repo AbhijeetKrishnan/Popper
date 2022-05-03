@@ -280,7 +280,7 @@ different_pos(S1, S2) :-
     ).
 different_pos(S1, S2) :- different_pos(S2, S1).
 
-pieceAt(S, Pos, Side, Piece) :-
+piece_at(S, Pos, Side, Piece) :-
     sq(S),
     position(Pos),
     side(Side),
@@ -301,15 +301,15 @@ behind(Front, Middle, Back, Pos) :-
     position(Pos),
     attacks(Front, Middle, Pos),
     attacks(Front, Back, Pos),
-    pieceAt(Front, Pos, _, Piece),
+    piece_at(Front, Pos, _, Piece),
     sliding_piece(Piece).
 
 pin(Pos, From, To) :-
     make_move(From, To, Pos, NewPos),
     behind(To, Middle, Back, NewPos),
-    pieceAt(To, NewPos, SameSide, _),
-    pieceAt(Middle, NewPos, OppSide, _),
-    pieceAt(Back, NewPos, OppSide, _),
+    piece_at(To, NewPos, SameSide, _),
+    piece_at(Middle, NewPos, OppSide, _),
+    piece_at(Back, NewPos, OppSide, _),
     different_pos(Middle, Back),
     other_side(SameSide, OppSide).
 
