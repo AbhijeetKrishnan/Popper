@@ -146,7 +146,6 @@ def popper(settings, stats):
                     # GENERATE HYPOTHESIS
                     with stats.duration('generate'):
                         program, before, min_clause = generate_program(model)
-                        # print(format_program(program))
 
                     # TEST HYPOTHESIS
                     with stats.duration('test'):
@@ -185,9 +184,7 @@ def popper(settings, stats):
             if update_solver:
                 update_solver = False
                 with stats.duration('add'):
-                    # print(rules)
-                    if rules:
-                        solver.add_ground_clauses(rules)
+                    solver.add_ground_clauses(rules)
                 # generated constraints, restart model loop with new solve call
                 continue
 
