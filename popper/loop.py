@@ -74,7 +74,7 @@ def build_rules(settings, stats, constrainer, tester, program, before, min_claus
     rules = set()
 
     tp, fn, tn, fp = conf_matrix
-    if tp + fp > 0:
+    if tp + fp == 0: # if coverage is 0, exclude specializations of this program (specializations will also have 0 coverage)
         rules.update(constrainer.specialisation_constraint(program, before, min_clause))
 
     # for constraint_type in OUTCOME_TO_CONSTRAINTS[(positive_outcome, negative_outcome)]:
@@ -146,7 +146,7 @@ def popper(settings, stats):
                     # GENERATE HYPOTHESIS
                     with stats.duration('generate'):
                         program, before, min_clause = generate_program(model)
-                        print(format_program(program))
+                        # print(format_program(program))
 
                     # TEST HYPOTHESIS
                     with stats.duration('test'):
@@ -178,12 +178,14 @@ def popper(settings, stats):
                     if rules:
                         update_solver = True
                         break
+                    else:
+                        print(format_program(program))
 
             # UPDATE SOLVER
             if update_solver:
                 update_solver = False
                 with stats.duration('add'):
-                    print(rules)
+                    # print(rules)
                     if rules:
                         solver.add_ground_clauses(rules)
                 # generated constraints, restart model loop with new solve call
