@@ -168,26 +168,11 @@ piece_at(S, Pos, Side, Piece) :-
     to_coords(S, X, Y),
     member(contents(Side, Piece, X, Y), Pos).
 
-fork(Pos, From, To) :-
-    make_move(From, To, Pos, NewPos),
-    attacks(To, S1, NewPos),
-    attacks(To, S2, NewPos),
-    different_pos(S1, S2).
-
 behind(Front, Middle, Back, Pos) :-
     attacks(Front, Middle, Pos),
     attacks(Front, Back, Pos),
     piece_at(Front, Pos, _, Piece),
     sliding_piece(Piece).
-
-pin(Pos, From, To) :-
-    make_move(From, To, Pos, NewPos),
-    behind(To, Middle, Back, NewPos),
-    piece_at(To, NewPos, SameSide, _),
-    piece_at(Middle, NewPos, OppSide, _),
-    piece_at(Back, NewPos, OppSide, _),
-    different_pos(Middle, Back),
-    other_side(SameSide, OppSide).
 
 % TODO: design a "state" property
 
@@ -214,3 +199,18 @@ make_move(From, To, Pos, NewPos) :-
     ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pin(Pos, From, To) :-
+    make_move(From, To, Pos, NewPos),
+    behind(To, Middle, Back, NewPos),
+    piece_at(To, NewPos, SameSide, _),
+    piece_at(Middle, NewPos, OppSide, _),
+    piece_at(Back, NewPos, OppSide, _),
+    different_pos(Middle, Back),
+    other_side(SameSide, OppSide).
+
+fork(Pos, From, To) :-
+    make_move(From, To, Pos, NewPos),
+    attacks(To, S1, NewPos),
+    attacks(To, S2, NewPos),
+    different_pos(S1, S2).
