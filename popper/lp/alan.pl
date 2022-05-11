@@ -8,6 +8,7 @@
 #defined irreflexive/2.
 #defined direction/2.
 #defined type/2.
+#defined forced/2.
 #defined size/1.
 #defined invented/2.
 #defined lower/2.
@@ -245,6 +246,12 @@ head_connected(C,Var1):-
     Vars1 = (Var1,Var2),
     Vars2 = (Var2,Var1),
     Vars1 < Vars2.
+
+%% FORCE PREDICATES
+%% forces certain predicates to be used
+:-
+    forced(P, 2),
+    #count{C : body_literal(C,P,_,_)} == 0.
 
 %% AC TODO: GENERALISE THE BELOW
 %% DYADIC FUNCTIONAL

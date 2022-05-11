@@ -34,3 +34,5 @@ direction(legal_move, (out, out, in)).
 
 irreflexive(different_pos, 2).
 irreflexive(other_side, 2).
+
+forced(legal_move, 2).
