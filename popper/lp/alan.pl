@@ -253,6 +253,12 @@ head_connected(C,Var1):-
     forced(P, 2),
     #count{C : body_literal(C,P,_,_)} == 0.
 
+:-
+    forced(P, 2),
+    body_literal(C, P, _, Vars),
+    var_member(Var, Vars),
+    not head_var(C, Var).
+
 %% AC TODO: GENERALISE THE BELOW
 %% DYADIC FUNCTIONAL
 %% CAN REPLICATE RECALL
