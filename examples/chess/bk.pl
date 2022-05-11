@@ -144,13 +144,15 @@ position(Pos) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+:- dynamic legal_move/3.
+
 attacks(From,To,Pos) :-
     to_coords(From, FromX, FromY),
     to_coords(To, ToX, ToY),
-    member(contents(Side,Piece,FromX,FromY), Pos),
-    member(contents(OtherSide,OtherPiece,ToX,ToY), Pos),
+    member(contents(Side,_,FromX,FromY), Pos),
+    member(contents(OtherSide,_,ToX,ToY), Pos),
     other_side(Side, OtherSide),
-    can_move(Piece, FromX, FromY, ToX, ToY).
+    legal_move(From, To, Pos).
 
 different_pos(S1, S2) :-
     to_coords(S1, X1, Y1),
@@ -160,7 +162,7 @@ different_pos(S1, S2) :-
     ( 
         X1 =\= X2 -> true ;
         Y1 =\= Y2 -> true ;
-        false
+        !, fail
     ).
 % different_pos(S1, S2) :- different_pos(S2, S1).
 
@@ -179,15 +181,18 @@ behind(Front, Middle, Back, Pos) :-
 % legal move is one where piece of move color exists at move location
 % TODO: turn this into an actual legal_move property calculator?
 % if I have this working correctly, I don't need to pass in all the legal moves in the target relation
-legal_move(FromX,FromY,ToX,ToY,Pos) :-
-    member(contents(_,Piece,FromX,FromY),Pos), % piece to be moved exists
-    can_move(Piece,FromX,FromY,ToX,ToY). % move for the piece is theoretically permitted (if board was empty)
+% legal_move(FromX,FromY,ToX,ToY,Pos) :-
+%     square(FromX, FromY),
+%     square(ToX, ToY),
+%     position(Pos),
+%     member(contents(_,Piece,FromX,FromY),Pos), % piece to be moved exists
+%     can_move(Piece,FromX,FromY,ToX,ToY). % move for the piece is theoretically permitted (if board was empty)
     
 make_move(From, To, Pos, NewPos) :-
     \+ ground(NewPos),
     to_coords(From, FromX, FromY),
     to_coords(To, ToX, ToY),
-    legal_move(FromX,FromY,ToX,ToY,Pos),
+    legal_move(From, To, Pos),
     member(contents(Side,Piece,FromX,FromY),Pos),
     delete(Pos, contents(Side,Piece,FromX,FromY), TmpPos),
     append(TmpPos, [contents(Side, Piece, ToX, ToY)], TmpNewUnsortedPos),
