@@ -8,6 +8,7 @@ from . tester import Tester
 from . constrain import Constrain
 from . generate import generate_program
 from . core import Grounding, Clause
+from . chess_test import ChessTester
 
 class Outcome:
     ALL = 'all'
@@ -87,30 +88,30 @@ def build_rules(settings, stats, constrainer, tester, program, before, min_claus
     #     elif constraint_type == Con.BANISH:
     #         rules.update(constrainer.banish_constraint(program, before, min_clause))
 
-    if settings.functional_test and tester.is_non_functional(program):
-        rules.update(constrainer.generalisation_constraint(program, before, min_clause))
+    # if settings.functional_test and tester.is_non_functional(program):
+    #     rules.update(constrainer.generalisation_constraint(program, before, min_clause))
 
     # eliminate generalisations of clauses that contain redundant literals
-    for rule in tester.check_redundant_literal(program):
-        rules.update(constrainer.redundant_literal_constraint(rule, before, min_clause))
+    # for rule in tester.check_redundant_literal(program):
+    #     rules.update(constrainer.redundant_literal_constraint(rule, before, min_clause))
 
     # eliminate generalisations of programs that contain redundant clauses
-    if tester.check_redundant_clause(program):
-        rules.update(constrainer.generalisation_constraint(program, before, min_clause))
+    # if tester.check_redundant_clause(program):
+    #     rules.update(constrainer.generalisation_constraint(program, before, min_clause))
 
-    if len(program) > 1:
-        # evaluate inconsistent sub-clauses
-        for rule in program:
-            if Clause.is_separable(rule) and tester.is_inconsistent(rule):
-                for x in constrainer.generalisation_constraint([rule], before, min_clause):
-                    rules.add(x)
+    # if len(program) > 1:
+    #     # evaluate inconsistent sub-clauses
+    #     for rule in program:
+    #         if Clause.is_separable(rule) and tester.is_inconsistent(rule):
+    #             for x in constrainer.generalisation_constraint([rule], before, min_clause):
+    #                 rules.add(x)
 
-        # eliminate totally incomplete rules
-        if all(Clause.is_separable(rule) for rule in program):
-            for rule in program:
-                if tester.is_totally_incomplete(rule):
-                    for x in constrainer.redundancy_constraint([rule], before, min_clause):
-                        rules.add(x)
+        # # eliminate totally incomplete rules
+        # if all(Clause.is_separable(rule) for rule in program):
+        #     for rule in program:
+        #         if tester.is_totally_incomplete(rule):
+        #             for x in constrainer.redundancy_constraint([rule], before, min_clause):
+        #                 rules.add(x)
 
     stats.register_rules(rules)
 
@@ -124,7 +125,7 @@ def calc_score(conf_matrix):
 
 def popper(settings, stats):
     solver = ClingoSolver(settings)
-    tester = Tester(settings)
+    tester = ChessTester(settings)
     settings.num_pos, settings.num_neg = len(tester.pos), len(tester.neg)
     grounder = ClingoGrounder()
     constrainer = Constrain()
