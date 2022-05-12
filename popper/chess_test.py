@@ -1,5 +1,4 @@
 import csv
-from multiprocessing import context
 import os
 from contextlib import contextmanager
 
@@ -7,7 +6,8 @@ import chess
 from pyswip import Prolog
 from pyswip.prolog import PrologError
 
-from .core import Clause
+from .core import Clause, Literal
+
 
 def _fen_to_contents(fen: str) -> str:
     "Convert a FEN position into a contents predicate"
@@ -30,8 +30,17 @@ class ChessTester():
         self.settings = settings
         self.prolog = Prolog()
         self.eval_timeout = settings.eval_timeout
+        self.already_checked_redundant_literals = set()
 
         bk_pl_path = self.settings.bk_file
+
+        self.pos = []
+        self.neg = []
+        for ex in self.chess_examples():
+            if ex[2]:
+                self.pos.append(ex)
+            else:
+                self.neg.append(ex)
 
         for x in [bk_pl_path]:
             if os.name == 'nt': # if on Windows, SWI requires escaped directory separators
@@ -39,7 +48,7 @@ class ChessTester():
             self.prolog.consult(x)
 
     def chess_examples(self):
-        chess_exs_path = self.settings.exs_file # csv file of (FEN position, UCI move, pos/neg)
+        chess_exs_path = self.settings.ex_file # csv file of (FEN position, UCI move, label)
         with open(chess_exs_path) as exs_file:
             exs_reader = csv.DictReader(exs_file)
             for row in exs_reader:
@@ -65,7 +74,7 @@ class ChessTester():
 
     @contextmanager
     def _legal_moves(self, board):
-        position = _fen_to_contents(board)
+        position = _fen_to_contents(board.fen())
         try:
             for legal_move in board.legal_moves:
                 legal_from_sq = chess.square_name(legal_move.from_square)
@@ -76,12 +85,38 @@ class ChessTester():
         finally:
             self.prolog.retractall('legal_move(_, _, _)')
 
-    def chess_test(self, rules):
+    def check_redundant_literal(self, program):
+        for clause in program:
+            k = Clause.clause_hash(clause)
+            if k in self.already_checked_redundant_literals:
+                continue
+            self.already_checked_redundant_literals.add(k)
+            (head, body) = clause
+            C = f"[{','.join(('not_'+ Literal.to_code(head),) + tuple(Literal.to_code(lit) for lit in body))}]"
+            res = list(self.prolog.query(f'redundant_literal({C})'))
+            if res:
+                yield clause
+
+    def check_redundant_clause(self, program):
+        # AC: if the overhead of this call becomes too high, such as when learning programs with lots of clauses, we can improve it by not comparing already compared clauses
+        prog = []
+        for (head, body) in program:
+            C = f"[{','.join(('not_'+ Literal.to_code(head),) + tuple(Literal.to_code(lit) for lit in body))}]"
+            prog.append(C)
+        prog = f"[{','.join(prog)}]"
+        return list(self.prolog.query(f'redundant_clause({prog})'))
+
+    def is_non_functional(self, program):
+        with self.using(program):
+            return list(self.prolog.query(f'non_functional.'))
+
+
+    def test(self, rules):
         tp, fp, tn, fn = 0, 0, 0, 0
 
         with self.using(rules):
             for board, move, label in self.chess_examples():
-                position = _fen_to_contents(board)
+                position = _fen_to_contents(board.fen())
                 from_sq = chess.square_name(move.from_square)
                 to_sq = chess.square_name(move.to_square)
                 
@@ -90,7 +125,7 @@ class ChessTester():
                     query = f"f({position}, {from_sq}, {to_sq})"
                     try:
                         results = list(self.prolog.query(f'call_with_time_limit({self.eval_timeout}, {query})'))
-                        if next(results, None) == {}:
+                        if len(results) == 1:
                             prediction = True
                         else:
                             prediction = False
@@ -105,5 +140,5 @@ class ChessTester():
                     fn += 1
                 elif not prediction and not label:
                     tn += 1
-                    
+
         return tp, fp, tn, fn
