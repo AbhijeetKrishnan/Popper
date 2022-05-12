@@ -8,7 +8,6 @@
 #defined irreflexive/2.
 #defined direction/2.
 #defined type/2.
-#defined forced/2.
 #defined size/1.
 #defined invented/2.
 #defined lower/2.
@@ -255,17 +254,14 @@ head_connected(C,Var1):-
     Vars = (Var1,Var2),
     Var1 > Var2.
 
-%% FORCE PREDICATES
-%% forces certain predicates to be used
+%% FORCE legal_move
 :-
-    forced(P, 2),
-    #count{C : body_literal(C,P,_,_)} == 0.
-
+    head_literal(_, f, 3, (Pos, From, To)),
+    not body_literal(_, legal_move, 3, (From, To, Pos)).
 :-
-    forced(P, 2),
-    body_literal(C, P, _, Vars),
-    var_member(Var, Vars),
-    not head_var(C, Var).
+    #count{From : body_literal(C, legal_move, 3, (From,_,_))} > 1.
+:-
+    #count{To : body_literal(C, legal_move, _, (_,To,_))} > 1.
 
 %% AC TODO: GENERALISE THE BELOW
 %% DYADIC FUNCTIONAL
