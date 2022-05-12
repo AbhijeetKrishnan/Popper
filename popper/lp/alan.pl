@@ -247,6 +247,14 @@ head_connected(C,Var1):-
     Vars2 = (Var2,Var1),
     Vars1 < Vars2.
 
+%% TRANSITIVE
+%% prevents: head:-q(B,A) if head:-q(A,B) would also be correct
+:-
+    transitive(P,2),
+    body_literal(C,P,2,Vars),
+    Vars = (Var1,Var2),
+    Var1 > Var2.
+
 %% FORCE PREDICATES
 %% forces certain predicates to be used
 :-
