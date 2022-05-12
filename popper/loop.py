@@ -8,6 +8,7 @@ from . tester import Tester
 from . constrain import Constrain
 from . generate import generate_program
 from . core import Grounding, Clause
+from . chess_test import ChessTester
 
 class Outcome:
     ALL = 'all'
@@ -124,7 +125,7 @@ def calc_score(conf_matrix):
 
 def popper(settings, stats):
     solver = ClingoSolver(settings)
-    tester = Tester(settings)
+    tester = ChessTester(settings)
     settings.num_pos, settings.num_neg = len(tester.pos), len(tester.neg)
     grounder = ClingoGrounder()
     constrainer = Constrain()
