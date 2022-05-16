@@ -24,7 +24,7 @@ type(other_side, (side, side)).
 type(legal_move, (sq, sq, pos)).
 
 direction(f, (in, in, in)).
-direction(attacks, (in, out, out)).
+direction(attacks, (in, out, in)).
 direction(make_move, (in, in, in, out)).
 direction(different_pos, (out, out)).
 direction(behind, (in, out, out, in)).
