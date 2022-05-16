@@ -76,6 +76,7 @@ def build_rules(settings, stats, constrainer, tester, program, before, min_claus
 
     tp, fn, tn, fp = conf_matrix
     if tp + fp == 0: # if coverage is 0, exclude specializations of this program (specializations will also have 0 coverage)
+        print('% adding constraints')
         rules.update(constrainer.specialisation_constraint(program, before, min_clause))
 
     # for constraint_type in OUTCOME_TO_CONSTRAINTS[(positive_outcome, negative_outcome)]:
