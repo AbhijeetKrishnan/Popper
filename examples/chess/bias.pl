@@ -26,7 +26,7 @@ type(legal_move, (sq, sq, pos)).
 direction(f, (in, in, in)).
 direction(attacks, (in, out, in)).
 direction(make_move, (in, in, in, out)).
-direction(different_pos, (out, out)).
+direction(different_pos, (in, in)).
 direction(behind, (in, out, out, in)).
 direction(piece_at, (in, in, in, out)).
 direction(other_side, (in, in)).
