@@ -112,7 +112,7 @@ class ChessTester():
 
 
     def test(self, rules):
-        tp, fp, tn, fn = 0, 0, 0, 0
+        tp, fn, tn, fp = 0, 0, 0, 0
 
         with self.using(rules):
             for board, move, label in self.chess_examples():
@@ -141,4 +141,4 @@ class ChessTester():
                 elif not prediction and not label:
                     tn += 1
 
-        return tp, fp, tn, fn
+        return tp, fn, tn, fp
