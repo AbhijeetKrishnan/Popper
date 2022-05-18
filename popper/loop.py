@@ -76,7 +76,7 @@ def build_rules(settings, stats, constrainer, tester, program, before, min_claus
 
     tp, fn, tn, fp = conf_matrix
     if tp + fp == 0: # if coverage is 0, exclude specializations of this program (specializations will also have 0 coverage)
-        print('% adding constraints')
+        # print('% adding constraints')
         rules.update(constrainer.specialisation_constraint(program, before, min_clause))
 
     # for constraint_type in OUTCOME_TO_CONSTRAINTS[(positive_outcome, negative_outcome)]:
@@ -132,11 +132,13 @@ def popper(settings, stats):
     constrainer = Constrain()
     best_score = None
     update_solver = False
+    RULE_LIMIT = 1
 
     for size in range(1, settings.max_literals + 1):
         stats.update_num_literals(size)
         solver.update_number_of_literals(size)
         solver.solver.configuration.solve.models = 0
+        all_rules = []
 
         print(f'% searching programs of size:{size}')
 
@@ -177,19 +179,24 @@ def popper(settings, stats):
 
                     # if we generate constraints, we need to update the solver. So break out of the model loop
                     if rules:
-                        update_solver = True
-
-                        break
+                        all_rules.append(rules)
+                    # if len(all_rules) >= RULE_LIMIT:
+                    #     print(f'% rule limit of {RULE_LIMIT} exceeded, updating solver')
+                        #update_solver = True
+                        # break
                     else:
+                        # program didn't generate constraints (had non-zero matches), so print it out
                         print(format_program(program))
 
             # UPDATE SOLVER
-            if update_solver:
-                update_solver = False
-                with stats.duration('add'):
+            #if update_solver:
+            #update_solver = False
+            with stats.duration('add'):
+                for rules in all_rules:
                     solver.add_ground_clauses(rules)
-                # generated constraints, restart model loop with new solve call
-                continue
+            all_rules = []
+            # generated constraints, restart model loop with new solve call
+            #continue
 
             # all models of this size exhausted, restart with new size
             break
