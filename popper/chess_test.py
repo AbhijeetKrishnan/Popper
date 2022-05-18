@@ -1,34 +1,146 @@
 import csv
 import os
 from contextlib import contextmanager
+from typing import List, Union
 
 import chess
+import pyswip
 from pyswip import Prolog
 from pyswip.prolog import PrologError
 
 from .core import Clause, Literal
 
 
-def _fen_to_contents(fen: str) -> str:
+def convert_side(side: Union[str, bool]) -> Union[bool, str]:
+    if isinstance(side, bool):
+        side_str = 'white' if side == chess.WHITE else 'black'
+        return side_str
+    elif isinstance(side, str):
+        side_val = chess.WHITE if side == 'white' else chess.BLACK
+        return side_val
+
+def fen_to_contents(fen: str) -> str:
     "Convert a FEN position into a contents predicate"
+
     board = chess.Board()
     board.set_fen(fen)
-    piece_str_list = []
+    board_str_list = []
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece:
-            color = 'white' if piece.color else 'black'
+            color = convert_side(piece.color)
             piece_name = chess.piece_name(piece.piece_type)
             row = chess.square_rank(square) + 1
             col = chess.square_file(square) + 1
-            piece_str_list.append(f'contents({color}, {piece_name}, {col}, {row})')
-    return f'[{", ".join(piece_str_list)}]'
+            board_str_list.append(f'contents({color}, {piece_name}, {col}, {row})')
 
+    side_str = convert_side(board.turn)
+    turn_pred = f'turn({side_str})'
+    board_str_list.append(turn_pred)
+
+    castling_preds = []
+    for side, side_str in zip([chess.WHITE, chess.BLACK], ['white', 'black']):
+        if board.has_kingside_castling_rights(side):
+            castling_preds.append(f'kingside_castle({side_str})')
+        if board.has_queenside_castling_rights(side):
+            castling_preds.append(f'queenside_castle({side_str})')
+    board_str_list.extend(castling_preds)
+
+    return f'[{", ".join(board_str_list)}]'
+
+def parse_piece(name: str) -> chess.Piece:
+    name = name.lower()
+    if name == 'pawn':
+        return chess.PAWN
+    elif name == 'knight':
+        return chess.KNIGHT
+    elif name == 'bishop':
+        return chess.BISHOP
+    elif name == 'rook':
+        return chess.ROOK
+    elif name == 'queen':
+        return chess.QUEEN
+    elif name == 'king':
+        return chess.KING
+
+def convert_pos_to_board(pos: List[pyswip.easy.Functor]) -> chess.Board:
+    "Convert a list of contents/4 predicates into a board that can be used to generate legal moves"
+
+    board = chess.Board(None)
+    for predicate in pos:
+        predicate_name = predicate.name.value
+        if predicate_name == 'contents':
+            side_str = predicate.args[0].value
+            piece_str = predicate.args[1].value
+            #code.interact(local=locals())
+            file = predicate.args[2]
+            rank = predicate.args[3]
+
+            piece = chess.Piece(parse_piece(piece_str), convert_side(side_str))
+            square = chess.square(file - 1, rank - 1)
+            board.set_piece_at(square, piece)
+        elif predicate_name == 'turn':
+            side_str = predicate.args[0].value
+            side = convert_side(side_str)
+            board.turn = side
+        elif predicate_name == 'kingside_castle':
+            side_str = predicate.args[0].value
+            side = convert_side(side_str)
+            if side == chess.WHITE:
+                board.castling_rights |= chess.BB_H1
+            else:
+                board.castling_rights |= chess.BB_H8
+        elif predicate_name == 'queenside_castle':
+            side_str = predicate.args[0].value
+            side = convert_side(side_str)
+            if side == chess.WHITE:
+                board.castling_rights |= chess.BB_A1
+            else:
+                board.castling_rights |= chess.BB_A8
+        else:
+            pass
+    return board
+
+# https://stackoverflow.com/a/63156085
+def legal_move(_from, to, pos, handle):
+    "Implementation of a foreign predicate which unifies with legal moves in the position"
+
+    control = pyswip.core.PL_foreign_control(handle)
+
+    index = None
+    return_value = False
+
+    if control == pyswip.core.PL_FIRST_CALL: # First call of legal_move
+        index = 0
+    
+    if control == pyswip.core.PL_REDO:  # Subsequent call of legal_move
+        last_index = pyswip.core.PL_foreign_context(handle)  # retrieve the index of the last call
+        index = last_index + 1
+
+    if control == pyswip.core.PL_PRUNED:  # A cut has destroyed the choice point
+        return False
+    
+    board = convert_pos_to_board(pos)
+    legal_moves = list(board.legal_moves)
+    if 0 <= index < len(legal_moves):
+        move = legal_moves[index]
+        _from.unify(chess.square_name(move.from_square))
+        to.unify(chess.square_name(move.to_square))
+        return_value = pyswip.core.PL_retry(index)
+
+    return return_value
+
+def get_prolog() -> pyswip.prolog.Prolog:
+    "Create the Prolog object and initialize it for the tactic-unification process"
+
+    pyswip.registerForeign(legal_move, arity=3, flags=pyswip.core.PL_FA_NONDETERMINISTIC)
+    prolog = pyswip.Prolog()
+    return prolog
 
 class ChessTester():
     def __init__(self, settings):
         self.settings = settings
-        self.prolog = Prolog()
+        self.prolog = get_prolog()
         self.eval_timeout = settings.eval_timeout
         self.already_checked_redundant_literals = set()
 
@@ -72,19 +184,6 @@ class ChessTester():
                 args = ','.join(['_'] * arity)
                 self.prolog.retractall(f'{predicate}({args})')
 
-    @contextmanager
-    def _legal_moves(self, board):
-        position = _fen_to_contents(board.fen())
-        try:
-            for legal_move in board.legal_moves:
-                legal_from_sq = chess.square_name(legal_move.from_square)
-                legal_to_sq = chess.square_name(legal_move.to_square)
-                legal_move_pred = f'legal_move({legal_from_sq}, {legal_to_sq}, {position})'
-                self.prolog.assertz(legal_move_pred)
-            yield
-        finally:
-            self.prolog.retractall('legal_move(_, _, _)')
-
     def check_redundant_literal(self, program):
         for clause in program:
             k = Clause.clause_hash(clause)
@@ -110,27 +209,25 @@ class ChessTester():
         with self.using(program):
             return list(self.prolog.query(f'non_functional.'))
 
-
     def test(self, rules):
         tp, fn, tn, fp = 0, 0, 0, 0
 
         with self.using(rules):
             for board, move, label in self.chess_examples():
-                position = _fen_to_contents(board.fen())
+                position = fen_to_contents(board.fen())
                 from_sq = chess.square_name(move.from_square)
                 to_sq = chess.square_name(move.to_square)
                 
-                with self._legal_moves(board):
-                    # query the relation with the current example
-                    query = f"f({position}, {from_sq}, {to_sq})"
-                    try:
-                        results = list(self.prolog.query(f'call_with_time_limit({self.eval_timeout}, {query})'))
-                        if len(results) == 1:
-                            prediction = True
-                        else:
-                            prediction = False
-                    except PrologError:
+                # query the relation with the current example
+                query = f"f({position}, {from_sq}, {to_sq})"
+                try:
+                    results = list(self.prolog.query(f'call_with_time_limit({self.eval_timeout}, {query})'))
+                    if len(results) == 1:
+                        prediction = True
+                    else:
                         prediction = False
+                except PrologError:
+                    prediction = False
                 
                 if prediction and label:
                     tp += 1
