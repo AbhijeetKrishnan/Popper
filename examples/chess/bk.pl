@@ -142,9 +142,18 @@ position(Pos) :-
     % how to indicate list of contents/4 predicates?
     is_list(Pos).
 
+turn(Side, Pos) :-
+    side(Side),
+    member(turn(Side), Pos).
+
+kingside_castle(Side, Pos) :-
+    member(kingside_castle(Side), Pos).
+queenside_castle(Side, Pos) :-
+    member(queenside_castle(Side), Pos).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- dynamic legal_move/3.
+% :- dynamic legal_move/3.
 
 attacks(From,To,Pos) :-
     to_coords(From, FromX, FromY),
@@ -177,16 +186,6 @@ behind(Front, Middle, Back, Pos) :-
     sliding_piece(Piece).
 
 % TODO: design a "state" property
-
-% legal move is one where piece of move color exists at move location
-% TODO: turn this into an actual legal_move property calculator?
-% if I have this working correctly, I don't need to pass in all the legal moves in the target relation
-% legal_move(FromX,FromY,ToX,ToY,Pos) :-
-%     square(FromX, FromY),
-%     square(ToX, ToY),
-%     position(Pos),
-%     member(contents(_,Piece,FromX,FromY),Pos), % piece to be moved exists
-%     can_move(Piece,FromX,FromY,ToX,ToY). % move for the piece is theoretically permitted (if board was empty)
     
 make_move(From, To, Pos, NewPos) :-
     \+ ground(NewPos),
@@ -219,3 +218,4 @@ fork(Pos, From, To) :-
     attacks(To, S1, NewPos),
     attacks(To, S2, NewPos),
     different_pos(S1, S2).
+

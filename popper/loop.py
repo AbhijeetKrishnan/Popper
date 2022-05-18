@@ -178,6 +178,7 @@ def popper(settings, stats):
                     # if we generate constraints, we need to update the solver. So break out of the model loop
                     if rules:
                         update_solver = True
+
                         break
                     else:
                         print(format_program(program))
