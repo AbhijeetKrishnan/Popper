@@ -76,7 +76,7 @@ def build_rules(settings, stats, constrainer, tester, program, before, min_claus
 
     tp, fn, tn, fp = conf_matrix
     if tp + fp == 0: # if coverage is 0, exclude specializations of this program (specializations will also have 0 coverage)
-        print('% adding constraints')
+        # print('% adding constraints')
         rules.update(constrainer.specialisation_constraint(program, before, min_clause))
 
     # for constraint_type in OUTCOME_TO_CONSTRAINTS[(positive_outcome, negative_outcome)]:
@@ -130,8 +130,7 @@ def popper(settings, stats):
     settings.num_pos, settings.num_neg = len(tester.pos), len(tester.neg)
     grounder = ClingoGrounder()
     constrainer = Constrain()
-    best_score = None
-    update_solver = False
+    all_rules = []
 
     for size in range(1, settings.max_literals + 1):
         stats.update_num_literals(size)
@@ -175,20 +174,17 @@ def popper(settings, stats):
                     with stats.duration('ground'):
                         rules = ground_rules(stats, grounder, solver.max_clauses, solver.max_vars, rules)
 
-                    # if we generate constraints, we need to update the solver. So break out of the model loop
+                    # if we generate constraints, add them to the list of all constraints to be updated at the end of the loop
                     if rules:
-                        update_solver = True
-                        break
+                        all_rules.append(rules)
                     else:
                         print(format_program(program))
 
             # UPDATE SOLVER
-            if update_solver:
-                update_solver = False
-                with stats.duration('add'):
+            with stats.duration('add'):
+                for rules in all_rules:
                     solver.add_ground_clauses(rules)
-                # generated constraints, restart model loop with new solve call
-                continue
+                all_rules = []
 
             # all models of this size exhausted, restart with new size
             break
