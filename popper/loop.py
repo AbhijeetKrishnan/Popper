@@ -130,7 +130,8 @@ def popper(settings, stats):
     settings.num_pos, settings.num_neg = len(tester.pos), len(tester.neg)
     grounder = ClingoGrounder()
     constrainer = Constrain()
-    all_rules = []
+    constraint_rule_buffer = []
+    BUFFER_LIMIT = 10000 # arbitrary value
 
     for size in range(1, settings.max_literals + 1):
         stats.update_num_literals(size)
@@ -138,6 +139,7 @@ def popper(settings, stats):
         solver.solver.configuration.solve.models = 0
 
         print(f'% searching programs of size:{size}')
+        update_required = False
 
         while True:
             with solver.solver.solve(yield_ = True) as handle:
@@ -174,17 +176,26 @@ def popper(settings, stats):
                     with stats.duration('ground'):
                         rules = ground_rules(stats, grounder, solver.max_clauses, solver.max_vars, rules)
 
-                    # if we generate constraints, add them to the list of all constraints to be updated at the end of the loop
+                    # if we generate constraints, add them to the buffer
                     if rules:
-                        all_rules.append(rules)
+                        print('[skipped]', format_program(program), conf_matrix[0] + conf_matrix[3])
+                        constraint_rule_buffer.append(rules)
                     else:
-                        print(format_program(program))
+                        print(format_program(program), conf_matrix[0] + conf_matrix[3])
+                    
+                    # if the buffer exceeds the limit, apply the constraints and restart the model
+                    if len(constraint_rule_buffer) >= BUFFER_LIMIT:
+                        update_required = True
+                        break
 
             # UPDATE SOLVER
-            with stats.duration('add'):
-                for rules in all_rules:
-                    solver.add_ground_clauses(rules)
-                all_rules = []
+            if update_required:
+                with stats.duration('add'):
+                    for rules in constraint_rule_buffer:
+                        solver.add_ground_clauses(rules)
+                    update_required = False
+                    constraint_rule_buffer = []
+                continue
 
             # all models of this size exhausted, restart with new size
             break

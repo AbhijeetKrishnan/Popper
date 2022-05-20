@@ -1,6 +1,6 @@
 max_clauses(1).
-max_vars(6).
-max_body(6).
+max_vars(7).
+max_body(7).
 
 % enable_pi.
 
