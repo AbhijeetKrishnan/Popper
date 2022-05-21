@@ -66,6 +66,10 @@ def decide_outcome(conf_matrix):
 
     return (positive_outcome, negative_outcome)
 
+def write_valid_programs(programs):
+    for program in programs:
+        print(program)
+
 def build_rules(settings, stats, constrainer, tester, program, before, min_clause, outcome, conf_matrix):
     (positive_outcome, negative_outcome) = outcome
     # RM: If you don't use these two lines you need another three entries in the OUTCOME_TO_CONSTRAINTS table (one for every positive outcome combined with negative outcome ALL).
@@ -130,6 +134,7 @@ def popper(settings, stats):
     grounder = ClingoGrounder()
     constrainer = Constrain()
     constraint_rule_buffer = []
+    valid_tactics = set()
     BUFFER_LIMIT = 1 # arbitrary value
 
     for size in range(1, settings.max_literals + 1):
@@ -177,7 +182,8 @@ def popper(settings, stats):
                     if rules:
                         constraint_rule_buffer.append(rules)
                     else:
-                        print(format_program(program))
+                        print(f'% {format_program(program)}')
+                        valid_tactics.add(format_program(program))
                     
                     # if the buffer exceeds the limit, apply the constraints and restart the solver
                     if len(constraint_rule_buffer) >= BUFFER_LIMIT:
@@ -194,6 +200,7 @@ def popper(settings, stats):
             # all models of this size exhausted, restart with new size
             break
 
+    write_valid_programs(valid_tactics)
     stats.register_completion()
     return stats.best_program.code if stats.best_program else None
 
