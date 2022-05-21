@@ -76,7 +76,6 @@ def build_rules(settings, stats, constrainer, tester, program, before, min_claus
 
     tp, fn, tn, fp = conf_matrix
     if tp + fp == 0: # if coverage is 0, exclude specializations of this program (specializations will also have 0 coverage)
-        # print('% adding constraints')
         rules.update(constrainer.specialisation_constraint(program, before, min_clause))
 
     # for constraint_type in OUTCOME_TO_CONSTRAINTS[(positive_outcome, negative_outcome)]:
@@ -131,7 +130,7 @@ def popper(settings, stats):
     grounder = ClingoGrounder()
     constrainer = Constrain()
     constraint_rule_buffer = []
-    BUFFER_LIMIT = 10000 # arbitrary value
+    BUFFER_LIMIT = 1 # arbitrary value
 
     for size in range(1, settings.max_literals + 1):
         stats.update_num_literals(size)
@@ -139,13 +138,11 @@ def popper(settings, stats):
         solver.solver.configuration.solve.models = 0
 
         print(f'% searching programs of size:{size}')
-        update_required = False
 
         while True:
             with solver.solver.solve(yield_ = True) as handle:
                 for m in handle:
                     model = m.symbols(shown = True)
-
                     # GENERATE HYPOTHESIS
                     with stats.duration('generate'):
                         program, before, min_clause = generate_program(model)
@@ -178,22 +175,19 @@ def popper(settings, stats):
 
                     # if we generate constraints, add them to the buffer
                     if rules:
-                        print('[skipped]', format_program(program), conf_matrix[0] + conf_matrix[3])
                         constraint_rule_buffer.append(rules)
                     else:
-                        print(format_program(program), conf_matrix[0] + conf_matrix[3])
+                        print(format_program(program))
                     
-                    # if the buffer exceeds the limit, apply the constraints and restart the model
+                    # if the buffer exceeds the limit, apply the constraints and restart the solver
                     if len(constraint_rule_buffer) >= BUFFER_LIMIT:
-                        update_required = True
                         break
 
             # UPDATE SOLVER
-            if update_required:
+            if len(constraint_rule_buffer) >= BUFFER_LIMIT:
                 with stats.duration('add'):
                     for rules in constraint_rule_buffer:
                         solver.add_ground_clauses(rules)
-                    update_required = False
                     constraint_rule_buffer = []
                 continue
 
@@ -211,7 +205,8 @@ def learn_solution(settings):
     stats = Stats(log_best_programs=settings.info, stats_file=settings.stats_file)
     log_level = logging.DEBUG if settings.debug else logging.INFO
     logging.basicConfig(level=log_level, stream=sys.stderr, format='%(message)s')
-    timeout(popper, (settings, stats), timeout_duration=int(settings.timeout))
+    popper(settings, stats)
+    #timeout(popper, (settings, stats), timeout_duration=int(settings.timeout))
 
     if stats.solution:
         prog_stats = stats.solution

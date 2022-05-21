@@ -131,6 +131,7 @@ class ChessTester():
                             prediction = False
                     except PrologError:
                         print(f'% timeout occurred on {query}')
+                        # don't use this example if timeout occurred
                         continue
                 
                 if prediction and label:

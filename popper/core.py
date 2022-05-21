@@ -117,21 +117,11 @@ class Literal:
 class Clause:
     @staticmethod
     def to_code(clause, argmap={}):
-        PRED_VALUE = {
-            'make_move': 1,
-            'legal_move': 0,
-            'attacks': 2,
-            'behind': 3,
-            'piece_at': 4,
-            'different_pos': 6,
-            'other_side': 5
-        }
         (head, body) = clause
         head_str = ''
         if head:
             head_str = Literal.to_code(head, argmap)
-        sorted_literal_list = sorted(body, key=lambda literal: PRED_VALUE[literal.predicate])
-        body_str = ','.join(Literal.to_code(literal, argmap) for literal in sorted_literal_list)
+        body_str = ','.join(Literal.to_code(literal, argmap) for literal in body)
         return head_str + ':-' + body_str
 
     @staticmethod
