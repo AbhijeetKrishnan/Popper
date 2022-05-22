@@ -212,7 +212,8 @@ def learn_solution(settings):
     stats = Stats(log_best_programs=settings.info, stats_file=settings.stats_file)
     log_level = logging.DEBUG if settings.debug else logging.INFO
     logging.basicConfig(level=log_level, stream=sys.stderr, format='%(message)s')
-    timeout(popper, (settings, stats), timeout_duration=int(settings.timeout))
+    #timeout(popper, (settings, stats), timeout_duration=int(settings.timeout))
+    popper(settings, stats)
 
     if stats.solution:
         prog_stats = stats.solution

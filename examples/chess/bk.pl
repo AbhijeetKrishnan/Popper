@@ -7,80 +7,6 @@ square(6,1). square(6,2). square(6,3). square(6,4). square(6,5). square(6,6). sq
 square(7,1). square(7,2). square(7,3). square(7,4). square(7,5). square(7,6). square(7,7). square(7,8).
 square(8,1). square(8,2). square(8,3). square(8,4). square(8,5). square(8,6). square(8,7). square(8,8).
 
-allowed_del(knight, -1, 2).
-allowed_del(knight, 1, 2).
-allowed_del(knight, -2, 1).
-allowed_del(knight, 2, 1).
-allowed_del(knight, -2, -1).
-allowed_del(knight, 2, -1).
-allowed_del(knight, -1, -2).
-allowed_del(knight, 1, -2).
-
-allowed_del(bishop, -1, 1). allowed_del(bishop, 1, 1).
-allowed_del(bishop, -2, 2). allowed_del(bishop, 2, 2).
-allowed_del(bishop, -3, 3). allowed_del(bishop, 3, 3).
-allowed_del(bishop, -4, 4). allowed_del(bishop, 4, 4).
-allowed_del(bishop, -5, 5). allowed_del(bishop, 5, 5).
-allowed_del(bishop, -6, 6). allowed_del(bishop, 6, 6).
-allowed_del(bishop, -7, 7). allowed_del(bishop, 7, 7).
-
-allowed_del(bishop, -1, -1). allowed_del(bishop, 1, -1).
-allowed_del(bishop, -2, -2). allowed_del(bishop, 2, -2).
-allowed_del(bishop, -3, -3). allowed_del(bishop, 3, -3).
-allowed_del(bishop, -4, -4). allowed_del(bishop, 4, -4).
-allowed_del(bishop, -5, -5). allowed_del(bishop, 5, -5).
-allowed_del(bishop, -6, -6). allowed_del(bishop, 6, -6).
-allowed_del(bishop, -7, -7). allowed_del(bishop, 7, -7).
-
-allowed_del(king, -1, 0).
-allowed_del(king, -1, 1).
-allowed_del(king, 0, 1).
-allowed_del(king, 1, 1).
-allowed_del(king, 1, 0).
-allowed_del(king, 1, -1).
-allowed_del(king, 0, -1).
-allowed_del(king, -1, -1).
-
-allowed_del(rook, 0, 1). allowed_del(rook, 0, -1).
-allowed_del(rook, 0, 2). allowed_del(rook, 0, -2).
-allowed_del(rook, 0, 3). allowed_del(rook, 0, -3).
-allowed_del(rook, 0, 4). allowed_del(rook, 0, -4).
-allowed_del(rook, 0, 5). allowed_del(rook, 0, -5).
-allowed_del(rook, 0, 6). allowed_del(rook, 0, -6).
-allowed_del(rook, 0, 7). allowed_del(rook, 0, -7).
-
-allowed_del(rook, 1, 0). allowed_del(rook, -1, 0).
-allowed_del(rook, 2, 0). allowed_del(rook, -2, 0).
-allowed_del(rook, 3, 0). allowed_del(rook, -3, 0).
-allowed_del(rook, 4, 0). allowed_del(rook, -4, 0).
-allowed_del(rook, 5, 0). allowed_del(rook, -5, 0).
-allowed_del(rook, 6, 0). allowed_del(rook, -6, 0).
-allowed_del(rook, 7, 0). allowed_del(rook, -7, 0).
-
-allowed_del(queen, -1, 1). allowed_del(queen, 0, 1). allowed_del(queen, 1, 1).
-allowed_del(queen, -2, 2). allowed_del(queen, 0, 2). allowed_del(queen, 2, 2).
-allowed_del(queen, -3, 3). allowed_del(queen, 0, 3). allowed_del(queen, 3, 3).
-allowed_del(queen, -4, 4). allowed_del(queen, 0, 4). allowed_del(queen, 4, 4).
-allowed_del(queen, -5, 5). allowed_del(queen, 0, 5). allowed_del(queen, 5, 5).
-allowed_del(queen, -6, 6). allowed_del(queen, 0, 6). allowed_del(queen, 6, 6).
-allowed_del(queen, -7, 7). allowed_del(queen, 0, 7). allowed_del(queen, 7, 7).
-
-allowed_del(queen, -1, 0).                           allowed_del(queen, 1, 0).  
-allowed_del(queen, -2, 0).                           allowed_del(queen, 2, 0).  
-allowed_del(queen, -3, 0).                           allowed_del(queen, 3, 0).  
-allowed_del(queen, -4, 0).                           allowed_del(queen, 4, 0).  
-allowed_del(queen, -5, 0).                           allowed_del(queen, 5, 0).  
-allowed_del(queen, -6, 0).                           allowed_del(queen, 6, 0).  
-allowed_del(queen, -7, 0).                           allowed_del(queen, 7, 0).  
-
-allowed_del(queen, -1, -1). allowed_del(queen, 0, -1). allowed_del(queen, 1, -1).
-allowed_del(queen, -2, -2). allowed_del(queen, 0, -2). allowed_del(queen, 2, -2).
-allowed_del(queen, -3, -3). allowed_del(queen, 0, -3). allowed_del(queen, 3, -3).
-allowed_del(queen, -4, -4). allowed_del(queen, 0, -4). allowed_del(queen, 4, -4).
-allowed_del(queen, -5, -5). allowed_del(queen, 0, -5). allowed_del(queen, 5, -5).
-allowed_del(queen, -6, -6). allowed_del(queen, 0, -6). allowed_del(queen, 6, -6).
-allowed_del(queen, -7, -7). allowed_del(queen, 0, -7). allowed_del(queen, 7, -7).
-
 to_coords(a1, 1, 1). to_coords(a2, 1, 2). to_coords(a3, 1, 3). to_coords(a4, 1, 4). to_coords(a5, 1, 5). to_coords(a6, 1, 6). to_coords(a7, 1, 7). to_coords(a8, 1, 8).
 to_coords(b1, 2, 1). to_coords(b2, 2, 2). to_coords(b3, 2, 3). to_coords(b4, 2, 4). to_coords(b5, 2, 5). to_coords(b6, 2, 6). to_coords(b7, 2, 7). to_coords(b8, 2, 8).
 to_coords(c1, 3, 1). to_coords(c2, 3, 2). to_coords(c3, 3, 3). to_coords(c4, 3, 4). to_coords(c5, 3, 5). to_coords(c6, 3, 6). to_coords(c7, 3, 7). to_coords(c8, 3, 8).
@@ -111,8 +37,8 @@ sameCol(X1,Y1,X2,Y2) :-
 
 side(white).
 side(black).
-other_side(white,black).
-other_side(black,white).
+other_side(white, black).
+other_side(black, white).
 
 piece(Piece) :-
     member(Piece, [pawn, knight, bishop, rook, queen, king]).
@@ -129,14 +55,6 @@ contents(Side,Piece,X,Y) :-
 move(FromX,FromY,ToX,ToY) :-
     square(FromX,FromY),
     square(ToX,ToY).
-
-can_move(Piece, FromX, FromY, ToX, ToY) :-
-    piece(Piece),
-    square(FromX, FromY),
-    square(ToX, ToY),
-    DelX is ToX - FromX,
-    DelY is ToY - FromY,
-    allowed_del(Piece, DelX, DelY).
 
 position(Pos) :- 
     % how to indicate list of contents/4 predicates?
@@ -164,15 +82,9 @@ attacks(From,To,Pos) :-
     legal_move(From, To, Pos).
 
 different_pos(S1, S2) :-
-    to_coords(S1, X1, Y1),
-    to_coords(S2, X2, Y2),
-    square(X1, Y1),
-    square(X2, Y2),
-    ( 
-        X1 =\= X2 -> true ;
-        Y1 =\= Y2 -> true ;
-        !, fail
-    ).
+    sq(S1),
+    sq(S2),
+    S1 \== S2.
 % different_pos(S1, S2) :- different_pos(S2, S1).
 
 piece_at(S, Pos, Side, Piece) :-
@@ -186,6 +98,16 @@ behind(Front, Middle, Back, Pos) :-
     sliding_piece(Piece).
 
 % TODO: design a "state" property
+
+% legal move is one where piece of move color exists at move location
+% TODO: turn this into an actual legal_move property calculator?
+% if I have this working correctly, I don't need to pass in all the legal moves in the target relation
+% legal_move(FromX,FromY,ToX,ToY,Pos) :-
+%     square(FromX, FromY),
+%     square(ToX, ToY),
+%     position(Pos),
+%     member(contents(_,Piece,FromX,FromY),Pos), % piece to be moved exists
+%     can_move(Piece,FromX,FromY,ToX,ToY). % move for the piece is theoretically permitted (if board was empty)
     
 make_move(From, To, Pos, NewPos) :-
     \+ ground(NewPos),

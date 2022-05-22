@@ -72,7 +72,6 @@ def convert_pos_to_board(pos: List[pyswip.easy.Functor]) -> chess.Board:
         if predicate_name == 'contents':
             side_str = predicate.args[0].value
             piece_str = predicate.args[1].value
-            #code.interact(local=locals())
             file = predicate.args[2]
             rank = predicate.args[3]
 
@@ -101,10 +100,12 @@ def convert_pos_to_board(pos: List[pyswip.easy.Functor]) -> chess.Board:
             pass
     return board
 
+legal_move_cache = None
+
 # https://stackoverflow.com/a/63156085
 def legal_move(_from, to, pos, handle):
     "Implementation of a foreign predicate which unifies with legal moves in the position"
-
+    global legal_move_cache
     control = pyswip.core.PL_foreign_control(handle)
 
     index = None
@@ -112,6 +113,9 @@ def legal_move(_from, to, pos, handle):
 
     if control == pyswip.core.PL_FIRST_CALL: # First call of legal_move
         index = 0
+        board = convert_pos_to_board(pos)
+        legal_moves = list(board.legal_moves)
+        legal_move_cache = legal_moves
     
     if control == pyswip.core.PL_REDO:  # Subsequent call of legal_move
         last_index = pyswip.core.PL_foreign_context(handle)  # retrieve the index of the last call
@@ -119,19 +123,18 @@ def legal_move(_from, to, pos, handle):
 
     if control == pyswip.core.PL_PRUNED:  # A cut has destroyed the choice point
         return False
-    
-    board = convert_pos_to_board(pos)
-    legal_moves = list(board.legal_moves)
         
     if isinstance(_from, pyswip.easy.Variable):
-        if 0 <= index < len(legal_moves):
-            move = legal_moves[index]
-            _from.unify(chess.square_name(move.from_square))
-            to.unify(chess.square_name(move.to_square))
+        if 0 <= index < len(legal_move_cache):
+            move = legal_move_cache[index]
+            from_atom = pyswip.easy.Atom(chess.square_name(move.from_square))
+            to_atom = pyswip.easy.Atom(chess.square_name(move.to_square))
+            _from.unify(from_atom)
+            to.unify(to_atom)
             return_value = pyswip.core.PL_retry(index)
     elif isinstance(_from, pyswip.easy.Atom):
         target = chess.Move(chess.parse_square(_from.value), chess.parse_square(to.value))
-        return_value = target in legal_moves
+        return_value = target in legal_move_cache
 
     return return_value
 
