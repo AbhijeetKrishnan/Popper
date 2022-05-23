@@ -83,7 +83,8 @@ def parse_settings():
         clingo_args= [] if not args.clingo_args else args.clingo_args.split(' '),
         max_solutions = MAX_SOLUTIONS,
         functional_test = args.functional_test,
-        hspace = False if args.hspace == -1 else args.hspace
+        hspace = False if args.hspace == -1 else args.hspace,
+        fpred = args.fpred
     )
 
 class Settings:
@@ -102,7 +103,8 @@ class Settings:
             clingo_args = CLINGO_ARGS,
             max_solutions = MAX_SOLUTIONS,
             functional_test = False,
-            hspace=False):
+            hspace=False,
+            fpred=False):
             
         self.bias_file = bias_file
         self.ex_file = ex_file
@@ -119,6 +121,7 @@ class Settings:
         self.max_solutions = max_solutions
         self.functional_test = functional_test
         self.hspace = hspace
+        self.fpred = fpred
 
 def format_program(program):
     return "\n".join(Clause.to_code(Clause.to_ordered(clause)) + '.' for clause in program)

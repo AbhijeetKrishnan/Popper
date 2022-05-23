@@ -85,7 +85,7 @@ class ChessTester():
                 # TODO: eek, refactor this
                 query = f"f({position}, {from_sq}, {to_sq})"
 
-                if self.settings.fpred:
+                if not self.settings.fpred:
                     with assert_legal_moves(self.prolog, board):
                         try:
                             results = list(self.prolog.query(f'call_with_time_limit({self.eval_timeout}, {query})'))

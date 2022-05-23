@@ -11,12 +11,12 @@ import pyswip
 
 PathLike = Union[str, List[str]]
 
-BK_FILE = os.path.join('bk.pl')
+BK_FILE = os.path.join('chess', 'bk.pl')
 
-LICHESS_2013 = os.path.join('data', 'lichess_db_standard_rated_2013-01.pgn')
+LICHESS_2013 = os.path.join('tactics', 'data', 'lichess_db_standard_rated_2013-01.pgn')
 
-STOCKFISH = os.path.join('bin', 'stockfish_14_x64')
-MAIA_1100 = os.path.join('bin' 'lc0', 'build', 'release', 'lc0')
+STOCKFISH = os.path.join('tactics', 'bin', 'stockfish_14_x64')
+MAIA_1100 = os.path.join('tactics', 'bin' 'lc0', 'build', 'release', 'lc0')
 
 logger = logging.getLogger(__name__)
 
@@ -199,12 +199,14 @@ def legal_move(_from, to, pos, handle):
 
     return return_value
 
-def get_prolog(use_foreign_predicate: bool=False) -> pyswip.prolog.Prolog:
+def get_prolog(bk_path: PathLike=None, use_foreign_predicate: bool=False) -> pyswip.prolog.Prolog:
     "Create the Prolog object and initialize it for the tactic-unification process"
 
     if use_foreign_predicate:
         pyswip.registerForeign(legal_move, arity=3, flags=pyswip.core.PL_FA_NONDETERMINISTIC)
     prolog = pyswip.Prolog()
+    if bk_path:
+        prolog.consult(bk_path)
     return prolog
 
 @contextmanager
@@ -261,6 +263,7 @@ def chess_query(prolog: pyswip.prolog.Prolog, tactic_text: str, board: chess.Boa
                 logger.debug(f'Results: {results}')
                 prolog.retract(tactic_text)
         return results
-    except pyswip.prolog.PrologError:
+    except pyswip.prolog.PrologError as e:
+        logger.warning(str(e))
         logger.warning(f'timeout after {time_limit_sec}s on tactic {tactic_text}')
         return None

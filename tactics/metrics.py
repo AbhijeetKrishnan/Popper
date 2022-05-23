@@ -10,11 +10,11 @@ import chess.engine
 import chess.pgn
 import pyparsing
 from pyswip import Prolog
-from pyswip.prolog import Prolog, PrologError
+from pyswip.prolog import Prolog
 from tqdm import tqdm
 
 from prolog_parser import create_parser, parse_result_to_str
-from util import (LICHESS_2013, MAIA_1100, STOCKFISH, chess_query,
+from util import (BK_FILE, LICHESS_2013, MAIA_1100, STOCKFISH, chess_query,
                   fen_to_contents, get_engine, get_evals, get_prolog,
                   get_top_n_moves, positions_list, positions_pgn)
 
@@ -36,7 +36,7 @@ def evaluate(evaluated_suggestions: List[Tuple[chess.engine.Score, chess.Move]],
 def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3, time_limit_sec: int=5, use_foreign_predicate: bool=False) -> Tuple[Optional[bool], Optional[List[chess.Move]]]:
     "Given the text of a Prolog-based tactic, and a position, check whether the tactic matched in the given position or and if so, what were the suggested moves"
     
-    results = chess_query(prolog, text, board, limit, time_limit_sec, use_foreign_predicate=use_foreign_predicate)
+    results = chess_query(prolog, text, board, limit=limit, time_limit_sec=time_limit_sec, use_foreign_predicate=use_foreign_predicate)
     if results is None:
         match, suggestions = None, None
     elif not results:
@@ -128,10 +128,10 @@ def parse_args():
     parser.add_argument('--pgn', dest='pgn_file', default=LICHESS_2013, help='Path to PGN file of positions to use for calculating divergence')
     parser.add_argument('--num-games', dest='num_games', type=int, default=10, help='Number of games to use')
     parser.add_argument('--pos-per-game', dest='pos_per_game', type=int, default=10, help='Number of positions to use per game')
-    parser.add_argument('--data-path', dest='data_path', type=str, default='data/stats/metrics_data.csv', help='File path to which metrics should be written')
+    parser.add_argument('--data-path', dest='data_path', type=str, default='tactics/data/stats/metrics_data.csv', help='File path to which metrics should be written')
     parser.add_argument('--pos-list', dest='pos_list', type=str, help='Path to file contatining list of positions to use for calculating divergence')
     parser.add_argument('--fpred', default=False, action='store_true', help='Use legal_move as a foreign predicate')
-    parser.add_argument('--eval-timeout', type=int, default=1, help='Prolog evaluation timeout in seconds')
+    parser.add_argument('--eval-timeout', type=int, default=5, help='Prolog evaluation timeout in seconds')
     return parser.parse_args()
 
 def create_logger(log_level):
@@ -153,7 +153,7 @@ def main():
     
     # Calculate metrics for each tactic
     prolog_parser = create_parser()
-    prolog = get_prolog()
+    prolog = get_prolog(BK_FILE)
     metrics_list = []
     with get_engine(args.engine_path) as engine:
         with open(args.tactics_file) as hspace_handle:
