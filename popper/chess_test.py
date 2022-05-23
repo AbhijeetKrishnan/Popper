@@ -7,22 +7,7 @@ from pyswip import Prolog
 from pyswip.prolog import PrologError
 
 from .core import Clause, Literal
-
-
-def _fen_to_contents(fen: str) -> str:
-    "Convert a FEN position into a contents predicate"
-    board = chess.Board()
-    board.set_fen(fen)
-    piece_str_list = []
-    for square in chess.SQUARES:
-        piece = board.piece_at(square)
-        if piece:
-            color = 'white' if piece.color else 'black'
-            piece_name = chess.piece_name(piece.piece_type)
-            row = chess.square_rank(square) + 1
-            col = chess.square_file(square) + 1
-            piece_str_list.append(f'contents({color}, {piece_name}, {col}, {row})')
-    return f'[{", ".join(piece_str_list)}]'
+from tactics.util import fen_to_contents, chess_examples
 
 
 class ChessTester():
@@ -47,17 +32,6 @@ class ChessTester():
                 x = x.replace('\\', '\\\\')
             self.prolog.consult(x)
 
-    def chess_examples(self):
-        chess_exs_path = self.settings.ex_file # csv file of (FEN position, UCI move, label)
-        with open(chess_exs_path) as exs_file:
-            exs_reader = csv.DictReader(exs_file)
-            for row in exs_reader:
-                board = chess.Board()
-                board.set_fen(row['fen'])
-                move = chess.Move.from_uci(row['uci'])
-                label = bool(int(row['label']))
-                yield (board, move, label)
-
     @contextmanager
     def using(self, rules):
         current_clauses = set()
@@ -74,7 +48,7 @@ class ChessTester():
 
     @contextmanager
     def _legal_moves(self, board):
-        position = _fen_to_contents(board.fen())
+        position = fen_to_contents(board.fen())
         try:
             for legal_move in board.legal_moves:
                 legal_from_sq = chess.square_name(legal_move.from_square)
@@ -115,8 +89,8 @@ class ChessTester():
         tp, fn, tn, fp = 0, 0, 0, 0
 
         with self.using(rules):
-            for board, move, label in self.chess_examples():
-                position = _fen_to_contents(board.fen())
+            for board, move, label in chess_examples(self.settings.ex_file):
+                position = fen_to_contents(board.fen())
                 from_sq = chess.square_name(move.from_square)
                 to_sq = chess.square_name(move.to_square)
                 
