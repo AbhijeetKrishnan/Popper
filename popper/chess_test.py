@@ -1,4 +1,3 @@
-import csv
 import os
 from contextlib import contextmanager
 
@@ -21,7 +20,7 @@ class ChessTester():
 
         self.pos = []
         self.neg = []
-        for ex in self.chess_examples():
+        for ex in chess_examples(self.settings.ex_file):
             if ex[2]:
                 self.pos.append(ex)
             else:
