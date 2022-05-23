@@ -165,11 +165,46 @@ def convert_pos_to_board(pos: List[pyswip.easy.Functor]) -> chess.Board:
             logger.error(f'Unknown predicate in position list: {predicate_name}')
     return board
 
-def get_prolog() -> pyswip.prolog.Prolog:
+# https://stackoverflow.com/a/63156085
+def legal_move(_from, to, pos, handle):
+    "Implementation of a foreign predicate which unifies with legal moves in the position"
+    control = pyswip.core.PL_foreign_control(handle)
+
+    index = None
+    return_value = False
+    board = convert_pos_to_board(pos)
+    legal_moves = list(board.legal_moves)
+
+    if control == pyswip.core.PL_FIRST_CALL: # First call of legal_move
+        index = 0
+        
+    if control == pyswip.core.PL_REDO:  # Subsequent call of legal_move
+        last_index = pyswip.core.PL_foreign_context(handle)  # retrieve the index of the last call
+        index = last_index + 1
+
+    if control == pyswip.core.PL_PRUNED:  # A cut has destroyed the choice point
+        return False
+        
+    if isinstance(_from, pyswip.easy.Variable):
+        if 0 <= index < len(legal_moves):
+            move = legal_moves[index]
+            from_atom = pyswip.easy.Atom(chess.square_name(move.from_square))
+            to_atom = pyswip.easy.Atom(chess.square_name(move.to_square))
+            _from.unify(from_atom)
+            to.unify(to_atom)
+            return_value = pyswip.core.PL_retry(index)
+    elif isinstance(_from, pyswip.easy.Atom):
+        target = chess.Move(chess.parse_square(_from.value), chess.parse_square(to.value))
+        return_value = target in legal_moves
+
+    return return_value
+
+def get_prolog(use_foreign_predicate: bool=False) -> pyswip.prolog.Prolog:
     "Create the Prolog object and initialize it for the tactic-unification process"
 
+    if use_foreign_predicate:
+        pyswip.registerForeign(legal_move, arity=3, flags=pyswip.core.PL_FA_NONDETERMINISTIC)
     prolog = pyswip.Prolog()
-    prolog.consult(BK_FILE)
     return prolog
 
 @contextmanager
@@ -186,13 +221,13 @@ def assert_legal_moves(prolog: pyswip.prolog.Prolog, board: chess.Board):
     finally:
         prolog.retractall('legal_move(_, _, _)')
 
-def chess_query(prolog: pyswip.prolog.Prolog, tactic_text: str, board: chess.Board, limit: int=3, move: Optional[chess.Move]=None, time_limit_sec: Optional[int]=None) -> Optional[list]:
+def chess_query(prolog: pyswip.prolog.Prolog, tactic_text: str, board: chess.Board, limit: int=3, move: Optional[chess.Move]=None, time_limit_sec: Optional[int]=None, use_foreign_predicate: bool=False) -> Optional[list]:
     "Given the text of a Prolog-based tactic, and a position, check whether the tactic matched in the given position or and if so, what were the suggested moves"
-    
+    # TODO: eek, refactor this
     position = fen_to_contents(board.fen())
     try:
         prolog.assertz(tactic_text)
-        with assert_legal_moves(prolog, board):
+        if use_foreign_predicate:
             if move:
                 from_sq = chess.square_name(move.from_square)
                 to_sq = chess.square_name(move.to_square)
@@ -208,6 +243,23 @@ def chess_query(prolog: pyswip.prolog.Prolog, tactic_text: str, board: chess.Boa
             results = list(prolog.query(f'{query}', maxresult=limit))
             logger.debug(f'Results: {results}')
             prolog.retract(tactic_text)
+        else:
+            with assert_legal_moves(prolog, board):
+                if move:
+                    from_sq = chess.square_name(move.from_square)
+                    to_sq = chess.square_name(move.to_square)
+                    query = f"f({position}, {from_sq}, {to_sq})"
+                else:
+                    query = f"f({position}, From, To)"
+                    
+                if time_limit_sec:
+                    query = f"call_with_time_limit({time_limit_sec}, {query})"
+                    logger.debug(f'Launching query: {query} with time limit: {time_limit_sec}s')
+                else:
+                    logger.debug(f'Launching query: {query} with no time limit')
+                results = list(prolog.query(f'{query}', maxresult=limit))
+                logger.debug(f'Results: {results}')
+                prolog.retract(tactic_text)
         return results
     except pyswip.prolog.PrologError:
         logger.warning(f'timeout after {time_limit_sec}s on tactic {tactic_text}')

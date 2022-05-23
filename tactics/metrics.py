@@ -33,10 +33,10 @@ def evaluate(evaluated_suggestions: List[Tuple[chess.engine.Score, chess.Move]],
         metric = metric_fn(idx, error)
     return metric
 
-def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3, time_limit_sec: int=5) -> Tuple[Optional[bool], Optional[List[chess.Move]]]:
+def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3, time_limit_sec: int=5, use_foreign_predicate: bool=False) -> Tuple[Optional[bool], Optional[List[chess.Move]]]:
     "Given the text of a Prolog-based tactic, and a position, check whether the tactic matched in the given position or and if so, what were the suggested moves"
     
-    results = chess_query(prolog, text, board, limit, time_limit_sec)
+    results = chess_query(prolog, text, board, limit, time_limit_sec, use_foreign_predicate=use_foreign_predicate)
     if results is None:
         match, suggestions = None, None
     elif not results:
@@ -81,7 +81,8 @@ def write_metrics(metrics_list: List[dict], csv_filename: str) -> None:
             }
             writer.writerow(row)
 
-def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, positions: Generator[chess.Board, None, None]) -> Optional[dict]:
+def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, positions: Generator[chess.Board, None, None], settings) -> Optional[dict]:
+    SUGGESTIONS_PER_TACTIC = 3
     metrics = {
         'total_positions': 0, # total number of positions (across all games)
         'total_matches': 0,
@@ -97,7 +98,7 @@ def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, po
     with tqdm(desc='Positions', unit='positions', leave=False) as pos_progress_bar:
         for board in positions:
             logger.debug(board)
-            match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=3)
+            match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=SUGGESTIONS_PER_TACTIC, time_limit_sec=settings.eval_timeout, use_foreign_predicate=settings.fpred)
             if match is None:
                 return None
             metrics['total_positions'] += 1 # don't include a position for which we don't have a result
@@ -129,6 +130,8 @@ def parse_args():
     parser.add_argument('--pos-per-game', dest='pos_per_game', type=int, default=10, help='Number of positions to use per game')
     parser.add_argument('--data-path', dest='data_path', type=str, default='data/stats/metrics_data.csv', help='File path to which metrics should be written')
     parser.add_argument('--pos-list', dest='pos_list', type=str, help='Path to file contatining list of positions to use for calculating divergence')
+    parser.add_argument('--fpred', default=False, action='store_true', help='Use legal_move as a foreign predicate')
+    parser.add_argument('--eval-timeout', type=int, default=1, help='Prolog evaluation timeout in seconds')
     return parser.parse_args()
 
 def create_logger(log_level):
@@ -177,7 +180,7 @@ def main():
                     elif args.pgn_file:
                         positions = positions_pgn(args.pgn_file, args.num_games, args.pos_per_game)
                     
-                    metrics = calc_metrics(prolog, tactic_text, engine, positions)
+                    metrics = calc_metrics(prolog, tactic_text, engine, positions, args)
                     if metrics:
                         metrics['tactic_text'] = tactic_text
                         metrics_list.append(metrics)

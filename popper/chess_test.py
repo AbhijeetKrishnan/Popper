@@ -1,18 +1,20 @@
 import os
 from contextlib import contextmanager
+from typing import List, Union
 
 import chess
+import pyswip
 from pyswip import Prolog
 from pyswip.prolog import PrologError
 
 from .core import Clause, Literal
-from tactics.util import assert_legal_moves, chess_examples, fen_to_contents
+from tactics.util import assert_legal_moves, chess_examples, fen_to_contents, get_prolog
 
 
 class ChessTester():
     def __init__(self, settings):
         self.settings = settings
-        self.prolog = Prolog()
+        self.prolog = get_prolog(settings.fpred)
         self.eval_timeout = settings.eval_timeout
         self.already_checked_redundant_literals = set()
 
@@ -70,7 +72,6 @@ class ChessTester():
         with self.using(program):
             return list(self.prolog.query(f'non_functional.'))
 
-
     def test(self, rules):
         tp, fn, tn, fp = 0, 0, 0, 0
 
@@ -79,10 +80,24 @@ class ChessTester():
                 position = fen_to_contents(board.fen())
                 from_sq = chess.square_name(move.from_square)
                 to_sq = chess.square_name(move.to_square)
-                
-                with assert_legal_moves(self.prolog, board):
-                    # query the relation with the current example
-                    query = f"f({position}, {from_sq}, {to_sq})"
+
+                # query the relation with the current example
+                # TODO: eek, refactor this
+                query = f"f({position}, {from_sq}, {to_sq})"
+
+                if self.settings.fpred:
+                    with assert_legal_moves(self.prolog, board):
+                        try:
+                            results = list(self.prolog.query(f'call_with_time_limit({self.eval_timeout}, {query})'))
+                            if len(results) == 1:
+                                prediction = True
+                            else:
+                                prediction = False
+                        except PrologError:
+                            print(f'% timeout occurred on {query}')
+                            # don't use this example if timeout occurred
+                            continue
+                else:
                     try:
                         results = list(self.prolog.query(f'call_with_time_limit({self.eval_timeout}, {query})'))
                         if len(results) == 1:
@@ -90,7 +105,7 @@ class ChessTester():
                         else:
                             prediction = False
                     except PrologError:
-                        print(f'% timeout occurred on {query}')
+                        prediction = False
                         # don't use this example if timeout occurred
                         continue
                 

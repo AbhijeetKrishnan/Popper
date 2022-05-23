@@ -34,6 +34,7 @@ def parse_args():
     parser.add_argument('--bk-file', type=str, default='', help='Filename for the background knowledge')
     parser.add_argument('--bias-file', type=str, default='', help='Filename for the bias')
     parser.add_argument('--stats-file', type=str, default='', help='Filename for outputting execution statistics as json')
+    parser.add_argument('--fpred', default=False, action='store_true', help='Use legal_move as a foreign predicate')
     return parser.parse_args()
 
 def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
