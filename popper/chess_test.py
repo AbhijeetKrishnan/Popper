@@ -7,7 +7,7 @@ from pyswip import Prolog
 from pyswip.prolog import PrologError
 
 from .core import Clause, Literal
-from tactics.util import fen_to_contents, chess_examples
+from tactics.util import assert_legal_moves, chess_examples, fen_to_contents
 
 
 class ChessTester():
@@ -46,19 +46,6 @@ class ChessTester():
                 args = ','.join(['_'] * arity)
                 self.prolog.retractall(f'{predicate}({args})')
 
-    @contextmanager
-    def _legal_moves(self, board):
-        position = fen_to_contents(board.fen())
-        try:
-            for legal_move in board.legal_moves:
-                legal_from_sq = chess.square_name(legal_move.from_square)
-                legal_to_sq = chess.square_name(legal_move.to_square)
-                legal_move_pred = f'legal_move({legal_from_sq}, {legal_to_sq}, {position})'
-                self.prolog.assertz(legal_move_pred)
-            yield
-        finally:
-            self.prolog.retractall('legal_move(_, _, _)')
-
     def check_redundant_literal(self, program):
         for clause in program:
             k = Clause.clause_hash(clause)
@@ -94,7 +81,7 @@ class ChessTester():
                 from_sq = chess.square_name(move.from_square)
                 to_sq = chess.square_name(move.to_square)
                 
-                with self._legal_moves(board):
+                with assert_legal_moves(self.prolog, board):
                     # query the relation with the current example
                     query = f"f({position}, {from_sq}, {to_sq})"
                     try:

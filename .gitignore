@@ -1,6 +1,8 @@
 *.txt
 *.csv
 *.log
+tactics/bin/*
+tactics/data/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
