@@ -1,0 +1,6 @@
+[submodule "tactics/bin/maia-chess"]
+	path = tactics/bin/maia-chess
+	url = git@github.com:CSSLab/maia-chess.git
+[submodule "tactics/bin/lc0"]
+	path = tactics/bin/lc0
+	url = git@github.com:LeelaChessZero/lc0.git
