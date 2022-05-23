@@ -1,10 +1,7 @@
 import os
 from contextlib import contextmanager
-from typing import List, Union
 
 import chess
-import pyswip
-from pyswip import Prolog
 from pyswip.prolog import PrologError
 
 from .core import Clause, Literal
@@ -14,7 +11,7 @@ from tactics.util import assert_legal_moves, chess_examples, fen_to_contents, ge
 class ChessTester():
     def __init__(self, settings):
         self.settings = settings
-        self.prolog = get_prolog(settings.fpred)
+        self.prolog = get_prolog(use_foreign_predicate=settings.fpred)
         self.eval_timeout = settings.eval_timeout
         self.already_checked_redundant_literals = set()
 

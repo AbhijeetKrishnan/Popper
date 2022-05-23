@@ -153,7 +153,7 @@ def main():
     
     # Calculate metrics for each tactic
     prolog_parser = create_parser()
-    prolog = get_prolog(BK_FILE)
+    prolog = get_prolog(BK_FILE, args.fpred)
     metrics_list = []
     with get_engine(args.engine_path) as engine:
         with open(args.tactics_file) as hspace_handle:
