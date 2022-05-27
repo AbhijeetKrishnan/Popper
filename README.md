@@ -24,23 +24,13 @@ Generate test data
 Learn tactics (~7 min)
 `python popper.py chess --ex-file tactics/data/exs/examples_train.csv --eval-timeout 1 > tactics/data/hspace/hspace_tactics.txt`
 
-Generate Stockfish 14 validation stats (~35 mins)
-`python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tactics/data/exs/examples_valid.csv --data-path tactics/data/stats/metrics_valid_sf14.csv`
-
-Generate Maia-1100 validation stats (~37 min)
-`python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tactics/data/exs/examples_valid.csv --data-path tactics/data/stats/metrics_valid_maia1100.csv --engine MAIA1100`
-
 Generate Maia-1600 validation stats (~38 min)
 `python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tactics/data/exs/examples_valid.csv --data-path tactics/data/stats/metrics_valid_maia1600.csv --engine MAIA1600`
 
-Generate Maia-1900 validation stats (~56 min)
-`python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tactics/data/exs/examples_valid.csv --data-path tactics/data/stats/metrics_valid_maia1900.csv --engine MAIA1900`
-
-Filter T_1100
+Generate Stockfish 14 validation stats (~35 mins)
+`python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tactics/data/exs/examples_valid.csv --data-path tactics/data/stats/metrics_valid_sf14.csv`
 
 Filter T_1600
-
-Filter T_1900
 
 Filter T_SF
 

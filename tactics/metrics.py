@@ -19,15 +19,13 @@ from util import *
 logger = logging.getLogger(__name__)
 logger.propagate = False # https://stackoverflow.com/a/2267567
 
-def evaluate(evaluated_suggestions: List[Tuple[chess.engine.Score, chess.Move]], top_moves: List[Tuple[chess.engine.Score, chess.Move]], metric_fn: Callable[[int, float], float], mate_score: int=2000) -> float:
+def evaluate(evaluated_suggestions: List[Tuple[chess.Move, int]], top_moves: List[Tuple[chess.Move, int]], metric_fn: Callable[[int, float], float]) -> float:
     "Calculate a metric by comparing a given list of evaluated moves to the top recommended moves"
     metric: float = 0
     for idx, (evaluated_move, top_move) in enumerate(zip(evaluated_suggestions, top_moves)):
-        score, move = evaluated_move
-        eval = score.score(mate_score=mate_score)
-        score_top, move_top = top_move
-        top_eval = score_top.score(mate_score=mate_score)
-        error = abs(top_eval - eval)
+        _, score = evaluated_move
+        _, top_score = top_move
+        error = abs(top_score - score)
         metric += metric_fn(idx, error)
     return metric / len(evaluated_suggestions)
 
@@ -109,8 +107,8 @@ def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, po
                 if suggestions:
                     if move in suggestions:
                         metrics['correct_move'] += 1
-                    tactic_evals = get_evals(engine, board, suggestions)
-                    ground_evals = get_evals(engine, board, [move])
+                    tactic_evals = get_evals(engine, board, suggestions, mate_score=settings.mate_score)
+                    ground_evals = get_evals(engine, board, [move], mate_score=settings.mate_score)
                     metrics['divergence'] += evaluate(tactic_evals, ground_evals, divergence_fn)
                     metrics['avg'] += evaluate(tactic_evals, ground_evals, avg_fn)
                     metrics['num_suggestions'] += len(suggestions)
@@ -135,6 +133,7 @@ def parse_args():
     parser.add_argument('--pos-list', dest='pos_list', type=str, help='Path to file contatining list of positions to use for calculating divergence')
     parser.add_argument('--fpred', default=False, action='store_true', help='Use legal_move as a foreign predicate')
     parser.add_argument('--eval-timeout', type=int, default=5, help='Prolog evaluation timeout in seconds')
+    parser.add_argument('--mate-score', type=int, default=2000, help='Score to use to approximate a Mate in X evaluation')
     return parser.parse_args()
 
 def create_logger(log_level):
@@ -202,6 +201,7 @@ def main():
 
     logger.info(f'% Calculated metrics for {tactics_seen} tactics')
     write_metrics(metrics_list, args.data_path)
+
 
 if __name__ == '__main__':
     main()

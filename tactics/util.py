@@ -109,20 +109,27 @@ def chess_examples(chess_exs_path: PathLike) -> Generator[Tuple[chess.Board, che
             label = bool(int(row['label']))
             yield (board, move, label)
 
-def get_evals(engine: chess.engine.SimpleEngine, board: chess.Board, suggestions: List[chess.Move]) -> List[Tuple[chess.engine.Score, chess.Move]]:
+def get_evals(engine: chess.engine.SimpleEngine, board: chess.Board, suggestions: List[chess.Move], mate_score: int=2000) -> List[Tuple[chess.Move, int]]:
     "Obtain engine evaluations for a list of moves in a given position"
 
     evals = []
     for move in suggestions:
-        analysis = engine.analyse(board, limit=chess.engine.Limit(depth=1), root_moves=[move])
-        if 'pv' in analysis: 
-            evals.append((analysis['score'].relative, analysis['pv'][0]))
+        tmp_board = chess.Board(board.fen())
+        tmp_board.push(move)
+        prev_eval = engine.analyse(board, limit=chess.engine.Limit(nodes=1), game=object()) # https://stackoverflow.com/a/66251120
+        curr_eval = engine.analyse(tmp_board, limit=chess.engine.Limit(nodes=1), game=object())
+        orig_turn = board.turn
+        if 'pv' in prev_eval and 'pv' in curr_eval:
+            prev_score = prev_eval['score'].pov(orig_turn)
+            curr_score = curr_eval['score'].pov(orig_turn)
+            move_score = curr_score.score(mate_score=mate_score) - prev_score.score(mate_score=mate_score)
+            evals.append((move, move_score))
     return evals
 
 def get_top_n_moves(engine: chess.engine.SimpleEngine, board: chess.Board, n: int) -> List[Tuple[chess.engine.Score, chess.Move]]:
     "Get the top-n engine-recommended moves for a given position"
 
-    analysis = engine.analyse(board, limit=chess.engine.Limit(depth=1), multipv=n)
+    analysis = engine.analyse(board, limit=chess.engine.Limit(depth=1), multipv=n, game=object())
     top_n_moves = [(root['score'].relative, root['pv'][0]) for root in analysis]
     return top_n_moves[:n]
 
