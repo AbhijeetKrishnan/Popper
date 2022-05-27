@@ -136,7 +136,7 @@ def popper(settings, stats):
     constrainer = Constrain()
     constraint_rule_buffer = []
     valid_tactics = set()
-    BUFFER_LIMIT = 1000 # arbitrary value
+    BUFFER_LIMIT = 1000 # update after every `BUFFER_LIMIT` constraints added
 
     for size in range(1, settings.max_literals + 1):
         stats.update_num_literals(size)

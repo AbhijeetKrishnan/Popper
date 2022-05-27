@@ -14,9 +14,7 @@ from pyswip.prolog import Prolog
 from tqdm import tqdm
 
 from prolog_parser import create_parser, parse_result_to_str
-from util import (BK_FILE, LICHESS_2013, MAIA_1100, STOCKFISH, chess_query,
-                  fen_to_contents, get_engine, get_evals, get_prolog,
-                  get_top_n_moves, positions_list, positions_pgn)
+from util import *
 
 logger = logging.getLogger(__name__)
 logger.propagate = False # https://stackoverflow.com/a/2267567
@@ -63,11 +61,12 @@ def print_metrics(metrics: dict, log_level=logging.INFO, **kwargs) -> None:
     logger.log(log_level, f"# of empty suggestions: {metrics['empty_suggestions']}/{metrics['total_positions']}") # number of positions where tactic did not suggest any move
     logger.log(log_level, f"Divergence = {metrics['divergence']:.2f}")
     logger.log(log_level, f"Average = {metrics['avg']:.2f}")
+    logger.log(log_level, f"# of correct move suggestions = {metrics['correct_move']}")
 
 def write_metrics(metrics_list: List[dict], csv_filename: str) -> None:
     "Write metrics to csv file for analysis"
     with open(csv_filename, 'w') as csv_file:
-        field_names = ['text', 'total_positions', 'total_matches', 'num_suggestions', 'divergence', 'avg']
+        field_names = ['text', 'total_positions', 'total_matches', 'num_suggestions', 'divergence', 'avg', 'correct_move']
         writer = csv.DictWriter(csv_file, fieldnames=field_names)
         writer.writeheader()
         for metrics in metrics_list:
@@ -77,7 +76,8 @@ def write_metrics(metrics_list: List[dict], csv_filename: str) -> None:
                 'total_matches': metrics['total_matches'],
                 'num_suggestions': metrics['num_suggestions'],
                 'divergence': metrics['divergence'],
-                'avg': metrics['avg']
+                'avg': metrics['avg'],
+                'correct_move': metrics['correct_move']
             }
             writer.writerow(row)
 
@@ -89,32 +89,35 @@ def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, po
         'divergence': 0.0,
         'avg': 0.0,
         'empty_suggestions': 0,
-        'num_suggestions': 0
+        'num_suggestions': 0,
+        'correct_move': 0
     }
 
     divergence_fn = lambda idx, error: error / math.log2(1 + (idx + 1))
     avg_fn = lambda _, error: error
 
     with tqdm(desc='Positions', unit='positions', leave=False) as pos_progress_bar:
-        for board in positions:
+        for board, move, label in positions:
             logger.debug(board)
             match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=SUGGESTIONS_PER_TACTIC, time_limit_sec=settings.eval_timeout, use_foreign_predicate=settings.fpred)
             if match is None:
                 return None
             metrics['total_positions'] += 1 # don't include a position for which we don't have a result
-            pos_progress_bar.update(1)
             logger.debug(f'Suggestions: {suggestions}')
             if match:
                 metrics['total_matches'] += 1
                 if suggestions:
-                    evals = get_evals(engine, board, suggestions)
-                    top_n_moves = get_top_n_moves(engine, board, len(suggestions))
-                    metrics['divergence'] += evaluate(evals, top_n_moves, divergence_fn)
-                    metrics['avg'] += evaluate(evals, top_n_moves, avg_fn)
+                    if move in suggestions:
+                        metrics['correct_move'] += 1
+                    tactic_evals = get_evals(engine, board, suggestions)
+                    ground_evals = get_evals(engine, board, [move])
+                    metrics['divergence'] += evaluate(tactic_evals, ground_evals, divergence_fn)
+                    metrics['avg'] += evaluate(tactic_evals, ground_evals, avg_fn)
                     metrics['num_suggestions'] += len(suggestions)
             else:
                 logger.debug(f'Updated empty suggestions')
                 metrics['empty_suggestions'] += 1
+            pos_progress_bar.update(1)
     
     print_metrics(metrics, log_level=logging.DEBUG, tactic_text=tactic_text)
     return metrics
@@ -124,7 +127,7 @@ def parse_args():
     parser.add_argument('tactics_file', type=str, help='file containing list of tactics')
     parser.add_argument('--log', dest='log_level', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], help='Set the logging level', default='INFO')
     parser.add_argument('-n', '--num_tactics', dest='tactics_limit', type=int, help='Number of tactics to analyze', default=None)
-    parser.add_argument('-e', '--engine', dest='engine_path', default=STOCKFISH, help='Path to engine executable to use for calculating divergence')
+    parser.add_argument('-e', '--engine', dest='engine_path', default='STOCKFISH', choices=['STOCKFISH', 'MAIA1100', 'MAIA1600', 'MAIA1900'], help='Path to engine executable to use for calculating divergence')
     parser.add_argument('--pgn', dest='pgn_file', default=LICHESS_2013, help='Path to PGN file of positions to use for calculating divergence')
     parser.add_argument('--num-games', dest='num_games', type=int, default=10, help='Number of games to use')
     parser.add_argument('--pos-per-game', dest='pos_per_game', type=int, default=10, help='Number of positions to use per game')
@@ -147,6 +150,14 @@ def create_logger(log_level):
 def main():
     # Create argument parser
     args = parse_args()
+    if args.engine_path == 'STOCKFISH':
+        engine_path = STOCKFISH
+    elif args.engine_path == 'MAIA1100':
+        engine_path = get_lc0_cmd(LC0, MAIA_1100)
+    elif args.engine_path == 'MAIA1600':
+        engine_path = get_lc0_cmd(LC0, MAIA_1600)
+    elif args.engine_path == 'MAIA1900':
+        engine_path = get_lc0_cmd(LC0, MAIA_1900)
 
     # Create logger
     logger = create_logger(args.log_level)
@@ -155,7 +166,7 @@ def main():
     prolog_parser = create_parser()
     prolog = get_prolog(BK_FILE, args.fpred)
     metrics_list = []
-    with get_engine(args.engine_path) as engine:
+    with get_engine(engine_path) as engine:
         with open(args.tactics_file) as hspace_handle:
             tactics_seen = 0
             with tqdm(total=args.tactics_limit, desc='Tactics', unit='tactics') as tactics_progress_bar:
@@ -176,7 +187,7 @@ def main():
 
                     # Get position list
                     if args.pos_list:
-                        positions = positions_list(args.pos_list)
+                        positions = chess_examples(args.pos_list)
                     elif args.pgn_file:
                         positions = positions_pgn(args.pgn_file, args.num_games, args.pos_per_game)
                     

@@ -15,17 +15,25 @@ BK_FILE = os.path.join('chess', 'bk.pl')
 
 LICHESS_2013 = os.path.join('tactics', 'data', 'lichess_db_standard_rated_2013-01.pgn')
 
+MAIA_1100 = os.path.join('tactics', 'bin', 'maia-chess', 'maia_weights', 'maia-1100.pb')
+MAIA_1600 = os.path.join('tactics', 'bin', 'maia-chess', 'maia_weights', 'maia-1600.pb')
+MAIA_1900 = os.path.join('tactics', 'bin', 'maia-chess', 'maia_weights', 'maia-1900.pb')
+
 STOCKFISH = os.path.join('tactics', 'bin', 'stockfish_14_x64')
-MAIA_1100 = os.path.join('tactics', 'bin' 'lc0', 'build', 'release', 'lc0')
+LC0 = os.path.join('tactics', 'bin', 'lc0', 'build', 'release', 'lc0')
 
 logger = logging.getLogger(__name__)
+
+def get_lc0_cmd(lc0_path: str, weights_path: str) -> List[str]:
+    return [lc0_path, f'--weights={weights_path}']
 
 @contextmanager
 def get_engine(engine_path: PathLike):
     try:
         engine = chess.engine.SimpleEngine.popen_uci(engine_path)
         yield engine
-    except chess.engine.EngineError:
+    except chess.engine.EngineError as e:
+        logger.warning(str(e))
         pass
     finally:
         engine.close()

@@ -1,7 +1,7 @@
 import argparse
 import csv
 import random
-from typing import List, TextIO
+from typing import List, Optional, TextIO
 
 import chess
 import chess.engine
@@ -28,32 +28,37 @@ def sample_pgn(handle: TextIO, num_games: int=10, pos_per_game: int=10) -> List[
     for offset in sampled_offsets:
         handle.seek(offset)
         game = chess.pgn.read_game(handle)
-        positions = []
+        examples = []
         if game:
             node = game.next()
             while node and not node.is_end():
-                board = node.board()
-                positions.append(board)
+                board = node.parent.board()
+                move = node.move
+                examples.append((board, move))
                 node = node.next()
-            sampled_positions = random.sample(positions, pos_per_game)
-            result.extend(sampled_positions)
+            sampled_examples = random.sample(examples, pos_per_game)
+            result.extend(sampled_examples)
 
     return result
 
-def gen_exs(exs_pgn_path: PathLike, engine_path: PathLike, num_games: int=10, pos_per_game: int=10, neg_to_pos_ratio: int=0):
+def gen_exs(exs_pgn_path: PathLike, num_games: int=10, pos_per_game: int=10, neg_to_pos_ratio: int=0, use_engine: bool=False, engine_path: Optional[PathLike]=None):
     
     with open(exs_pgn_path) as handle:
-        sample_positions = sample_pgn(handle, num_games=num_games, pos_per_game=pos_per_game)
+        sample_examples = sample_pgn(handle, num_games=num_games, pos_per_game=pos_per_game)
     
-    with get_engine(engine_path) as engine:
-        for position in sample_positions:
-            moves = get_top_n_moves(engine, position, neg_to_pos_ratio + 1)
-            if not moves:
-                continue
-            _, top_move = moves[0]
-            yield {'fen': position.fen(), 'uci': top_move.uci(), 'label': 1}
-            for _, move in moves[1:]:
-                yield {'fen': position.fen(), 'uci': move.uci(), 'label': 0}
+    if use_engine:
+        with get_engine(engine_path) as engine:
+            for position, move in sample_examples:
+                moves = get_top_n_moves(engine, position, neg_to_pos_ratio + 1)
+                if not moves:
+                    continue
+                _, top_move = moves[0]
+                yield {'fen': position.fen(), 'uci': top_move.uci(), 'label': 1}
+                for _, move in moves[1:]:
+                    yield {'fen': position.fen(), 'uci': move.uci(), 'label': 0}
+    else:
+        for position, move in sample_examples:
+            yield {'fen': position.fen(), 'uci': move.uci(), 'label': 1}
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Generate tactic training examples and write them to a csv file')
@@ -64,6 +69,7 @@ def parse_args():
     parser.add_argument('-p', '--pos-per-game', dest='pos_per_game', type=int, default=10, help='Number of positions to use per game')
     parser.add_argument('-r', '--ratio', dest='neg_to_pos_ratio', type=int, default=3, help='Ratio of negative to positive examples to generate')
     parser.add_argument('--seed', dest='seed', type=int, default=1, help='Seed to use for random generation')
+    parser.add_argument('--use-engine', action='store_true', help='Use engine to generate moves for the examples')
     return parser.parse_args()
 
 def main():
@@ -74,7 +80,7 @@ def main():
         field_names = ['fen', 'uci', 'label']
         writer = csv.DictWriter(output, fieldnames=field_names)
         writer.writeheader()
-        for ex in gen_exs(args.pgn_file, args.engine_path, args.num_games, args.pos_per_game, args.neg_to_pos_ratio):
+        for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
             writer.writerow(ex)
 
 if __name__ == '__main__':
