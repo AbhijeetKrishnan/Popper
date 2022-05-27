@@ -30,8 +30,8 @@ def evaluate(evaluated_suggestions: List[Tuple[chess.engine.Score, chess.Move]],
         score_top, move_top = top_move
         top_eval = score_top.score(mate_score=mate_score)
         error = abs(top_eval - eval)
-        metric = metric_fn(idx, error)
-    return metric
+        metric += metric_fn(idx, error)
+    return metric / len(evaluated_suggestions)
 
 def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3, time_limit_sec: int=5, use_foreign_predicate: bool=False) -> Tuple[Optional[bool], Optional[List[chess.Move]]]:
     "Given the text of a Prolog-based tactic, and a position, check whether the tactic matched in the given position or and if so, what were the suggested moves"
