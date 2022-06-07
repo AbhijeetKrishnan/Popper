@@ -116,6 +116,10 @@ def get_evals(engine: chess.engine.SimpleEngine, board: chess.Board, suggestions
     for move in suggestions:
         tmp_board = chess.Board(board.fen())
         tmp_board.push(move)
+        if tmp_board.outcome() is not None:
+            move_score = mate_score if tmp_board.is_checkmate() else 0
+            evals.append((move, move_score))
+            continue
         prev_eval = engine.analyse(board, limit=chess.engine.Limit(nodes=1), game=object()) # https://stackoverflow.com/a/66251120
         curr_eval = engine.analyse(tmp_board, limit=chess.engine.Limit(nodes=1), game=object())
         orig_turn = board.turn
@@ -126,12 +130,13 @@ def get_evals(engine: chess.engine.SimpleEngine, board: chess.Board, suggestions
             evals.append((move, move_score))
     return evals
 
-def get_top_n_moves(engine: chess.engine.SimpleEngine, board: chess.Board, n: int) -> List[Tuple[chess.engine.Score, chess.Move]]:
-    "Get the top-n engine-recommended moves for a given position"
+def get_top_n_moves(engine: chess.engine.SimpleEngine, board: chess.Board, n: int) -> List[chess.Move]:
+    "Get the top-n engine-recommended (and evaluated) moves for a given position"
 
     analysis = engine.analyse(board, limit=chess.engine.Limit(depth=1), multipv=n, game=object())
-    top_n_moves = [(root['score'].relative, root['pv'][0]) for root in analysis]
-    return top_n_moves[:n]
+    top_results = [root['pv'][0] for root in analysis]
+    top_n_results = top_results[:n]
+    return top_n_results
 
 def parse_piece(name: str) -> int:
     name = name.lower()
@@ -282,3 +287,11 @@ def chess_query(prolog: pyswip.prolog.Prolog, tactic_text: str, board: chess.Boa
         logger.warning(str(e))
         logger.warning(f'timeout after {time_limit_sec}s on tactic {tactic_text}')
         return None
+
+if __name__ == '__main__':
+    tactic = 'f(A,B,C):-legal_move(B,C,A),attacks(B,D,A),different_pos(B,D)'
+    contents = 'contents(white, king, 5, 3), contents(white, pawn, 7, 3), contents(white, pawn, 1, 4), contents(white, pawn, 5, 4), contents(white, pawn, 8, 4), contents(white, pawn, 2, 5), contents(black, king, 5, 5), contents(black, pawn, 8, 5), contents(black, pawn, 4, 6), contents(black, pawn, 7, 6), contents(black, pawn, 1, 7), contents(black, pawn, 2, 7), contents(black, pawn, 7, 7), turn(black)]'
+    prolog = get_prolog(BK_FILE)
+    board = chess.Board()
+    results = chess_query(prolog, tactic, board)
+    print(results)

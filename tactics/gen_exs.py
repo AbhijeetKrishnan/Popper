@@ -10,7 +10,7 @@ import chess.pgn
 from util import LICHESS_2013, STOCKFISH, PathLike, get_engine, get_top_n_moves
 
 
-def sample_pgn(handle: TextIO, num_games: int=10, pos_per_game: int=10) -> List[chess.Board]:
+def sample_pgn(handle: TextIO, num_games: int=10, pos_per_game: int=10, middle_game_cutoff: Optional[int]=None) -> List[chess.Board]:
     "Sample positions from games in a PGN file"
     
     result = []
@@ -18,9 +18,16 @@ def sample_pgn(handle: TextIO, num_games: int=10, pos_per_game: int=10) -> List[
 
     # obtain num_game offsets from list of games
     offsets = []
-    while _ := chess.pgn.read_headers(handle) is not None:
+    while True:
         offset = handle.tell()
-        offsets.append(offset)
+
+        header = chess.pgn.read_headers(handle)
+        if header is None:
+            break
+
+        termination = header.get("Termination")
+        if "Normal" in termination:
+            offsets.append(offset)
     sampled_offsets = random.sample(offsets, num_games)
 
     # obtain pos_per_game positions from sampled list of games
@@ -36,15 +43,22 @@ def sample_pgn(handle: TextIO, num_games: int=10, pos_per_game: int=10) -> List[
                 move = node.move
                 examples.append((board, move))
                 node = node.next()
+            if len(examples) <= 2 * middle_game_cutoff:
+                continue
+            if middle_game_cutoff:
+                cutoff_examples = examples[middle_game_cutoff:-middle_game_cutoff]
+                if len(cutoff_examples) < pos_per_game:
+                    print(game)
+                examples = cutoff_examples
             sampled_examples = random.sample(examples, pos_per_game)
             result.extend(sampled_examples)
-
+    print(len(result))
     return result
 
-def gen_exs(exs_pgn_path: PathLike, num_games: int=10, pos_per_game: int=10, neg_to_pos_ratio: int=0, use_engine: bool=False, engine_path: Optional[PathLike]=None):
+def gen_exs(exs_pgn_path: PathLike, num_games: int=10, pos_per_game: int=10, neg_to_pos_ratio: int=0, use_engine: bool=False, engine_path: Optional[PathLike]=None, middle_game_cutoff: Optional[int]=False):
     
     with open(exs_pgn_path) as handle:
-        sample_examples = sample_pgn(handle, num_games=num_games, pos_per_game=pos_per_game)
+        sample_examples = sample_pgn(handle, num_games=num_games, pos_per_game=pos_per_game, middle_game_cutoff=middle_game_cutoff)
     
     if use_engine:
         with get_engine(engine_path) as engine:
@@ -70,6 +84,7 @@ def parse_args():
     parser.add_argument('-r', '--ratio', dest='neg_to_pos_ratio', type=int, default=3, help='Ratio of negative to positive examples to generate')
     parser.add_argument('--seed', dest='seed', type=int, default=1, help='Seed to use for random generation')
     parser.add_argument('--use-engine', action='store_true', help='Use engine to generate moves for the examples')
+    parser.add_argument('--middle-game-cutoff', dest='middle_game_cutoff', type=int, default=None, help='Cut-off first and last N examples in  game to sample from')
     return parser.parse_args()
 
 def main():
@@ -80,7 +95,7 @@ def main():
         field_names = ['fen', 'uci', 'label']
         writer = csv.DictWriter(output, fieldnames=field_names)
         writer.writeheader()
-        for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
+        for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path, args.middle_game_cutoff):
             writer.writerow(ex)
 
 if __name__ == '__main__':
