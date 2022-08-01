@@ -15,9 +15,9 @@ BK_FILE = os.path.join('chess', 'bk.pl')
 
 LICHESS_2013 = os.path.join('tactics', 'data', 'lichess_db_standard_rated_2013-01.pgn')
 
-MAIA_1100 = os.path.join('tactics', 'bin', 'maia-chess', 'maia_weights', 'maia-1100.pb')
-MAIA_1600 = os.path.join('tactics', 'bin', 'maia-chess', 'maia_weights', 'maia-1600.pb')
-MAIA_1900 = os.path.join('tactics', 'bin', 'maia-chess', 'maia_weights', 'maia-1900.pb')
+MAIA_1100 = os.path.join('tactics', 'bin', 'maia_weights', 'maia-1100.pb')
+MAIA_1600 = os.path.join('tactics', 'bin', 'maia_weights', 'maia-1600.pb')
+MAIA_1900 = os.path.join('tactics', 'bin', 'maia_weights', 'maia-1900.pb')
 
 STOCKFISH = os.path.join('tactics', 'bin', 'stockfish_14_x64')
 LC0 = os.path.join('tactics', 'bin', 'lc0', 'build', 'release', 'lc0')
