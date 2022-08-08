@@ -84,9 +84,17 @@ python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tact
 python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tactics/data/exs/examples_valid.csv --data-path tactics/data/stats/metrics_valid_sf14.csv
 ```
 
-13. Filter T_1600 TODO: write the commands for these by converting `analysis.ipynb` to a single script
+13. Filter T_1600 to obtain the top-10% of tactics
 
-14. Filter T_SF
+```bash
+python tactics/analysis.py tactics/data/stats/metrics_valid_maia1600.csv -o tactics/data/hspace/hspace_t_1600.txt --filter 10
+```
+
+14. Filter T_SF to obtain the top-10% of tactics
+
+```bash
+python tactics/analysis.py tactics/data/stats/metrics_valid_sf14.csv -o tactics/data/hspace/hspace_t_sf.txt --filter 10
+```
 
 15. Evaluate T1600 with M1600 (~2.5 hrs), SF14
 
@@ -108,4 +116,11 @@ python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt --pos-list tactics
 python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt --pos-list tactics/data/exs/examples_test.csv --data-path tactics/data/stats/metrics_test_tsf_sf14.csv --engine STOCKFISH
 ```
 
-## Generate graphs TODO: write the commands for this
+## Generate graphs
+
+17. Open `analysis.ipynb`
+18. Modify the variable `data_filename` to point to the input metric file
+19. Modify the `plt.title` statements to reflect the current engine and tactic file being used
+20. Run all cells to generate the graphs for divergence, accuracy and evaluation score
+21. Download and save the graphs from the IPython viewer to `tactics/data/graphs`
+22. Repeat for all test metrics generated
