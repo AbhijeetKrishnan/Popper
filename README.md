@@ -6,8 +6,7 @@
    January](https://database.lichess.org/standard/lichess_db_standard_rated_2013-01.pgn.bz2) from
    the [lichess.org open database](https://database.lichess.org/)
 
-2. Unzip the games using `bzip2 -dk lichess_db_standard_rated_2013-01.pgn.bz2` and move into `data/` (create the
-   folder if necessary)
+2. Unzip the games and move them into `data/` (create the folder if necessary)
 
 ```bash
 mkdir data
@@ -15,13 +14,17 @@ bzip2 -dk lichess_db_standard_rated_2013-01.pgn.bz2
 mv lichess_db_standard_rated_2013-01.pgn data
 ```
 
-3. Generate train/valid data
+3. Generate data for the training and validation datasets
 
 ```bash
-python tactics/gen_exs.py tactics/data/exs/examples_train.csv -i tactics/data/lichess_db_standard_rated_2013-01.pgn -n 200 -p 1 -r 0 --middle-game-cutoff 10 --seed 1
+python tactics/gen_exs.py tactics/data/exs/examples.csv -i tactics/data/lichess_db_standard_rated_2013-01.pgn -n 200 -p 1 -r 0 --middle-game-cutoff 10 --seed 1
 ```
 
-4. Split into train/valid sets manually and trim it down to 100 validation examples TODO: do it via script
+4. Split the examples into training and validation sets
+
+```bash
+python tactics/generate_train_valid.py tactics/data/exs/examples.csv --trim=100 --split=20
+```
 
 5. Generate test data
 
@@ -29,22 +32,29 @@ python tactics/gen_exs.py tactics/data/exs/examples_train.csv -i tactics/data/li
 python tactics/gen_exs.py tactics/data/exs/examples_test.csv -i tactics/data/lichess_db_standard_rated_2013-02.pgn -n 1100 -p 1 -r 0 --middle-game-cutoff 10 --seed 1
 ```
 
-6. Manually trim the test data down to 1000 test examples TODO: do it via script
+6. Trim the test data down to 1000 test examples
+
+```bash
+python tactics/generate_train_valid.py tactics/data/exs/examples_test.csv --trim=1000 --test
+```
 
 ## Engine(s)
 
-7. Download the latest x64 Stockfish binary for Linux from the [Stockfish Downloads page]
-   (https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
+7. Download the latest x64 Stockfish binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
    `stockfish_14_x64` into the `bin/` folder (create the folder if necessary)
 
 ```bash
 mkdir bin
-mv stockfish_14_x64 bin
+mv path/to/stockfish_14_x64 bin
 ```
 
-8. Give execution permissions to the Stockfish binary using `chmod +x stockfish_14_x64`
+8. Give execution permission to the Stockfish binary 
 
-9. Download the Maia-chess weights, unzip them and move them outside the maia-chess submodule into a `maia_weights` folder (create the folder if necessary)
+```bash
+chmod +x stockfish_14_x64
+```
+
+9. Download the Maia-chess weights, unzip them and move them outside the `maia-chess` submodule into a `maia_weights` folder (create the folder if necessary)
 
 ```bash
 cd maia-chess/maia_weights
@@ -74,7 +84,7 @@ python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tact
 python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt --pos-list tactics/data/exs/examples_valid.csv --data-path tactics/data/stats/metrics_valid_sf14.csv
 ```
 
-13. Filter T_1600 TODO: write the commands for these
+13. Filter T_1600 TODO: write the commands for these by converting `analysis.ipynb` to a single script
 
 14. Filter T_SF
 
