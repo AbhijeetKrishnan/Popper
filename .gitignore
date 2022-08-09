@@ -1,7 +1,8 @@
 *.txt
 *.csv
 *.log
-tactics/bin/*
+tactics/bin/stockfish_14_x64
+tactics/bin/maia_weights/*
 tactics/data/*
 
 # Byte-compiled / optimized / DLL files
