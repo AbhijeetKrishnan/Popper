@@ -1,17 +1,21 @@
 # Interpretable Chess Tactics
 
+This is the code release for the paper *Synthesizing Chess Tactics from Player Games* by Abhijeet Krishnan and Dr. Chris Martens.
+
+The bash commands below assume you are in the root folder of the repository.
+
 ## Dataset
 
 1. Download Lichess games database for [2013 -
    January](https://database.lichess.org/standard/lichess_db_standard_rated_2013-01.pgn.bz2) from
    the [lichess.org open database](https://database.lichess.org/)
 
-2. Unzip the games and move them into `data/` (create the folder if necessary)
+2. Unzip the games and move them into `tactics/data/` (create the folder if necessary)
 
 ```bash
-mkdir data
-bzip2 -dk lichess_db_standard_rated_2013-01.pgn.bz2
-mv lichess_db_standard_rated_2013-01.pgn data
+mkdir tactics/data
+bzip2 -dk path/to/lichess_db_standard_rated_2013-01.pgn.bz2
+mv path/to/lichess_db_standard_rated_2013-01.pgn tactics/data
 ```
 
 3. Generate data for the training and validation datasets
@@ -41,23 +45,23 @@ python tactics/generate_train_valid.py tactics/data/exs/examples_test.csv --trim
 ## Engine(s)
 
 7. Download the latest x64 Stockfish binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
-   `stockfish_14_x64` into the `bin/` folder (create the folder if necessary)
+   `stockfish_14_x64` into the `tactics/bin/` folder (create the folder if necessary)
 
 ```bash
 mkdir bin
-mv path/to/stockfish_14_x64 bin
+mv path/to/stockfish_14_x64 tactics/bin
 ```
 
 8. Give execution permission to the Stockfish binary 
 
 ```bash
-chmod +x stockfish_14_x64
+chmod +x tactics/bin/stockfish_14_x64
 ```
 
-9. Download the Maia-chess weights, unzip them and move them outside the `maia-chess` submodule into a `maia_weights` folder (create the folder if necessary)
+9. Download the Maia-Chess weights, unzip them and move them outside the `maia-chess` submodule into a `maia_weights` folder (create the folder if necessary)
 
 ```bash
-cd maia-chess/maia_weights
+cd tactics/bin/maia-chess/maia_weights
 gzip -d maia-1100.pb.gz
 gzip -d maia-1600.pb.gz
 mkdir ../maia_weights
