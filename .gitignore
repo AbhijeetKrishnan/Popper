@@ -1,6 +1,8 @@
 *.txt
 *.csv
 *.log
+*.zip
+stockfish_14_x64/*
 tactics/bin/stockfish_14_x64
 tactics/bin/maia_weights/*
 tactics/data/*
