@@ -21,21 +21,17 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
 
 ## Dataset
 
-5. Download Lichess games databases for [2013 -
+We use Lichess games databases for [2013 -
    January](https://database.lichess.org/standard/lichess_db_standard_rated_2013-01.pgn.bz2) and [2013 - February](https://database.lichess.org/standard/lichess_db_standard_rated_2013-02.pgn.bz2) from
-   the [lichess.org open database](https://database.lichess.org/)
+   the [lichess.org open database](https://database.lichess.org/) for our train/validation and test datasets respectively. 
 
-6. Unzip the games and move them into `tactics/data/` (create the folder if necessary)
+5. Run the `get_pgns.sh` script to download, unzip and move the games database files to the necessary locations
 
    ```bash
-   mkdir tactics/data
-   bzip2 -dk path/to/lichess_db_standard_rated_2013-01.pgn.bz2
-   bzip2 -dk path/to/lichess_db_standard_rated_2013-02.pgn.bz2
-   mv path/to/lichess_db_standard_rated_2013-01.pgn tactics/data
-   mv path/to/lichess_db_standard_rated_2013-02.pgn tactics/data
+   bash get_pgns.sh
    ```
 
-7. Generate data for the training and validation datasets
+6. Generate data for the training and validation datasets
 
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples.csv  \
@@ -43,14 +39,14 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
       -n 200 -p 1 -r 0 --middle-game-cutoff 10 --seed 1
    ```
 
-8. Split the examples into training and validation sets
+7. Split the examples into training and validation sets
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples.csv \
       --trim=100 --split=20
    ```
 
-9. Generate test data
+8. Generate test data
 
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples_test.csv \
@@ -58,7 +54,7 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
       -n 1100 -p 1 -r 0 --middle-game-cutoff 10 --seed 1
    ```
 
-10. Trim the test data down to 1000 test examples
+9. Trim the test data down to 1000 test examples
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples_test.csv \
@@ -67,7 +63,7 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
 
 ## Engine(s)
 
-11. Download the latest x64 Stockfish binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
+10. Download the latest x64 Stockfish binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
    `stockfish_14_x64` into the `tactics/bin/` folder (create the folder if necessary)
 
    ```bash
@@ -75,13 +71,13 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
    mv path/to/stockfish_14_x64 tactics/bin
    ```
 
-12. Give execution permission to the Stockfish binary 
+11. Give execution permission to the Stockfish binary 
 
    ```bash
    chmod +x tactics/bin/stockfish_14_x64
    ```
 
-13. Download the Maia-Chess weights, unzip them and move them outside the `maia-chess` submodule into a `maia_weights` folder (create the folder if necessary)
+12. Download the Maia-Chess weights, unzip them and move them outside the `maia-chess` submodule into a `maia_weights` folder (create the folder if necessary)
 
    ```bash
    cd tactics/bin/maia-chess/maia_weights
@@ -93,14 +89,14 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
 
 ## Running the experiments
 
-14. Learn tactics (~7 min)
+13. Learn tactics (~7 min)
 
    ```bash
    python popper.py chess --ex-file tactics/data/exs/examples_train.csv \
       --eval-timeout 1 > tactics/data/hspace/hspace_tactics.txt
    ```
 
-15. Generate Maia-1600 validation stats (~50 min)
+14. Generate Maia-1600 validation stats (~50 min)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -109,7 +105,7 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
       --engine MAIA1600
    ```
 
-16. Generate Stockfish 14 validation stats (~35 mins)
+15. Generate Stockfish 14 validation stats (~35 mins)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -117,21 +113,21 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
       --data-path tactics/data/stats/metrics_valid_sf14.csv
    ```
 
-17. Filter T_1600 to obtain the top-10% of tactics
+16. Filter T_1600 to obtain the top-10% of tactics
 
    ```bash
    python tactics/analysis.py tactics/data/stats/metrics_valid_maia1600.csv \
       -o tactics/data/hspace/hspace_t_1600.txt --filter 10
    ```
 
-18. Filter T_SF to obtain the top-10% of tactics
+17. Filter T_SF to obtain the top-10% of tactics
 
    ```bash
    python tactics/analysis.py tactics/data/stats/metrics_valid_sf14.csv \
       -o tactics/data/hspace/hspace_t_sf.txt --filter 10
    ```
 
-19. Evaluate T1600 with M1600 (~2.5 hrs), SF14
+18. Evaluate T1600 with M1600 (~2.5 hrs), SF14
 
    ```bash
    # T_1600 with Maia-1600
@@ -147,7 +143,7 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
       --engine STOCKFISH
    ```
 
-20. Evaluate T_SF with M1600, SF14
+19. Evaluate T_SF with M1600, SF14
 
    ```bash
    # T_SF with Maia-1600
@@ -165,9 +161,9 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
 
 ## Generate graphs
 
-21. Open `analysis.ipynb`
-22. Modify the variable `data_filename` to point to the input metric file
-23. Modify the `plt.title` statements to reflect the current engine and tactic file being used
-24. Run all cells to generate the graphs for divergence, accuracy and evaluation score
-25. Download and save the graphs from the IPython viewer to `tactics/data/graphs`
-26. Repeat for all test metrics generated
+20. Open `analysis.ipynb`
+21. Modify the variable `data_filename` to point to the input metric file
+22. Modify the `plt.title` statements to reflect the current engine and tactic file being used
+23. Run all cells to generate the graphs for divergence, accuracy and evaluation score
+24. Download and save the graphs from the IPython viewer to `tactics/data/graphs`
+25. Repeat for all test metrics generated
