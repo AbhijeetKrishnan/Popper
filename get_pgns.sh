@@ -6,8 +6,7 @@ wget https://database.lichess.org/standard/lichess_db_standard_rated_2013-02.pgn
 bzip2 -dk lichess_db_standard_rated_2013-01.pgn.bz2
 bzip2 -dk lichess_db_standard_rated_2013-02.pgn.bz2
 
-# Create the tactics/data folder and move the pgn files there
-mkdir tactics/data
+# Move the pgn files to tactics/data
 mv lichess_db_standard_rated_2013-01.pgn tactics/data
 mv lichess_db_standard_rated_2013-02.pgn tactics/data
 
