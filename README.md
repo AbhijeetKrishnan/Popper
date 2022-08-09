@@ -6,8 +6,8 @@ The bash commands below assume you are in the root folder of the repository.
 
 ## Dataset
 
-1. Download Lichess games database for [2013 -
-   January](https://database.lichess.org/standard/lichess_db_standard_rated_2013-01.pgn.bz2) from
+1. Download Lichess games databases for [2013 -
+   January](https://database.lichess.org/standard/lichess_db_standard_rated_2013-01.pgn.bz2) and [2013 - February](https://database.lichess.org/standard/lichess_db_standard_rated_2013-02.pgn.bz2) from
    the [lichess.org open database](https://database.lichess.org/)
 
 2. Unzip the games and move them into `tactics/data/` (create the folder if necessary)
@@ -15,7 +15,9 @@ The bash commands below assume you are in the root folder of the repository.
 ```bash
 mkdir tactics/data
 bzip2 -dk path/to/lichess_db_standard_rated_2013-01.pgn.bz2
+bzip2 -dk path/to/lichess_db_standard_rated_2013-02.pgn.bz2
 mv path/to/lichess_db_standard_rated_2013-01.pgn tactics/data
+mv path/to/lichess_db_standard_rated_2013-02.pgn tactics/data
 ```
 
 3. Generate data for the training and validation datasets
