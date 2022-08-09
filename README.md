@@ -5,16 +5,17 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
 ## Prerequisites
 
 1. Install [Python v3.10.4](https://www.python.org/downloads/)
-2. Install the necessary Python dependencies
-
-   ```bash
-   pip install -r requirements.txt
-   ```
 
 3. Clone the repository locally
 
    ```bash
-   git clone https://github.com/AbhijeetKrishnan/interpretable-chess-tactics.git
+   git clone --recurse-submodules https://github.com/AbhijeetKrishnan/interpretable-chess-tactics.git
+   ```
+
+2. Install the necessary Python dependencies
+
+   ```bash
+   pip install -r requirements.txt
    ```
 
 4. Navigate to the root folder of the cloned repository
@@ -67,8 +68,10 @@ We use Lichess games databases for [2013 -
    `stockfish_14_x64` into the `tactics/bin/` folder (create the folder if necessary)
 
    ```bash
-   mkdir bin
-   mv path/to/stockfish_14_x64 tactics/bin
+   wget https://stockfishchess.org/files/stockfish_14_linux_x64.zip
+   unzip stockfish_14_linux_x64.zip
+   mkdir tactics/bin
+   mv stockfish_14_linux_x64/stockfish_14_x64 tactics/bin
    ```
 
 11. Give execution permission to the Stockfish binary 
