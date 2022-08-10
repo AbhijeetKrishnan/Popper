@@ -102,14 +102,12 @@ We use Lichess games databases for [2013 -
 
 14. Build the `lc0` source code (~1m9s). Build instructions can be found in the [project README](https://github.com/LeelaChessZero/lc0/blob/master/README.md)
 
-15. Unzip the Maia-Chess weights for ELO 1100 and 1600 and move them outside the `maia-chess` submodule into a `maia_weights` folder
+15. Unzip the Maia-Chess weights for ELO 1600 and move it outside the `maia-chess` submodule into a `maia_weights` folder
 
    ```bash
-   gzip -dk tactics/bin/maia-chess/maia_weights/maia-1100.pb.gz
    gzip -dk tactics/bin/maia-chess/maia_weights/maia-1600.pb.gz
    mkdir tactics/bin/maia_weights
-   mv tactics/bin/maia-chess/maia_weights/maia-1100.pb \
-      tactics/bin/maia-chess/maia_weights/maia-1600.pb \
+   mv tactics/bin/maia-chess/maia_weights/maia-1600.pb \
       tactics/bin/maia_weights
    ```
 
@@ -153,7 +151,7 @@ We use Lichess games databases for [2013 -
       -o tactics/data/hspace/hspace_t_sf.txt --filter 10
    ```
 
-21. Evaluate $T_{1600}$ with Maia-1600 (~2.5h)
+21. Evaluate $T_{1600}$ with Maia-1600 (~54m52s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
@@ -162,7 +160,7 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-22. Evaluate $T_{1600}$ with Stockfish 14 (??)
+22. Evaluate $T_{1600}$ with Stockfish 14 (~30m2s)
    
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
@@ -171,7 +169,7 @@ We use Lichess games databases for [2013 -
       --engine STOCKFISH
    ```
 
-23. Evaluate $T_{SF}$ with Maia-1600 (??)
+23. Evaluate $T_{SF}$ with Maia-1600 (~50m13s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \
@@ -180,7 +178,7 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-24. Evaluate $T_{SF}$ with Stockfish 14 (??)
+24. Evaluate $T_{SF}$ with Stockfish 14 (~29m12s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \
