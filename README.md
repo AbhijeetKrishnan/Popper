@@ -189,9 +189,8 @@ We use Lichess games databases for [2013 -
 
 ## Generate graphs
 
-25. Open `analysis.ipynb`
-26. Modify the variable `data_filename` to point to the input metric file
-27. Modify the `plt.title` statements to reflect the current engine and tactic file being used
-28. Run all cells to generate the graphs for divergence, accuracy and evaluation score
-29. Download and save the graphs from the IPython viewer to `tactics/data/graphs`
-30. Repeat for all test metrics generated
+25. Run `gen_graphs.sh` to generate all graphs reported in the paper
+
+   ```bash
+   bash gen_graphs.sh
+   ```
