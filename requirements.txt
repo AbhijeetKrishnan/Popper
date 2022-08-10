@@ -1,3 +1,6 @@
 pyswip
 clingo
 chess
+pyparsing
+tqdm
+pandas

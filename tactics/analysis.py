@@ -14,7 +14,7 @@ def get_top_tactics(df, filter: Optional[int]) -> List[str]:
     # df['coverage'] = df['total_matches'] / df['total_positions']
     # df['accuracy'] = df['correct_move'] / df['total_matches']
     final = df.sort_values(by = ['avg_divergence'], ascending = [True])
-    tactics = final['text']
+    tactics = final['tactic_text']
     if filter:
         target_len = int(len(tactics) * filter / 100)
         tactics = tactics[:target_len]
@@ -33,12 +33,12 @@ def main():
 
     df = pd.read_csv(args.metrics_file)
     tactics = get_top_tactics(df, args.filter_limit)
+    tactic_str = '\n'.join([tactic + '.' for tactic in tactics])
     if not args.output_file:
-        print('\n'.join(tactics))
+        print(tactic_str)
     else:
         with open(args.output_file, 'w') as output:
-            for tactic in tactics:
-                output.write(tactic + '\n')
+            output.write(tactic_str)
 
 if __name__ == '__main__':
     main()

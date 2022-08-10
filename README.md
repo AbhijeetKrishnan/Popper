@@ -100,7 +100,9 @@ We use Lichess games databases for [2013 -
    git submodule update
    ```
 
-14. Download the Maia-Chess weights for ELO 1100 and 1600, unzip them and move them outside the `maia-chess` submodule into a `maia_weights` folder
+14. Build the `lc0` source code (~1m9s). Build instructions can be found in the [project README](https://github.com/LeelaChessZero/lc0/blob/master/README.md)
+
+15. Unzip the Maia-Chess weights for ELO 1100 and 1600 and move them outside the `maia-chess` submodule into a `maia_weights` folder
 
    ```bash
    gzip -dk tactics/bin/maia-chess/maia_weights/maia-1100.pb.gz
@@ -113,14 +115,14 @@ We use Lichess games databases for [2013 -
 
 ## Running the experiments
 
-15. Learn tactics (~7 min)
+16. Learn tactics (~7m20s)
 
    ```bash
    python popper.py chess --ex-file tactics/data/exs/examples_train.csv \
       --eval-timeout 1 > tactics/data/hspace/hspace_tactics.txt
    ```
 
-16. Generate Maia-1600 validation stats (~50 min)
+17. Generate Maia-1600 validation stats (~33m)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -129,7 +131,7 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-17. Generate Stockfish 14 validation stats (~35 mins)
+18. Generate Stockfish 14 validation stats (~19m4s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -137,46 +139,50 @@ We use Lichess games databases for [2013 -
       --data-path tactics/data/stats/metrics_valid_sf14.csv
    ```
 
-18. Filter T_1600 to obtain the top-10% of tactics
+19. Obtain $T_{1600}$ by filtering out the top-10% of tactics evaluated by Maia-1600
 
    ```bash
    python tactics/analysis.py tactics/data/stats/metrics_valid_maia1600.csv \
       -o tactics/data/hspace/hspace_t_1600.txt --filter 10
    ```
 
-19. Filter T_SF to obtain the top-10% of tactics
+20. Obtain $T_{SF}$ by filtering out the top-10% of tactics evaluated by Stockfish 14
 
    ```bash
    python tactics/analysis.py tactics/data/stats/metrics_valid_sf14.csv \
       -o tactics/data/hspace/hspace_t_sf.txt --filter 10
    ```
 
-20. Evaluate T1600 with M1600 (~2.5 hrs), SF14
+21. Evaluate $T_{1600}$ with Maia-1600 (~2.5h)
 
    ```bash
-   # T_1600 with Maia-1600
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
       --pos-list tactics/data/exs/examples_test.csv                \
       --data-path tactics/data/stats/metrics_test_t1600_m1600.csv  \
       --engine MAIA1600
+   ```
 
-   # T_1600 with Stockfish 14
+22. Evaluate $T_{1600}$ with Stockfish 14 (??)
+   
+   ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
       --pos-list tactics/data/exs/examples_test.csv                \
       --data-path tactics/data/stats/metrics_test_t1600_sf14.csv   \
       --engine STOCKFISH
    ```
 
-21. Evaluate T_SF with M1600, SF14
+23. Evaluate $T_{SF}$ with Maia-1600 (??)
 
    ```bash
-   # T_SF with Maia-1600
    python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \
       --pos-list tactics/data/exs/examples_test.csv              \
       --data-path tactics/data/stats/metrics_test_tsf_m1600.csv  \
       --engine MAIA1600
+   ```
 
-   # T_SF with Stockfish 14
+24. Evaluate $T_{SF}$ with Stockfish 14 (??)
+
+   ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \
       --pos-list tactics/data/exs/examples_test.csv              \
       --data-path tactics/data/stats/metrics_test_tsf_sf14.csv   \
@@ -185,9 +191,9 @@ We use Lichess games databases for [2013 -
 
 ## Generate graphs
 
-22. Open `analysis.ipynb`
-23. Modify the variable `data_filename` to point to the input metric file
-24. Modify the `plt.title` statements to reflect the current engine and tactic file being used
-25. Run all cells to generate the graphs for divergence, accuracy and evaluation score
-26. Download and save the graphs from the IPython viewer to `tactics/data/graphs`
-27. Repeat for all test metrics generated
+25. Open `analysis.ipynb`
+26. Modify the variable `data_filename` to point to the input metric file
+27. Modify the `plt.title` statements to reflect the current engine and tactic file being used
+28. Run all cells to generate the graphs for divergence, accuracy and evaluation score
+29. Download and save the graphs from the IPython viewer to `tactics/data/graphs`
+30. Repeat for all test metrics generated
