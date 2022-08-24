@@ -51,7 +51,7 @@ We use Lichess games databases for [2013 -
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples.csv  \
       -i tactics/data/lichess_db_standard_rated_2013-01.pgn \
-      -n 200 -p 1 -r 0 --middle-game-cutoff 10 --seed 1
+      -n 200 -p 1 --seed 1
    ```
 
 8. Split the examples into training and validation sets
@@ -66,7 +66,7 @@ We use Lichess games databases for [2013 -
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples_test.csv \
       -i tactics/data/lichess_db_standard_rated_2013-02.pgn     \
-      -n 1100 -p 1 -r 0 --middle-game-cutoff 10 --seed 1
+      -n 1100 -p 1 --seed 1
    ```
 
 10. Trim the test data down to 1000 test examples
@@ -78,7 +78,7 @@ We use Lichess games databases for [2013 -
 
 ## Engine(s)
 
-11. Download the latest x64 Stockfish binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
+11. Download the latest x64 Stockfish 14 binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
    `stockfish_14_x64` into the `tactics/bin/` folder
 
    ```bash
