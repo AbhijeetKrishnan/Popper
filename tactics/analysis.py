@@ -7,14 +7,16 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
+import numpy as np
 import pandas as pd
 
 def get_top_tactics(df, filter: Optional[int]) -> List[str]:
-    df['avg_divergence'] = df['divergence'] / df['total_matches']
-    # df['coverage'] = df['total_matches'] / df['total_positions']
-    # df['accuracy'] = df['correct_move'] / df['total_matches']
-    final = df.sort_values(by = ['avg_divergence'], ascending = [True])
-    tactics = final['tactic_text']
+    agg = df.groupby('tactic_text').aggregate(np.sum)
+    agg['avg_divergence'] = agg['divergence'] / agg['matches']
+    # agg['coverage'] = agg['matches'] / df.groupby(['position', 'move']).ngroups
+    # agg['accuracy'] = agg['correct_move'] / agg['matches']
+    final = agg.sort_values(by = ['avg_divergence'], ascending = [True])
+    tactics = list(final.index)
     if filter:
         target_len = int(len(tactics) * filter / 100)
         tactics = tactics[:target_len]

@@ -3,23 +3,23 @@
 import argparse
 import logging
 
-from typing import List, Optional
-
 logger = logging.getLogger(__name__)
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
 def calculate_metrics(df):
-    df['avg_divergence'] = df['divergence'] / df['total_matches']
-    df['coverage'] = df['total_matches'] / df['total_positions']
-    df['accuracy'] = df['correct_move'] / df['total_matches']
-    return df
+    agg = df.groupby('tactic_text').aggregate(np.sum)
+    agg['avg_divergence'] = agg['divergence'] / agg['matches']
+    agg['coverage'] = agg['matches'] / df.groupby(['position', 'move']).ngroups
+    agg['accuracy'] = agg['correct_move'] / agg['matches']
+    return agg
 
 def generate_frequency_graph(df, metric_fname: str, filename: str, title: str='?', xlabel: str=None, bins: int=10):
     plt.hist(df[metric_fname], bins=bins)
-    plt.axvline(df.loc[(df['tactic_text'] == "f(A,B,C):-legal_move(B,C,A)")][metric_fname].values, linestyle='dashed') # random baseline performance
+    plt.axvline(df.loc[["f(A,B,C):-legal_move(B,C,A)"]][metric_fname].values, linestyle='dashed') # random baseline performance
     plt.title(f'Histogram of {title}')
     plt.xlabel(xlabel if xlabel else metric_fname)
     plt.ylabel('Frequency')
