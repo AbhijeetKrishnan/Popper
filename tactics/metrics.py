@@ -48,20 +48,16 @@ def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3
     
     return match, suggestions
 
-def print_metrics(metrics: dict, log_level=logging.INFO, **kwargs) -> None:
-    tactic_text = kwargs['tactic_text']
-    logger.log(log_level, f"Tactic: {tactic_text}")
-    logger.log(log_level, f"# of positions: {metrics['total_positions']}")
-    logger.log(log_level, f"Coverage: {metrics['total_matches'] / metrics['total_positions'] * 100:.2f}%") # % of matched positions
-    logger.log(log_level, f"Total matches: {metrics['total_matches']}")
-    if metrics['total_matches'] > 0:
-        logger.log(log_level, f"Average number of suggestions per matched position: {metrics['num_suggestions'] / metrics['total_matches']:.2f}")
-    logger.log(log_level, f"# of empty suggestions: {metrics['empty_suggestions']}/{metrics['total_positions']}") # number of positions where tactic did not suggest any move
+def print_metrics(metrics: dict, log_level=logging.INFO) -> None:
+    logger.log(log_level, f"Tactic: {metrics['tactic_text']}")
+    logger.log(log_level, f"Move: {metrics['move']}")
+    logger.log(log_level, f"Position: {metrics['position']}")
+    logger.log(log_level, f"Matches: {metrics['matches']}")
+    logger.log(log_level, f"Empty suggestion: {metrics['empty_suggestions']}")
     logger.log(log_level, f"Divergence = {metrics['divergence']:.2f}")
     logger.log(log_level, f"Average = {metrics['avg']:.2f}")
-    logger.log(log_level, f"# of correct move suggestions = {metrics['correct_move']}")
+    logger.log(log_level, f"Correct move suggestions = {metrics['correct_move']}")
 
-@contextmanager
 def write_metrics(metrics_list: List[dict], csv_filename: str) -> None:
     "Write metrics to csv file for analysis"
     with open(csv_filename, 'w') as csv_file:
@@ -71,11 +67,18 @@ def write_metrics(metrics_list: List[dict], csv_filename: str) -> None:
         for metrics in metrics_list:
             writer.writerow(metrics)
 
-def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, positions: Generator[chess.Board, None, None], settings) -> Optional[dict]:
+def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, example: Tuple[chess.Board, chess.Move, bool], settings) -> Optional[dict]:
+    "Calculate metrics from evaluating a tactic against a position"
+
     SUGGESTIONS_PER_TACTIC = 3
+    divergence_fn = lambda idx, error: error / math.log2(1 + (idx + 1))
+    avg_fn = lambda _, error: error
+
+    board, move, label = example
+    logger.debug(board)
+
     metrics = {
-        'total_positions': 0, # total number of positions (across all games)
-        'total_matches': 0,
+        'matches': 0,
         'divergence': 0.0,
         'avg': 0.0,
         'empty_suggestions': 0,
@@ -83,45 +86,39 @@ def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, po
         'correct_move': 0,
         'tactic_evals': 0,
         'ground_evals': 0,
-        'best_move_evals': 0
+        'best_move_evals': 0,
+        'tactic_text': tactic_text,
+        'position': board.fen(),
+        'move': move.uci()
     }
 
-    divergence_fn = lambda idx, error: error / math.log2(1 + (idx + 1))
-    avg_fn = lambda _, error: error
+    match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=SUGGESTIONS_PER_TACTIC, time_limit_sec=settings.eval_timeout, use_foreign_predicate=settings.fpred)
+    if match is None: # skip example for which we timeout
+        return
+    logger.debug(f'Suggestions: {suggestions}')
 
-    with tqdm(desc='Positions', unit='positions', leave=False) as pos_progress_bar:
-        for board, move, label in positions:
-            logger.debug(board)
-            match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=SUGGESTIONS_PER_TACTIC, time_limit_sec=settings.eval_timeout, use_foreign_predicate=settings.fpred)
-            if match is None: # skip position for which we timeout
-                continue
-            logger.debug(f'Suggestions: {suggestions}')
-
-            metrics['total_positions'] += 1
-
-            ground_evals = get_evals(engine, board, [move], mate_score=settings.mate_score)
-            best_moves = get_top_n_moves(engine, board, 1)
-            best_move_evals = get_evals(engine, board, best_moves[:1], mate_score=settings.mate_score)
-            metrics['ground_evals'] += ground_evals[0][1]
-            metrics['best_move_evals'] += best_move_evals[0][1]
-            
-            if match:
-                metrics['total_matches'] += 1
-                if suggestions:
-                    if move in suggestions:
-                        metrics['correct_move'] += 1
-                    tactic_evals = get_evals(engine, board, suggestions, mate_score=settings.mate_score)
-                    metrics['divergence'] += evaluate(tactic_evals, ground_evals, divergence_fn)
-                    metrics['avg'] += evaluate(tactic_evals, ground_evals, avg_fn)
-                    metrics['num_suggestions'] += len(suggestions)
-                    metrics['tactic_evals'] += tactic_evals[0][1]
-                    
-            else:
-                logger.debug(f'Updated empty suggestions')
-                metrics['empty_suggestions'] += 1
-            pos_progress_bar.update(1)
+    ground_evals = get_evals(engine, board, [move], mate_score=settings.mate_score)
+    best_moves = get_top_n_moves(engine, board, 1)
+    best_move_evals = get_evals(engine, board, best_moves[:1], mate_score=settings.mate_score)
+    metrics['ground_evals'] += ground_evals[0][1]
+    metrics['best_move_evals'] += best_move_evals[0][1]
     
-    print_metrics(metrics, log_level=logging.DEBUG, tactic_text=tactic_text)
+    if match:
+        metrics['matches'] += 1
+        if suggestions:
+            if move in suggestions:
+                metrics['correct_move'] += 1
+            tactic_evals = get_evals(engine, board, suggestions, mate_score=settings.mate_score)
+            metrics['divergence'] += evaluate(tactic_evals, ground_evals, divergence_fn)
+            metrics['avg'] += evaluate(tactic_evals, ground_evals, avg_fn)
+            metrics['num_suggestions'] += len(suggestions)
+            metrics['tactic_evals'] += tactic_evals[0][1]
+            
+    else:
+        logger.debug(f'Updated empty suggestions')
+        metrics['empty_suggestions'] += 1
+    
+    print_metrics(metrics, log_level=logging.DEBUG)
     return metrics
 
 def parse_args():
@@ -150,6 +147,27 @@ def create_logger(log_level):
     logger.addHandler(hdlr)
     return logger
 
+def get_tactics(tactics_file: str) -> Generator[str, None, None]:
+    "Generator for list of tactic text strings"
+
+    prolog_parser = create_parser()
+    with open(tactics_file) as hspace_handle:
+        for line in hspace_handle:
+            logger.debug(line)
+            if line[0] == '%': # skip comments
+                continue
+            
+            # Get tactic
+            try:
+                tactic = prolog_parser.parse_string(line)
+            except pyparsing.exceptions.ParseException:
+                logger.error(f'Parsing error on {line}')
+                continue
+            logger.debug(tactic)
+            tactic_text = parse_result_to_str(tactic)
+            logger.debug(tactic_text)
+            yield tactic_text
+
 def main():
     # Create argument parser
     args = parse_args()
@@ -164,46 +182,28 @@ def main():
 
     # Create logger
     logger = create_logger(args.log_level)
+
+    # Get list of training examples
+    if args.pos_list:
+        positions = chess_examples(args.pos_list)
+    elif args.pgn_file:
+        positions = positions_pgn(args.pgn_file, args.num_games, args.pos_per_game)
+    training_examples = list(positions)
+    tactics = list(get_tactics(args.tactics_file))
+    if args.tactics_limit:
+        tactics = tactic[:args.tactics_limit]
     
     # Calculate metrics for each tactic
-    prolog_parser = create_parser()
     prolog = get_prolog(BK_FILE, args.fpred)
     metrics_list = []
     with get_engine(engine_path) as engine:
-        with open(args.tactics_file) as hspace_handle:
-            tactics_seen = 0
-            with tqdm(total=args.tactics_limit, desc='Tactics', unit='tactics') as tactics_progress_bar:
-                for line in hspace_handle:
-                    logger.debug(line)
-                    if line[0] == '%': # skip comments
-                        continue
-                    
-                    # Get tactic
-                    try:
-                        tactic = prolog_parser.parse_string(line)
-                    except pyparsing.exceptions.ParseException:
-                        logger.error(f'Parsing error on {line}')
-                        continue
-                    logger.debug(tactic)
-                    tactic_text = parse_result_to_str(tactic)
-                    logger.debug(tactic_text)
+        for tactic_text in tqdm(tactics, desc='Tactics', unit='tactics'):
+            for example in tqdm(training_examples, desc='Positions', unit='positions', leave=False):
+                metrics = calc_metrics(prolog, tactic_text, engine, example, args)
+                if metrics:
+                    metrics_list.append(metrics)
 
-                    # Get position list
-                    if args.pos_list:
-                        positions = chess_examples(args.pos_list)
-                    elif args.pgn_file:
-                        positions = positions_pgn(args.pgn_file, args.num_games, args.pos_per_game)
-                    
-                    metrics = calc_metrics(prolog, tactic_text, engine, positions, args)
-                    if metrics:
-                        metrics['tactic_text'] = tactic_text
-                        metrics_list.append(metrics)
-                    tactics_seen += 1
-                    tactics_progress_bar.update(1)
-                    if args.tactics_limit and tactics_seen >= args.tactics_limit:
-                        break
-
-    logger.info(f'% Calculated metrics for {tactics_seen} tactics')
+    logger.info(f'% Calculated metrics for {len(tactics)} tactics')
     write_metrics(metrics_list, args.data_path)
 
 if __name__ == '__main__':
