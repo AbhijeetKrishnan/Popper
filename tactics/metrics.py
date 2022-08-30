@@ -2,6 +2,7 @@ import argparse
 import csv
 import logging
 import math
+import time
 from collections.abc import Callable
 from typing import Generator, List, Optional, Tuple
 
@@ -89,12 +90,14 @@ def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, ex
         'best_move_evals': 0,
         'tactic_text': tactic_text,
         'position': board.fen(),
-        'move': move.uci()
+        'move': move.uci(),
+        'exec_time': 0
     }
 
+    start = time.time()
     match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=SUGGESTIONS_PER_TACTIC, time_limit_sec=settings.eval_timeout, use_foreign_predicate=settings.fpred)
     if match is None: # skip example for which we timeout
-        return
+        return None
     logger.debug(f'Suggestions: {suggestions}')
 
     ground_evals = get_evals(engine, board, [move], mate_score=settings.mate_score)
@@ -118,6 +121,9 @@ def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, ex
         logger.debug(f'Updated empty suggestions')
         metrics['empty_suggestions'] += 1
     
+    stop = time.time()
+    interval = stop - start
+    metrics['exec_time'] = interval
     print_metrics(metrics, log_level=logging.DEBUG)
     return metrics
 
