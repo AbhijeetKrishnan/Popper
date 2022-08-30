@@ -117,17 +117,14 @@ def get_evals(engine: chess.engine.SimpleEngine, board: chess.Board, suggestions
         tmp_board = chess.Board(board.fen())
         tmp_board.push(move)
         if tmp_board.outcome() is not None:
-            move_score = mate_score if tmp_board.is_checkmate() else 0
+            move_score = mate_score if tmp_board.is_checkmate() else -mate_score
             evals.append((move, move_score))
             continue
-        prev_eval = engine.analyse(board, limit=chess.engine.Limit(nodes=1), game=object()) # https://stackoverflow.com/a/66251120
-        curr_eval = engine.analyse(tmp_board, limit=chess.engine.Limit(nodes=1), game=object())
+        eval = engine.analyse(tmp_board, limit=chess.engine.Limit(nodes=1), game=object()) # https://stackoverflow.com/a/66251120
         orig_turn = board.turn
-        if 'pv' in prev_eval and 'pv' in curr_eval:
-            prev_score = prev_eval['score'].pov(orig_turn)
-            curr_score = curr_eval['score'].pov(orig_turn)
-            move_score = curr_score.score(mate_score=mate_score) - prev_score.score(mate_score=mate_score)
-            evals.append((move, move_score))
+        if 'pv' in eval:
+            curr_score = eval['score'].pov(orig_turn)
+            move_score = curr_score.score(mate_score=mate_score)
     return evals
 
 def get_top_n_moves(engine: chess.engine.SimpleEngine, board: chess.Board, n: int) -> List[chess.Move]:

@@ -13,7 +13,10 @@ from util import LICHESS_2013, STOCKFISH, PathLike, get_engine, get_top_n_moves
 
 logger = logging.getLogger(__name__)
 
-def game_to_ex_list(game: Optional[chess.pgn.Game]) -> List[chess.Board]:
+BRATKO = 12 # Guid, Matej, and Ivan Bratko. "Computer analysis of world chess champions." ICGA journal 29.2 (2006): 65-73.
+ROMERO = 7 # Romero, Oscar. "Computer analysis of world chess championship players." ICSEA 2019 (2019): 212.
+
+def game_to_ex_list(game: Optional[chess.pgn.Game], opening_cutoff: int=ROMERO) -> List[chess.Board]:
     "Convert a game to a list of training examples"
 
     examples = []
@@ -28,7 +31,7 @@ def game_to_ex_list(game: Optional[chess.pgn.Game]) -> List[chess.Board]:
         examples.append((board, move))
         node = node.next()
 
-    return examples
+    return examples[opening_cutoff * 2:]
 
 def sample_pgn(handle: TextIO, num_games, pos_per_game) -> List[chess.Board]:
     "Sample training examples from games in a PGN file"
