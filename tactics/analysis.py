@@ -11,11 +11,11 @@ import numpy as np
 import pandas as pd
 
 def get_top_tactics(df, filter: Optional[int]) -> List[str]:
-    agg = df.groupby('tactic_text').aggregate(np.sum)
-    agg['avg_divergence'] = agg['divergence'] / agg['matches']
+    agg = df.groupby('tactic_text').aggregate(np.nansum)
+    agg['avg_tactic_ground_div'] = agg['tactic_ground_div'] / agg['match']
     # agg['coverage'] = agg['matches'] / df.groupby(['position', 'move']).ngroups
     # agg['accuracy'] = agg['correct_move'] / agg['matches']
-    final = agg.sort_values(by = ['avg_divergence'], ascending = [True])
+    final = agg.sort_values(by = ['avg_tactic_ground_div'], ascending = [True])
     tactics = list(final.index)
     if filter:
         target_len = int(len(tactics) * filter / 100)

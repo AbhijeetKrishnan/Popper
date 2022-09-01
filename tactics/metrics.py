@@ -2,7 +2,6 @@ import argparse
 import csv
 import logging
 import math
-import time
 from collections.abc import Callable
 from typing import Generator, List, Optional, Tuple
 
@@ -20,15 +19,21 @@ from util import *
 logger = logging.getLogger(__name__)
 logger.propagate = False # https://stackoverflow.com/a/2267567
 
-def evaluate(evaluated_suggestions: List[Tuple[chess.Move, int]], top_moves: List[Tuple[chess.Move, int]], metric_fn: Callable[[int, float], float]) -> float:
-    "Calculate a metric by comparing a given list of evaluated moves to the top recommended moves"
-    metric: float = 0
-    for idx, (evaluated_move, top_move) in enumerate(zip(evaluated_suggestions, top_moves)):
-        _, score = evaluated_move
-        _, top_score = top_move
-        error = abs(top_score - score)
+SUGGESTIONS_PER_TACTIC = 3
+divergence_fn = lambda idx, error: error / math.log2(1 + (idx + 1))
+avg_fn = lambda _, error: error
+
+def evaluate(moves_a: List[Tuple[chess.Move, int]], moves_b: List[Tuple[chess.Move, int]], metric_fn: Callable[[int, float], float]) -> float:
+    "Calculate a metric by comparing two lists of evaluated moves"
+    metric: float = 0.0
+    if len(moves_a) == 0 or len(moves_b) == 0:
+        return metric
+    for idx, (move_a, move_b) in enumerate(zip(moves_a, moves_b)):
+        _, score_a = move_a
+        _, score_b = move_b
+        error = abs(score_b - score_a)
         metric += metric_fn(idx, error)
-    return metric / len(evaluated_suggestions)
+    return metric / min(len(moves_a), len(moves_b))
 
 def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3, time_limit_sec: Optional[int]=None, use_foreign_predicate: bool=False) -> Tuple[Optional[bool], Optional[List[chess.Move]]]:
     "Given the text of a Prolog-based tactic, and a position, check whether the tactic matched in the given position or and if so, what were the suggested moves"
@@ -46,18 +51,23 @@ def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3
             to_sq = chess.parse_square(suggestion['To'])
             return chess.Move(from_sq, to_sq)
         suggestions = list(map(suggestion_to_move, results))
+        assert suggestions # suggestions list is not empty if tactic matches
     
     return match, suggestions
 
+def get_tactic_evals(prolog: Prolog, tactic_text: str, board: chess.Board, limit: int, engine: chess.engine.SimpleEngine, args) -> Tuple[bool, List[Tuple[chess.Move, int]]]:
+    "Obtain tactic suggestions and return their engine evaluations for a given position"
+    
+    match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=limit, time_limit_sec=args.eval_timeout, use_foreign_predicate=args.fpred)
+    logger.debug(f'Suggestions: {suggestions}')
+    tactic_evals = []
+    if match and suggestions:
+        tactic_evals = get_evals(engine, board, suggestions, mate_score=args.mate_score)
+    logger.debug(f'Match: {str(match)}, Evals: {str(tactic_evals)}')
+    return match, tactic_evals
+
 def print_metrics(metrics: dict, log_level=logging.INFO) -> None:
-    logger.log(log_level, f"Tactic: {metrics['tactic_text']}")
-    logger.log(log_level, f"Move: {metrics['move']}")
-    logger.log(log_level, f"Position: {metrics['position']}")
-    logger.log(log_level, f"Matches: {metrics['matches']}")
-    logger.log(log_level, f"Empty suggestion: {metrics['empty_suggestions']}")
-    logger.log(log_level, f"Divergence = {metrics['divergence']:.2f}")
-    logger.log(log_level, f"Average = {metrics['avg']:.2f}")
-    logger.log(log_level, f"Correct move suggestions = {metrics['correct_move']}")
+    logger.log(log_level, metrics)
 
 def write_metrics(metrics_list: List[dict], csv_filename: str) -> None:
     "Write metrics to csv file for analysis"
@@ -68,62 +78,38 @@ def write_metrics(metrics_list: List[dict], csv_filename: str) -> None:
         for metrics in metrics_list:
             writer.writerow(metrics)
 
-def calc_metrics(prolog, tactic_text: str, engine: chess.engine.SimpleEngine, example: Tuple[chess.Board, chess.Move, bool], settings) -> Optional[dict]:
+def calc_metrics(tactic_evals: List[Tuple[chess.Move, int]], ground_evals: List[Tuple[chess.Move, int]], best_move_evals: List[Tuple[chess.Move, int]], **kwargs) -> dict:
     "Calculate metrics from evaluating a tactic against a position"
 
-    SUGGESTIONS_PER_TACTIC = 3
-    divergence_fn = lambda idx, error: error / math.log2(1 + (idx + 1))
-    avg_fn = lambda _, error: error
-
-    board, move, label = example
+    board, move, label = kwargs['example']
     logger.debug(board)
 
     metrics = {
-        'matches': 0,
-        'divergence': 0.0,
-        'avg': 0.0,
-        'empty_suggestions': 0,
+        'match': 0,
         'num_suggestions': 0,
         'correct_move': 0,
-        'tactic_evals': 0,
-        'ground_evals': 0,
-        'best_move_evals': 0,
-        'tactic_text': tactic_text,
-        'position': board.fen(),
+        'tactic_text': kwargs['tactic_text'],
         'move': move.uci(),
-        'exec_time': 0
+        'position': board.fen()
     }
 
-    start = time.time()
-    match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=SUGGESTIONS_PER_TACTIC, time_limit_sec=settings.eval_timeout, use_foreign_predicate=settings.fpred)
-    if match is None: # skip example for which we timeout
-        return None
-    logger.debug(f'Suggestions: {suggestions}')
-
-    ground_evals = get_evals(engine, board, [move], mate_score=settings.mate_score)
-    best_moves = get_top_n_moves(engine, board, 1)
-    best_move_evals = get_evals(engine, board, best_moves[:1], mate_score=settings.mate_score)
-    metrics['ground_evals'] += ground_evals[0][1]
-    metrics['best_move_evals'] += best_move_evals[0][1]
-    
-    if match:
-        metrics['matches'] += 1
-        if suggestions:
-            if move in suggestions:
-                metrics['correct_move'] += 1
-            tactic_evals = get_evals(engine, board, suggestions, mate_score=settings.mate_score)
-            metrics['divergence'] += evaluate(tactic_evals, ground_evals, divergence_fn)
-            metrics['avg'] += evaluate(tactic_evals, ground_evals, avg_fn)
-            metrics['num_suggestions'] += len(suggestions)
-            metrics['tactic_evals'] += tactic_evals[0][1]
-            
+    if kwargs['match']:
+        metrics['match'] = 1
+        metrics['tactic_ground_div'] = evaluate(tactic_evals, ground_evals, divergence_fn)
+        metrics['tactic_ground_avg'] = evaluate(tactic_evals, ground_evals, avg_fn)
+        metrics['tactic_best_div'] = evaluate(tactic_evals, best_move_evals, divergence_fn)
+        metrics['tactic_best_avg'] = evaluate(tactic_evals, best_move_evals, avg_fn)
+        metrics['correct_move'] = int(move in [tactic_eval[0] for tactic_eval in tactic_evals])
+        metrics['num_suggestions'] = len(tactic_evals)
     else:
-        logger.debug(f'Updated empty suggestions')
-        metrics['empty_suggestions'] += 1
+        metrics['match'] = 0 if kwargs['match'] is False else 'n/a'
+        metrics['tactic_ground_div'] = 'n/a'
+        metrics['tactic_ground_avg'] = 'n/a'
+        metrics['tactic_best_div'] = 'n/a'
+        metrics['tactic_best_avg'] = 'n/a'
+        metrics['correct_move'] = 'n/a'
+        metrics['num_suggestions'] = 'n/a'
     
-    stop = time.time()
-    interval = stop - start
-    metrics['exec_time'] = interval
     print_metrics(metrics, log_level=logging.DEBUG)
     return metrics
 
@@ -203,11 +189,17 @@ def main():
     prolog = get_prolog(BK_FILE, args.fpred)
     metrics_list = []
     with get_engine(engine_path) as engine:
-        for tactic_text in tqdm(tactics, desc='Tactics', unit='tactics'):
-            for example in tqdm(training_examples, desc='Positions', unit='positions', leave=False):
-                metrics = calc_metrics(prolog, tactic_text, engine, example, args)
-                if metrics:
-                    metrics_list.append(metrics)
+        for board, move, label in tqdm(training_examples, desc='Positions', unit='positions'):
+            best_move_evals = get_top_n_moves(engine, board, SUGGESTIONS_PER_TACTIC)
+            ground_evals = get_evals(engine, board, [move], mate_score=args.mate_score)
+            ground_best_div = evaluate(ground_evals, best_move_evals, divergence_fn)
+            ground_best_avg = evaluate(ground_evals, best_move_evals, avg_fn)
+            for tactic_text in tqdm(tactics, desc='Tactics', unit='tactics', leave=False):
+                match, tactic_evals = get_tactic_evals(prolog, tactic_text, board, SUGGESTIONS_PER_TACTIC, engine, args)
+                metrics = calc_metrics(tactic_evals, ground_evals, best_move_evals, example=(board, move, label), match=match, tactic_text=tactic_text)
+                metrics['ground_best_div'] = ground_best_div
+                metrics['ground_best_avg'] = ground_best_avg
+                metrics_list.append(metrics)
 
     logger.info(f'% Calculated metrics for {len(tactics)} tactics')
     write_metrics(metrics_list, args.data_path)

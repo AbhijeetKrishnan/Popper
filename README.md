@@ -113,14 +113,14 @@ We use Lichess games databases for [2013 -
 
 ## Running the experiments
 
-16. Learn tactics (~30m48s)
+16. Learn tactics (~32m9s)
 
    ```bash
    python popper.py chess --ex-file tactics/data/exs/examples_train.csv \
       --eval-timeout 1 > tactics/data/hspace/hspace_tactics.txt
    ```
 
-17. Generate Maia-1600 validation stats (~14m38s)
+17. Generate Maia-1600 validation stats (~4m52s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -129,19 +129,19 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-18. Generate Stockfish 14 validation stats (~7m17s)
+18. Obtain $T_{1600}$ by filtering out the top-10% of tactics evaluated by Maia-1600
+
+   ```bash
+   python tactics/analysis.py tactics/data/stats/metrics_valid_maia1600.csv \
+      -o tactics/data/hspace/hspace_t_1600.txt --filter 10
+   ```
+
+19. Generate Stockfish 14 validation stats (~4m20s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
       --pos-list tactics/data/exs/examples_valid.csv                \
       --data-path tactics/data/stats/metrics_valid_sf14.csv
-   ```
-
-19. Obtain $T_{1600}$ by filtering out the top-10% of tactics evaluated by Maia-1600
-
-   ```bash
-   python tactics/analysis.py tactics/data/stats/metrics_valid_maia1600.csv \
-      -o tactics/data/hspace/hspace_t_1600.txt --filter 10
    ```
 
 20. Obtain $T_{SF}$ by filtering out the top-10% of tactics evaluated by Stockfish 14
@@ -151,7 +151,7 @@ We use Lichess games databases for [2013 -
       -o tactics/data/hspace/hspace_t_sf.txt --filter 10
    ```
 
-21. Evaluate $T_{1600}$ with Maia-1600 (~1m9s)
+21. Evaluate $T_{1600}$ with Maia-1600 (~23s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
@@ -160,7 +160,7 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-22. Evaluate $T_{1600}$ with Stockfish 14 (~29.5s)
+22. Evaluate $T_{1600}$ with Stockfish 14 (~18s)
    
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
@@ -169,7 +169,7 @@ We use Lichess games databases for [2013 -
       --engine STOCKFISH
    ```
 
-23. Evaluate $T_{SF}$ with Maia-1600 (~1m10.4s)
+23. Evaluate $T_{SF}$ with Maia-1600 (~22s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \
@@ -178,7 +178,7 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-24. Evaluate $T_{SF}$ with Stockfish 14 (~31.4s)
+24. Evaluate $T_{SF}$ with Stockfish 14 (~17s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \

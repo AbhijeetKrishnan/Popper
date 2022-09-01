@@ -125,13 +125,14 @@ def get_evals(engine: chess.engine.SimpleEngine, board: chess.Board, suggestions
         if 'pv' in eval:
             curr_score = eval['score'].pov(orig_turn)
             move_score = curr_score.score(mate_score=mate_score)
+            evals.append((move, move_score))
     return evals
 
-def get_top_n_moves(engine: chess.engine.SimpleEngine, board: chess.Board, n: int) -> List[chess.Move]:
+def get_top_n_moves(engine: chess.engine.SimpleEngine, board: chess.Board, n: int, mate_score: int=2000) -> List[chess.Move]:
     "Get the top-n engine-recommended (and evaluated) moves for a given position"
 
     analysis = engine.analyse(board, limit=chess.engine.Limit(depth=1), multipv=n, game=object())
-    top_results = [root['pv'][0] for root in analysis]
+    top_results = [(root['pv'][0], root['score'].relative.score(mate_score=mate_score)) for root in analysis]
     top_n_results = top_results[:n]
     return top_n_results
 
