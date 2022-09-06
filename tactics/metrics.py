@@ -78,11 +78,12 @@ def write_metrics(metrics_list: List[dict], csv_filename: str) -> None:
         for metrics in metrics_list:
             writer.writerow(metrics)
 
-def calc_metrics(tactic_evals: List[Tuple[chess.Move, int]], ground_evals: List[Tuple[chess.Move, int]], best_move_evals: List[Tuple[chess.Move, int]], **kwargs) -> dict:
+def calc_metrics(tactic_evals: List[Tuple[chess.Move, int]], ground_evals: List[Tuple[chess.Move, int]], **kwargs) -> dict:
     "Calculate metrics from evaluating a tactic against a position"
 
     board, move, label = kwargs['example']
     logger.debug(board)
+    prefix = kwargs['prefix']
 
     metrics = {
         'match': 0,
@@ -95,18 +96,16 @@ def calc_metrics(tactic_evals: List[Tuple[chess.Move, int]], ground_evals: List[
 
     if kwargs['match']:
         metrics['match'] = 1
-        metrics['tactic_ground_div'] = evaluate(tactic_evals, ground_evals, divergence_fn)
-        metrics['tactic_ground_avg'] = evaluate(tactic_evals, ground_evals, avg_fn)
-        metrics['tactic_best_div'] = evaluate(tactic_evals, best_move_evals, divergence_fn)
-        metrics['tactic_best_avg'] = evaluate(tactic_evals, best_move_evals, avg_fn)
+        metrics[f'{prefix}_div'] = evaluate(tactic_evals, ground_evals, divergence_fn)
+        metrics[f'{prefix}_avg'] = evaluate(tactic_evals, ground_evals, avg_fn)
         metrics['correct_move'] = int(move in [tactic_eval[0] for tactic_eval in tactic_evals])
         metrics['num_suggestions'] = len(tactic_evals)
     else:
         metrics['match'] = 0 if kwargs['match'] is False else 'n/a'
-        metrics['tactic_ground_div'] = 'n/a'
-        metrics['tactic_ground_avg'] = 'n/a'
-        metrics['tactic_best_div'] = 'n/a'
-        metrics['tactic_best_avg'] = 'n/a'
+        metrics[f'{prefix}_div'] = 'n/a'
+        metrics[f'{prefix}_avg'] = 'n/a'
+        metrics[f'{prefix}_div'] = 'n/a'
+        metrics[f'{prefix}_avg'] = 'n/a'
         metrics['correct_move'] = 'n/a'
         metrics['num_suggestions'] = 'n/a'
     
@@ -190,16 +189,16 @@ def main():
     metrics_list = []
     with get_engine(engine_path) as engine:
         for board, move, label in tqdm(training_examples, desc='Positions', unit='positions'):
-            best_move_evals = get_top_n_moves(engine, board, SUGGESTIONS_PER_TACTIC)
             ground_evals = get_evals(engine, board, [move], mate_score=args.mate_score)
-            ground_best_div = evaluate(ground_evals, best_move_evals, divergence_fn)
-            ground_best_avg = evaluate(ground_evals, best_move_evals, avg_fn)
+            ground_metrics = calc_metrics(ground_evals, ground_evals, example=(board, move, label), match=1, tactic_text='ground', prefix='tactic_ground')
+            metrics_list.append(ground_metrics)
             for tactic_text in tqdm(tactics, desc='Tactics', unit='tactics', leave=False):
                 match, tactic_evals = get_tactic_evals(prolog, tactic_text, board, SUGGESTIONS_PER_TACTIC, engine, args)
-                metrics = calc_metrics(tactic_evals, ground_evals, best_move_evals, example=(board, move, label), match=match, tactic_text=tactic_text)
-                metrics['ground_best_div'] = ground_best_div
-                metrics['ground_best_avg'] = ground_best_avg
+                metrics = calc_metrics(tactic_evals, ground_evals, example=(board, move, label), match=match, tactic_text=tactic_text, prefix='tactic_ground')
                 metrics_list.append(metrics)
+            best_move_evals = get_top_n_moves(engine, board, SUGGESTIONS_PER_TACTIC)
+            best_move_metrics = calc_metrics(best_move_evals, ground_evals, example=(board, move, label), match=1, tactic_text='engine_best', prefix='tactic_ground')
+            metrics_list.append(best_move_metrics)
 
     logger.info(f'% Calculated metrics for {len(tactics)} tactics')
     write_metrics(metrics_list, args.data_path)

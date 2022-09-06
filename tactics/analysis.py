@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 def get_top_tactics(df, filter: Optional[int]) -> List[str]:
-    agg = df.groupby('tactic_text').aggregate(np.nansum)
+    agg = df.groupby('tactic_text').aggregate(np.nansum).reset_index()
     agg['avg_tactic_ground_div'] = agg['tactic_ground_div'] / agg['match']
     # agg['coverage'] = agg['matches'] / df.groupby(['position', 'move']).ngroups
     # agg['accuracy'] = agg['correct_move'] / agg['matches']
