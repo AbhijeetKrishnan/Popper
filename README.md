@@ -2,6 +2,8 @@
 
 This is the code release for the paper *Synthesizing Chess Tactics from Player Games* by Abhijeet Krishnan and Dr. Chris Martens.
 
+*Execution times are from executing the commands on Ubuntu 20.04 LTS via WSL2 on Windows 11 running on a Dell XPS 15 7590 with an Intel Core i7-9750H CPU @ 2.60GHz*
+
 ## Prerequisites
 
 1. Install [Python v3.10.4](https://www.python.org/downloads/)
@@ -46,7 +48,7 @@ We use Lichess games databases for [2013 -
    bash get_pgns.sh
    ```
 
-7. Generate data for the training and validation datasets (~11s)
+7. Generate data for the training and validation datasets (~14s)
 
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples.csv  \
@@ -61,7 +63,7 @@ We use Lichess games databases for [2013 -
       --trim=100 --split=90
    ```
 
-9. Generate test data (~6s)
+9. Generate test data (~8s)
 
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples_test.csv \
@@ -69,7 +71,7 @@ We use Lichess games databases for [2013 -
       -n 20 -p 1 --seed 1
    ```
 
-10. Trim the test data down to 1000 test examples
+10. Trim the test data down to 10 test examples
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples_test.csv \
@@ -113,14 +115,14 @@ We use Lichess games databases for [2013 -
 
 ## Running the experiments
 
-16. Learn tactics (~32m9s)
+16. Learn tactics (~36m15s, 837 tactics)
 
    ```bash
    python popper.py chess --ex-file tactics/data/exs/examples_train.csv \
       --eval-timeout 1 > tactics/data/hspace/hspace_tactics.txt
    ```
 
-17. Generate Maia-1600 validation stats (~4m52s)
+17. Generate Maia-1600 validation stats (~22m23s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -129,14 +131,14 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-18. Obtain $T_{1600}$ by filtering out the top-10% of tactics evaluated by Maia-1600
+18. Obtain $T_{1600}$ ~~by filtering out the top-10% of tactics evaluated by Maia-1600~~
 
    ```bash
    python tactics/analysis.py tactics/data/stats/metrics_valid_maia1600.csv \
-      -o tactics/data/hspace/hspace_t_1600.txt --filter 10
+      -o tactics/data/hspace/hspace_t_1600.txt
    ```
 
-19. Generate Stockfish 14 validation stats (~3m43s)
+19. Generate Stockfish 14 validation stats (~11m42s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -144,20 +146,20 @@ We use Lichess games databases for [2013 -
       --data-path tactics/data/stats/metrics_valid_sf14.csv
    ```
 
-20. Obtain $T_{SF}$ by filtering out the top-10% of tactics evaluated by Stockfish 14
+20. Obtain $T_{SF}$ ~~by filtering out the top-10% of tactics evaluated by Stockfish 14~~
 
    ```bash
    python tactics/analysis.py tactics/data/stats/metrics_valid_sf14.csv \
-      -o tactics/data/hspace/hspace_t_sf.txt --filter 10
+      -o tactics/data/hspace/hspace_t_sf.txt
    ```
 
-21. Measure difference between $T_{1600}$ and $T_{SF}$
+21. Measure difference between $T_{1600}$ and $T_{SF}$ (0 lines differed)
 
    ```bash
-   diff -y --suppress-common-lines tactics/data/hspace/hspace_t_1600.txt tactics/data/hspace/hspace_t_sf.txt | wc -l
+   diff -y --suppress-common-lines <(sort tactics/data/hspace/hspace_t_1600.txt) <(sort tactics/data/hspace/hspace_t_sf.txt) | wc -l
    ```
 
-22. Evaluate $T_{1600}$ with Maia-1600 (~20s)
+22. Evaluate $T_{1600}$ with Maia-1600 (~17m31s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
@@ -166,7 +168,7 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-23. Evaluate $T_{1600}$ with Stockfish 14 (~14s)
+23. Evaluate $T_{1600}$ with Stockfish 14 (~13m7s)
    
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
@@ -175,7 +177,7 @@ We use Lichess games databases for [2013 -
       --engine STOCKFISH
    ```
 
-24. Evaluate $T_{SF}$ with Maia-1600 (~19s)
+<!-- 24. Evaluate $T_{SF}$ with Maia-1600 (~19s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \
@@ -191,7 +193,7 @@ We use Lichess games databases for [2013 -
       --pos-list tactics/data/exs/examples_test.csv              \
       --data-path tactics/data/stats/metrics_test_tsf_sf14.csv   \
       --engine STOCKFISH
-   ```
+   ``` -->
 
 ## Generate graphs
 

@@ -241,7 +241,7 @@ def assert_legal_moves(prolog: pyswip.prolog.Prolog, board: chess.Board):
     finally:
         prolog.retractall('legal_move(_, _, _)')
 
-def chess_query(prolog: pyswip.prolog.Prolog, tactic_text: str, board: chess.Board, limit: int=3, move: Optional[chess.Move]=None, time_limit_sec: Optional[int]=None, use_foreign_predicate: bool=False) -> Optional[list]:
+def chess_query(prolog: pyswip.prolog.Prolog, tactic_text: str, board: chess.Board, limit: int=-1, move: Optional[chess.Move]=None, time_limit_sec: Optional[int]=None, use_foreign_predicate: bool=False) -> Optional[list]:
     "Given the text of a Prolog-based tactic, and a position, check whether the tactic matched in the given position or and if so, what were the suggested moves"
     # TODO: eek, refactor this
     position = fen_to_contents(board.fen())

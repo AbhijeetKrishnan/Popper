@@ -12,15 +12,15 @@ import pandas as pd
 
 def get_top_tactics(df, filter: Optional[int]) -> List[str]:
     agg = df.groupby('tactic_text').aggregate(np.nansum).reset_index()
-    agg['avg_tactic_ground_div'] = agg['tactic_ground_div'] / agg['match']
+    agg['avg_tactic_ground_avg'] = agg['tactic_ground_avg'] / agg['match']
     # agg['coverage'] = agg['matches'] / df.groupby(['position', 'move']).ngroups
     # agg['accuracy'] = agg['correct_move'] / agg['matches']
-    final = agg.sort_values(by = ['avg_tactic_ground_div'], ascending = [True])
-    tactics = list(final.index)
+    final = agg.sort_values(by = ['avg_tactic_ground_avg'], ascending = [True])
+    tactics = list(final['tactic_text'])
     if filter:
         target_len = int(len(tactics) * filter / 100)
         tactics = tactics[:target_len]
-    return list(tactics)
+    return tactics
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Analyze metrics and return top tactics')
