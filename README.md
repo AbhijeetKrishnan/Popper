@@ -159,7 +159,7 @@ We use Lichess games databases for [2013 -
    diff -y --suppress-common-lines <(sort tactics/data/hspace/hspace_t_1600.txt) <(sort tactics/data/hspace/hspace_t_sf.txt) | wc -l
    ```
 
-22. Evaluate $T_{1600}$ with Maia-1600 (~17m31s)
+22. Evaluate $T_{1600}$ with Maia-1600 (~16m45s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
@@ -168,7 +168,7 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-23. Evaluate $T_{1600}$ with Stockfish 14 (~13m7s)
+23. Evaluate $T_{1600}$ with Stockfish 14 (~14m34s)
    
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \

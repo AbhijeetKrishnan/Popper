@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 logger.propagate = False # https://stackoverflow.com/a/2267567
 
 SUGGESTIONS_PER_TACTIC = -1
+NUM_ENGINE_MOVES = 1
 dcg_fn = lambda idx, error: error / math.log2(1 + (idx + 1))
 avg_fn = lambda _, error: error
 
@@ -198,9 +199,24 @@ def main():
             random_metrics = calc_metrics([random_eval], ground_eval, example=(board, move, label), match=1, tactic_text='random', prefix='tactic_ground')
             metrics_list.append(random_metrics)
 
-            best_move_evals = get_top_n_moves(engine, board, 1) # best move tactic only returns single best move
-            best_move_metrics = calc_metrics(best_move_evals, ground_eval, example=(board, move, label), match=1, tactic_text='engine_best', prefix='tactic_ground')
-            metrics_list.append(best_move_metrics)
+            # get best moves for engine best move tactics (can't reopen engine)
+            sf_best_moves, m1600_best_moves = [], []
+            if args.engine_path == 'STOCKFISH':
+                with get_engine(get_lc0_cmd(LC0, MAIA_1600)) as m1600:
+                    m1600_best_moves = get_top_n_moves(m1600, board, NUM_ENGINE_MOVES) 
+                sf_best_moves = get_top_n_moves(engine, board, NUM_ENGINE_MOVES) 
+            elif args.engine_path == 'MAIA1600':
+                with get_engine(STOCKFISH) as sf:
+                    sf_best_moves = get_top_n_moves(sf, board, NUM_ENGINE_MOVES) 
+                m1600_best_moves = get_top_n_moves(engine, board, NUM_ENGINE_MOVES)
+
+            sf_best_move_evals = get_evals(engine, board, sf_best_moves, mate_score=args.mate_score)
+            sf_best_move_metrics = calc_metrics(sf_best_move_evals, ground_eval, example=(board, move, label), match=1, tactic_text='sf14', prefix='tactic_ground')
+            metrics_list.append(sf_best_move_metrics)
+
+            m1600_best_move_evals = get_evals(engine, board, m1600_best_moves, mate_score=args.mate_score)
+            m1600_best_move_metrics = calc_metrics(m1600_best_move_evals, ground_eval, example=(board, move, label), match=1, tactic_text='maia_1600', prefix='tactic_ground')
+            metrics_list.append(m1600_best_move_metrics)
 
             for tactic_text in tqdm(tactics, desc='Tactics', unit='tactics', leave=False):
                 match, tactic_evals = get_tactic_evals(prolog, tactic_text, board, SUGGESTIONS_PER_TACTIC, engine, args)
