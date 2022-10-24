@@ -60,7 +60,7 @@ We use Lichess games databases for [2013 -
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples.csv \
-      --trim=100 --split=90
+      --trim=100 --split=100
    ```
 
 9. Generate test data (~8s)
