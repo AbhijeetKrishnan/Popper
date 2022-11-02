@@ -338,6 +338,11 @@ var_type(C,Var,@pytype(Pos,Types)):-
     clause_var(C,Var),
     #count{Type : var_type(C,Var,Type)} > 1.
 
+%% LIMIT VARIABLES USED IN BODY BASED ON TYPES
+:-
+    type_limit(Type, Limit),
+    #count{Var : var_type(Clause, Var, Type)} > Limit.
+
 %% ##################################################
 %% CLAUSE ORDERING
 %% ##################################################

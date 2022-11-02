@@ -4,7 +4,8 @@ max_body(5).
 
 % enable_pi.
 
-head_pred(f,3).
+head_pred(f, 3).
+type_limit(sq, 3).
 
 body_pred(attacks, 3).
 body_pred(make_move, 4).
