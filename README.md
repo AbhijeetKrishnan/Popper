@@ -17,7 +17,7 @@ This is the code release for the paper *Synthesizing Chess Tactics from Player G
 3. Install the necessary Python dependencies
 
    ```bash
-   pip install -r requirements.txt
+   python3 -m pip install -r requirements.txt
    ```
 
 4. Navigate to the root folder of the cloned repository
@@ -56,7 +56,7 @@ We use Lichess games databases for [2013 -
       -n 200 -p 1 --seed 1
    ```
 
-8. Split the examples into training and validation sets
+8. Split the examples into training ~~and validation~~ sets
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples.csv \
@@ -81,7 +81,7 @@ We use Lichess games databases for [2013 -
 ## Engine(s)
 
 11. Download the latest x64 Stockfish 14 binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
-   `stockfish_14_x64` into the `tactics/bin/` folder
+   `stockfish_14_x64` into the `tactics/bin/` folder. Delete any leftover files manually.
 
    ```bash
    wget https://stockfishchess.org/files/stockfish_14_linux_x64.zip
@@ -122,78 +122,23 @@ We use Lichess games databases for [2013 -
       --eval-timeout 1 > tactics/data/hspace/hspace_tactics.txt
    ```
 
-17. Generate Maia-1600 validation stats (~22m23s)
+22. Evaluate $T$ with Maia-1600 (~16m45s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
-      --pos-list tactics/data/exs/examples_valid.csv                \
-      --data-path tactics/data/stats/metrics_valid_maia1600.csv     \
-      --engine MAIA1600
-   ```
-
-18. Obtain $T_{1600}$ ~~by filtering out the top-10% of tactics evaluated by Maia-1600~~
-
-   ```bash
-   python tactics/analysis.py tactics/data/stats/metrics_valid_maia1600.csv \
-      -o tactics/data/hspace/hspace_t_1600.txt
-   ```
-
-19. Generate Stockfish 14 validation stats (~11m42s)
-
-   ```bash
-   python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
-      --pos-list tactics/data/exs/examples_valid.csv                \
-      --data-path tactics/data/stats/metrics_valid_sf14.csv
-   ```
-
-20. Obtain $T_{SF}$ ~~by filtering out the top-10% of tactics evaluated by Stockfish 14~~
-
-   ```bash
-   python tactics/analysis.py tactics/data/stats/metrics_valid_sf14.csv \
-      -o tactics/data/hspace/hspace_t_sf.txt
-   ```
-
-21. Measure difference between $T_{1600}$ and $T_{SF}$ (0 lines differed)
-
-   ```bash
-   diff -y --suppress-common-lines <(sort tactics/data/hspace/hspace_t_1600.txt) <(sort tactics/data/hspace/hspace_t_sf.txt) | wc -l
-   ```
-
-22. Evaluate $T_{1600}$ with Maia-1600 (~16m45s)
-
-   ```bash
-   python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
       --pos-list tactics/data/exs/examples_test.csv                \
-      --data-path tactics/data/stats/metrics_test_t1600_m1600.csv  \
+      --data-path tactics/data/stats/metrics_test_t_m1600.csv  \
       --engine MAIA1600
    ```
 
-23. Evaluate $T_{1600}$ with Stockfish 14 (~14m34s)
+23. Evaluate $T$ with Stockfish 14 (~14m34s)
    
    ```bash
-   python tactics/metrics.py tactics/data/hspace/hspace_t_1600.txt \
+   python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
       --pos-list tactics/data/exs/examples_test.csv                \
-      --data-path tactics/data/stats/metrics_test_t1600_sf14.csv   \
+      --data-path tactics/data/stats/metrics_test_t_sf14.csv   \
       --engine STOCKFISH
    ```
-
-<!-- 24. Evaluate $T_{SF}$ with Maia-1600 (~19s)
-
-   ```bash
-   python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \
-      --pos-list tactics/data/exs/examples_test.csv              \
-      --data-path tactics/data/stats/metrics_test_tsf_m1600.csv  \
-      --engine MAIA1600
-   ```
-
-25. Evaluate $T_{SF}$ with Stockfish 14 (~15s)
-
-   ```bash
-   python tactics/metrics.py tactics/data/hspace/hspace_t_sf.txt \
-      --pos-list tactics/data/exs/examples_test.csv              \
-      --data-path tactics/data/stats/metrics_test_tsf_sf14.csv   \
-      --engine STOCKFISH
-   ``` -->
 
 ## Generate graphs
 
