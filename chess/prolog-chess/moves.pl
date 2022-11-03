@@ -10,7 +10,7 @@
 :- ['squares.pl'].
 
 % is_promo(++Move)
-is_promo([From, To, Promo|[]]).
+is_promo([_, _, _|[]]).
 
 % move(++Move, -From, -To[, -Promo])
 move([From, To|[]], From, To) :-
