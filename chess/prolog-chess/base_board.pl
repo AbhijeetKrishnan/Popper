@@ -29,8 +29,8 @@ attacks(BaseBoard, Square, SquareSet) :-
     piece_at(BaseBoard, Square, piece(Type, Side)),
     attack_squares(Square, Type, Side, SquareSet).
 
-remove_piece_at(BaseBoard) :-
-    fail.
+remove_piece_at(BaseBoard, Square, NewBaseBoard) :-
+    delete(BaseBoard, contents(_, Square), NewBaseBoard).
 
 set_piece_at(BaseBoard, Piece) :-
     fail.
