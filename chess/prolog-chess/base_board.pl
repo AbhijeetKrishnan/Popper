@@ -1,4 +1,5 @@
 % The piece positions are represented by contents/2, which describe their piece (type + side) and location (square).
+% e.g., a white rook on g4 would be represented as `contents(piece(rook, white), square(g4))`
 
 :- ['colors.pl'].
 :- ['piece_types.pl'].
@@ -18,7 +19,7 @@ pieces([_|T], Type, Color, SquareSet) :-
 
 % piece_at(++BaseBoard, +At, -Piece)
 % Gets piece at given location provided as a square/1 predicate
-piece_at(BaseBoard, At, Piece) :-
+piece_at(BaseBoard, Piece, At) :-
     member(contents(Piece, At), BaseBoard).
 
 % attacks(++BaseBoard, +Square, -SquareSet)
@@ -29,11 +30,8 @@ attacks(BaseBoard, Square, SquareSet) :-
     piece_at(BaseBoard, Square, piece(Type, Side)),
     attack_squares(Square, Type, Side, SquareSet).
 
-remove_piece_at(BaseBoard, Square, NewBaseBoard) :-
-    delete(BaseBoard, contents(_, Square), NewBaseBoard).
+remove_piece_at(BaseBoard, At, NewBaseBoard) :-
+    delete(BaseBoard, contents(_, At), NewBaseBoard).
 
-set_piece_at(BaseBoard, Piece) :-
-    fail.
-
-set_board_fen(Fen, BaseBoard) :-
-    fail.
+set_piece_at(BaseBoard, Piece, At, NewBaseBoard) :-
+    append(BaseBoard, contents(Piece, At), NewBaseBoard).

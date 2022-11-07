@@ -70,6 +70,67 @@ en_passant(Board, Square) :-
     member(en_passant(Square), Board),
     square(Square).
 
+castling_str_to_rights('K', kingside_castle(white)).
+castling_str_to_rights('Q', queenside_castle(white)).
+castling_str_to_rights('k', kingside_castle(black)).
+castling_str_to_rights('q', queenside_castle(black)).
+
+castling_rights("-", []).
+castling_rights(CastleRights, CastleRightsStr) :-
+    string_chars(CastleRightsStr, CastleRightsList),
+    maplist(castling_str_to_rights, CastleRightsList, CastleRights).
+
+scan_row([], _, _, []).
+scan_row([H1|T1], Row, Col, [H2|T2]) :-
+    (
+        char_type(H1, digit) ->
+            atom_number(H1, Incr),
+            NewCol is Col + Incr,
+            H2 = [],
+            scan_row(T1, Row, NewCol, T2)
+        ;
+            piece_from_char(H1, Piece),
+            coords(Sq, Col, Row),
+            NewCol is Col + 1,
+            H2 = contents(Piece, square(Sq)),
+            scan_row(T1, Row, NewCol, T2)
+    ).
+
+set_board_contents(PosStr, Board) :-
+    split_string(PosStr, "/", "", [Row8, Row7, Row6, Row5, Row4, Row3, Row2, Row1]),
+    string_chars(Row1, Row1List),
+    string_chars(Row2, Row2List),
+    string_chars(Row3, Row3List),
+    string_chars(Row4, Row4List),
+    string_chars(Row5, Row5List),
+    string_chars(Row6, Row6List),
+    string_chars(Row7, Row7List),
+    string_chars(Row8, Row8List),
+    scan_row(Row1List, 1, 1, Row1Preds),
+    scan_row(Row2List, 2, 1, Row2Preds),
+    scan_row(Row3List, 3, 1, Row3Preds),
+    scan_row(Row4List, 4, 1, Row4Preds),
+    scan_row(Row5List, 5, 1, Row5Preds),
+    scan_row(Row6List, 6, 1, Row6Preds),
+    scan_row(Row7List, 7, 1, Row7Preds),
+    scan_row(Row8List, 8, 1, Row8Preds),
+    flatten([Row1Preds, Row2Preds, Row3Preds, Row4Preds, Row5Preds, Row6Preds, Row7Preds, Row8Preds], Board).
+
+en_passant_sq([], "-").
+en_passant_sq(EnPassantPred, EnPassantStr) :-
+    atom_string(EnPassantAtom, EnPassantStr),
+    EnPassantPred = [en_passant(EnPassantAtom)].
+
+set_board_fen(Fen, BaseBoard) :-
+    split_string(Fen, " ", "", [PosStr, TurnStr, CastleRightsStr, EpStr, HmClkStr, FmNumStr]),
+    set_board_contents(PosStr, PosPreds),
+    from_str(TurnCol, TurnStr),
+    castling_rights(CastleRightsPreds, CastleRightsStr),
+    en_passant_sq(EpPred, EpStr),
+    number_string(HalfmoveClock, HmClkStr),
+    number_string(Fullmove, FmNumStr),
+    flatten([PosPreds, turn(TurnCol), CastleRightsPreds, EpPred, halfmove_clock(HalfmoveClock), fullmove(Fullmove)], BaseBoard).
+
 % a move is a capture if a piece of the opposing color lies on the square to which the move is being made
 is_capture(Board, [From, To|_]) :-
     turn(Board, Side),
