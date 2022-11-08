@@ -40,7 +40,7 @@ fullmove(Board, N) :-
 increment_fullmove(Board, NewBoard) :-
     turn(Board, Side),
     (
-        Side =:= black ->
+        Side = black ->
             fullmove(Board, N),
             delete(Board, fullmove(_), Board_1),
             NewN is N + 1,
@@ -55,7 +55,7 @@ halfmove_clock(Board, N) :-
 
 set_halfmove_clock(Board, NewN, NewBoard) :-
     delete(Board, halfmove_clock(_), Board_1),
-    append(Board_1, [halfmove_clock(NewN), NewBoard]).
+    NewBoard = [halfmove_clock(NewN)|Board_1].
 
 increment_halfmove_clock(Board, NewBoard) :-
     halfmove_clock(Board, N),
@@ -75,7 +75,7 @@ castling_str_to_rights('Q', queenside_castle(white)).
 castling_str_to_rights('k', kingside_castle(black)).
 castling_str_to_rights('q', queenside_castle(black)).
 
-castling_rights("-", []).
+castling_rights([], "-").
 castling_rights(CastleRights, CastleRightsStr) :-
     string_chars(CastleRightsStr, CastleRightsList),
     maplist(castling_str_to_rights, CastleRightsList, CastleRights).
@@ -144,26 +144,27 @@ is_zeroing(Board, [From, To|_]) :-
 is_zeroing(Board, [From, To|_]) :-
     is_capture(Board, [From, To]).
 
-update_castling_rights(Board, [e1, To|_], NewBoard) :-
-    piece_at(Board, e1, piece(king, white)),
+update_castling_rights(Board, [square(e1), To|_], NewBoard) :-
+    piece_at(Board, piece(king, white), square(e1)),
     delete(Board, kingside_castle(white), Board_1),
     delete(Board_1, queenside_castle(white), NewBoard).
-update_castling_rights(Board, [e8, To|_], NewBoard) :-
-    piece_at(Board, e8, piece(king, black)),
+update_castling_rights(Board, [square(e8), To|_], NewBoard) :-
+    piece_at(Board, piece(king, black), square(e8)),
     delete(Board, kingside_castle(black), Board_1),
     delete(Board_1, queenside_castle(black), NewBoard).
-update_castling_rights(Board, [a1, To|_], NewBoard) :-
-    piece_at(Board, a1, piece(rook, white)),
+update_castling_rights(Board, [square(a1), To|_], NewBoard) :-
+    piece_at(Board, piece(rook, white), square(a1)),
     delete(Board_1, queenside_castle(white), NewBoard).
-update_castling_rights(Board, [h1, To|_], NewBoard) :-
-    piece_at(Board, h1, piece(rook, white)),
+update_castling_rights(Board, [square(h1), To|_], NewBoard) :-
+    piece_at(Board, piece(rook, white), square(h1)),
     delete(Board, kingside_castle(white), NewBoard).
-update_castling_rights(Board, [a8, To|_], NewBoard) :-
-    piece_at(Board, a8, piece(rook, black)),
+update_castling_rights(Board, [square(a8), To|_], NewBoard) :-
+    piece_at(Board, piece(rook, black), square(a8)),
     delete(Board_1, queenside_castle(black), NewBoard).
-update_castling_rights(Board, [h8, To|_], NewBoard) :-
-    piece_at(Board, h8, piece(rook, black)),
+update_castling_rights(Board, [square(h8), To|_], NewBoard) :-
+    piece_at(Board, piece(rook, black), square(h8)),
     delete(Board, kingside_castle(black), NewBoard).
+update_castling_rights(Board, _, Board).
 
 % legal_move(++Board, +Move)
 legal_move(Board, Move) :-
@@ -173,6 +174,9 @@ legal_move(Board, Move) :-
 pseudo_legal_move(Board, Move) :-
     fail.
 
+unpack_move([From, To], From, To, []).
+unpack_move([From, To, Promo], From, To, Promo).
+
 make_move(Board, Move, NewBoard) :-
     increment_halfmove_clock(Board, Board_1),
     increment_fullmove(Board_1, Board_2),
@@ -180,16 +184,20 @@ make_move(Board, Move, NewBoard) :-
         is_zeroing(Board, Move) ->
             reset_halfmove_clock(Board_2, Board_3)
         ;
-            Board_3 is Board_2
+            Board_3 = Board_2
     ),
 
-    [From, To|_] = Move,
-    piece_at(Board, From, MovedPiece),
-    ignore(piece_at(Board, To, CapturedPiece)),
+    unpack_move(Move, From, To, Promo),
+    piece_at(Board, MovedPiece, From),
+    ignore(piece_at(Board, CapturedPiece, To)),
     remove_piece_at(Board_3, From, Board_4),
     remove_piece_at(Board_4, To, Board_5),
     update_castling_rights(Board_5, Move, Board_6),
-    fail.
+    % handle special pawn moves (set ep square, remove pawn captured by ep)
+    % handle promotion - if promo, set new piece type to promo type
+    % handle castling - if possible (piece to be moved is King and ), perform that castle
+    % if castling not possible, put target piece on target square
+    set_piece_at(Board_6, MovedPiece, To, NewBoard).
 
 ply(Board, Ply) :-
     fullmove(Board, FullMove),

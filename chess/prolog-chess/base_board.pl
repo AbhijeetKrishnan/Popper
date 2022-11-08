@@ -34,4 +34,4 @@ remove_piece_at(BaseBoard, At, NewBaseBoard) :-
     delete(BaseBoard, contents(_, At), NewBaseBoard).
 
 set_piece_at(BaseBoard, Piece, At, NewBaseBoard) :-
-    append(BaseBoard, contents(Piece, At), NewBaseBoard).
+    append(BaseBoard, [contents(Piece, At)], NewBaseBoard).
