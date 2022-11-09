@@ -21,6 +21,7 @@ pieces([_|T], Type, Color, SquareSet) :-
 % Gets piece at given location provided as a square/1 predicate
 piece_at(BaseBoard, Piece, At) :-
     member(contents(Piece, At), BaseBoard).
+piece_at(_, empty, _).
 
 % attacks(++BaseBoard, +Square, -SquareSet)
 % Gets the set of attacked squares from the given square.

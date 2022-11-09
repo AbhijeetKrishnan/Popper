@@ -1,10 +1,11 @@
 % Represents a move from a square to a square and possibly the promotion piece type.
 % Drops and null moves are NOT supported.
 %
-% A move is represented by a list of two or three elements
+% A move is represented by a list of two or three atoms
 % The first element if the From square - the square the move is made from
 % The second element is the To square - the square the move is made to
 % The third (optional) element is the Promo piece - the piece to which the current piece (pawn) is being promoted
+% e.g. [e2, e4] represents a move from e2 to e4
 
 :- ['piece_types.pl'].
 :- ['squares.pl'].
