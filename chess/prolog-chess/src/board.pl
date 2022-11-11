@@ -88,7 +88,7 @@ scan_row([H1|T1], Row, Col, [H2|T2]) :-
             H2 = [],
             scan_row(T1, Row, NewCol, T2)
         ;
-            piece_from_char(H1, Piece),
+            piece_char(H1, Piece),
             coords(Sq, Col, Row),
             NewCol is Col + 1,
             H2 = contents(Piece, square(Sq)),
@@ -123,7 +123,7 @@ en_passant_sq(EnPassantPred, EnPassantStr) :-
 set_board_fen(Fen, BaseBoard) :-
     split_string(Fen, " ", "", [PosStr, TurnStr, CastleRightsStr, EpStr, HmClkStr, FmNumStr]),
     set_board_contents(PosStr, PosPreds),
-    from_str(TurnCol, TurnStr),
+    color_str(TurnCol, TurnStr),
     castling_rights(CastleRightsPreds, CastleRightsStr),
     en_passant_sq(EpPred, EpStr),
     number_string(HalfmoveClock, HmClkStr),
@@ -268,7 +268,7 @@ ply(Board, Ply) :-
     fullmove(Board, FullMove),
     turn(Board, Side),
     (
-        Side =:= black ->
+        Side = black ->
             Ply is 2 * FullMove + 1
         ;
             Ply is 2 * FullMove
