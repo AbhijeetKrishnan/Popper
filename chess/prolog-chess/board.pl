@@ -173,8 +173,8 @@ legal_move(Board, Move) :-
 pseudo_legal_move(Board, Move) :-
     fail.
 
-unpack_move([FromAtom, ToAtom], square(FromAtom), square(ToAtom), []).
-unpack_move([FromAtom, ToAtom, PromoPieceTypeAtom], square(FromAtom), square(ToAtom), piece_type(PromoPieceTypeAtom)).
+unpack_move([From, To], From, To, []).
+unpack_move([From, To, PromoPieceType], From, To, PromoPieceType).
 
 get_ep_square(File, 7, File, 5, EpPred) :-
     coords(EpSq, File, 6),
@@ -214,13 +214,27 @@ reset_if_zeroing(Board, Move, NewBoard) :-
 reset_if_zeroing(Board, _, Board).
 
 placed_piece(MovedPiece, [], MovedPiece).
-placed_piece(piece(_, Side), [piece_type(Promo)], piece(Promo, Side)).
+placed_piece(piece(_, Side), [piece_type(PromoTypeAtom)], piece(PromoTypeAtom, Side)).
 
 swap_turn(Board, NewBoard) :-
     turn(Board, Side),
     other_color(Side, Other),
     delete(Board, turn(Side), Board_1),
     append(Board_1, [turn(Other)], NewBoard).
+
+perform_castling(Board, square(e1), square(g1), piece(king, white), NewBoard) :-
+    remove_piece_at(Board, square(h1), Board_1),
+    set_piece_at(Board_1, piece(rook, white), square(f1), NewBoard).
+perform_castling(Board, square(e1), square(c1), piece(king, white), NewBoard) :-
+    remove_piece_at(Board, square(a1), Board_1),
+    set_piece_at(Board_1, piece(rook, white), square(d1), NewBoard).
+perform_castling(Board, square(e8), square(g8), piece(king, black), NewBoard) :-
+    remove_piece_at(Board, square(h8), Board_1),
+    set_piece_at(Board_1, piece(rook, black), square(f8), NewBoard).
+perform_castling(Board, square(e8), square(c8), piece(king, black), NewBoard) :-
+    remove_piece_at(Board, square(a8), Board_1),
+    set_piece_at(Board_1, piece(rook, black), square(d8), NewBoard).
+perform_castling(Board, _, _, PlacedPiece, Board).
 
 make_move(Board, Move, NewBoard) :-
     unpack_move(Move, From, To, Promo),
@@ -243,10 +257,12 @@ make_move(Board, Move, NewBoard) :-
     placed_piece(MovedPiece, Promo, PlacedPiece),
 
     % handle castling - if possible (piece to be moved is King and adjacent square has own rook), perform that castle
+    perform_castling(Board_8, From, To, PlacedPiece, Board_9),
     % if castling not possible, put target piece on target square
-    set_piece_at(Board_8, PlacedPiece, To, Board_9),
-    swap_turn(Board_9, Board_10),
-    NewBoard = Board_10.
+    set_piece_at(Board_9, PlacedPiece, To, Board_10),
+
+    swap_turn(Board_10, Board_11),
+    NewBoard = Board_11.
 
 ply(Board, Ply) :-
     fullmove(Board, FullMove),
