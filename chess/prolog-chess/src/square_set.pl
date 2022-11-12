@@ -256,5 +256,5 @@ attack_square_(Square, queen, _, AttackSquare) :-
  * @param Side
  * @param SquareSet A square set representing all squares that the input piece attacks.
  */
-attack_squares(Square, TypeAtom, SideAtom, SquareSet) :-
-    findall(AttackSquare, attack_square_(Square, TypeAtom, SideAtom, AttackSquare), SquareSet).
+attack_squares(Square, PieceType, Side, SquareSet) :-
+    findall(AttackSquare, attack_square_(Square, PieceType, Side, AttackSquare), SquareSet).

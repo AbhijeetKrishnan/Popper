@@ -4,6 +4,9 @@
  * A piece is represented with the predicate piece/2 as piece(TypeAtom, ColorAtom).
  * e.g., piece(king, white).
  *
+ * A piece is allowed to be represented with the atom 'empty' to denote the absence of a piece in case of predicates
+ * like piece_at/3.
+ *
  * @author Abhijeet Krishnan
  * @copyright (c)2022 Abhijeet Krishnan.
  * @license All rights reserved. Used with permission.
