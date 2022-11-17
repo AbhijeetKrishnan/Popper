@@ -457,12 +457,49 @@ ply(Board, Ply) :-
             Ply is 2 * FullMove
     ).
 
-% legal_move(++Board, +Move)
-legal_move(Board, Move) :-
+/**
+ * castling_move(+Board:board, -Move:move) is nondet
+ *
+ * Describes a legal castling move in the current board.
+ *
+ * @param Board
+ * @param Move
+ */
+castling_move(Board, Move) :-
     fail.
 
-% pseudo_legal_move(++Board, +Move)
+/**
+ * is_into_check(+Board:board, +Move:move) is det
+ *
+ * Check if a given move would put the king into check.
+ *
+ * @param Board
+ * @param Move
+ */
+is_into_check(Board, Move) :-
+    fail.
+
+
+/**
+ * pseudo_legal_move(+Board:board, +Move:move) is det
+ *
+ * Checks if a given move is pseudo-legal.
+ * A move is pseudo-legal if -
+ * 1. it is a valid move i.e., it is [From, To] or [From, To, Promo]
+ * 2. the source square contains a piece
+ * 3. piece being moved belongs to side whose turn it is to play
+ * 4. if the move is a promotion, the moved piece is a pawn on the correct rank
+ * 5. if the move is a castle, it is permissible depending on available castling rights
+ * 6. the destination square is NOT occupied
+ *
+ * @param Board
+ * @param Move
+ */
 pseudo_legal_move(Board, Move) :-
+    fail.
+
+% legal_move(++Board, +Move)
+legal_move(Board, Move) :-
     fail.
 
 % Gets the pieces currently giving check

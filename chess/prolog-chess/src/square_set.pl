@@ -258,3 +258,68 @@ attack_square_(Square, queen, _, AttackSquare) :-
  */
 attack_squares(Square, PieceType, Side, SquareSet) :-
     findall(AttackSquare, attack_square_(Square, PieceType, Side, AttackSquare), SquareSet).
+
+/**
+ * between_(+FileA:int, +RankA:int, +FileB:int, +RankB:int, +DelFile:int, +DelRank:int, +SignFile:int, +SignRank:int, -FileBet:int, -RankBet:int) is det
+ *
+ * Helper rule to find squares between two given squares.
+ *
+ * @param FileA
+ * @param RankA
+ * @param FileB
+ * @param RankB
+ * @param DelFile DelFile = FileB - FileA
+ * @param DelRank DelRank = RankB - RankA
+ * @param SignFile sign(DelFile)
+ * @param SignRank sign(DelRank)
+ * @param FileBet
+ * @param RankBet
+ */
+between_(FileA, RankA, FileA, RankB, 0, N, 0, _, FileA, RankBet) :-
+    LeftLimit is min(RankA, RankB) + 1,
+    RightLimit is max(RankA, RankB) - 1,
+    between(LeftLimit, RightLimit, RankBet).
+between_(FileA, RankA, FileB, RankA, N, 0, _, 0, FileBet, RankA) :-
+    BotLimit is min(FileA, FileB) + 1,
+    TopLimit is max(FileA, FileB) - 1,
+    between(BotLimit, TopLimit, FileBet).
+between_(FileA, RankA, FileB, RankB, N, N, 1, 1, FileBet, RankBet) :-
+    M is N - 1,
+    between(1, M, T),
+    FileBet is FileA + T,
+    RankBet is RankA + T.
+between_(FileA, RankA, FileB, RankB, N, N, -1, -1, FileBet, RankBet) :-
+    M is N - 1,
+    between(1, M, T),
+    FileBet is FileA - T,
+    RankBet is RankA - T.
+between_(FileA, RankA, FileB, RankB, N, N, 1, -1, FileBet, RankBet) :-
+    M is N - 1,
+    between(1, M, T),
+    FileBet is FileA - T,
+    RankBet is RankA + T.
+between_(FileA, RankA, FileB, RankB, N, N, -1, 1, FileBet, RankBet) :-
+    M is N - 1,
+    between(1, M, T),
+    FileBet is FileA + T,
+    RankBet is RankA - T.
+
+/**
+ * sq_between(+A:square, +B:square, +Bet:square) is det
+ *
+ * Describes a square that lies on the straight line path between squares A and B.
+ * If A and B are not on a straight line, no square lies in between them.
+ *
+ * @param A
+ * @param B
+ * @param Bet
+ */
+sq_between(A, B, Bet) :-
+    coords(A, FileA, RankA),
+    coords(B, FileB, RankB),
+    DelFile is FileB - FileA,
+    DelRank is RankB - RankA,
+    SignFile is sign(DelFile),
+    SignRank is sign(DelRank),
+    between_(FileA, RankA, FileB, RankB, DelFile, DelRank, SignFile, SignRank, FileBet, RankBet),
+    coords(Bet, FileBet, RankBet).
