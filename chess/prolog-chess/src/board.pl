@@ -202,11 +202,11 @@ set_board_fen(Fen, Board) :-
     split_string(Fen, " ", "", [PosStr, TurnStr, CastleRightsStr, EpStr, HmClkStr, FmNumStr]),
     set_board_contents(PosStr, PosPreds),
     color_str(TurnCol, TurnStr),
-    castling_rights(CastleRightsPreds, CastleRightsStr),
-    en_passant_sq(EpPred, EpStr),
+    castling_rights(CastleRightsStr, CastleRightsPreds),
+    en_passant_sq(EpStr, EpPred),
     number_string(HalfmoveClock, HmClkStr),
     number_string(Fullmove, FmNumStr),
-    flatten([PosPreds, turn(TurnCol), CastleRightsPreds, EpPred, halfmove_clock(HalfmoveClock), fullmove(Fullmove)], Board).
+    flatten([PosPreds, turn(TurnCol), CastleRightsPreds, EpPred, halfmove_clock(HalfmoveClock), fullmove(Fullmove)], Board), !.
 
 /**
  * is_capture(+Board:board, +Move:move) is semidet

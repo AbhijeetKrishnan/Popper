@@ -180,7 +180,7 @@ r_attacks(Square, AttackSquare) :-
     coords(AttackSquare, X_a, Y).
 
 /**
- * attack_square_(+Square:square, +PieceType:p_type, +Side:color, -AttackSquare:square) is nondet
+ * attack_square(+Square:square, +PieceType:p_type, +Side:color, -AttackSquare:square) is nondet
  *
  * Defines possible squares that a piece could attack.
  *
@@ -190,60 +190,60 @@ r_attacks(Square, AttackSquare) :-
  * @param AttackSquare
  */
 % pawn
-attack_square_(Square, pawn, SideAtom, AttackSquare) :-
+attack_square(Square, pawn, SideAtom, AttackSquare) :-
     coords(Square, X, Y),
     pawn_attack_delta(Side, DelX, DelY),
     X_a is X + DelX,
     Y_a is Y + DelY,
     coords(AttackSquare, X_a, Y_a).
 % knight
-attack_square_(Square, knight, _, AttackSquare) :-
+attack_square(Square, knight, _, AttackSquare) :-
     coords(Square, X, Y),
     knight_delta(DelX, DelY),
     X_a is X + DelX,
     Y_a is Y + DelY,
     coords(AttackSquare, X_a, Y_a).
 % king
-attack_square_(Square, king, _, AttackSquare) :-
+attack_square(Square, king, _, AttackSquare) :-
     coords(Square, X, Y),
     king_delta(DelX, DelY),
     X_a is X + DelX,
     Y_a is Y + DelY,
     coords(AttackSquare, X_a, Y_a).
 % rook
-attack_square_(Square, rook, _, AttackSquare) :-
+attack_square(Square, rook, _, AttackSquare) :-
     u_attacks(Square, AttackSquare).
-attack_square_(Square, rook, _, AttackSquare) :-
+attack_square(Square, rook, _, AttackSquare) :-
     d_attacks(Square, AttackSquare).
-attack_square_(Square, rook, _, AttackSquare) :-
+attack_square(Square, rook, _, AttackSquare) :-
     l_attacks(Square, AttackSquare).
-attack_square_(Square, rook, _, AttackSquare) :-
+attack_square(Square, rook, _, AttackSquare) :-
     r_attacks(Square, AttackSquare).
 % bishop
-attack_square_(Square, bishop, _, AttackSquare) :-
+attack_square(Square, bishop, _, AttackSquare) :-
     ul_diag_attacks(Square, AttackSquare).
-attack_square_(Square, bishop, _, AttackSquare) :-
+attack_square(Square, bishop, _, AttackSquare) :-
     dl_diag_attacks(Square, AttackSquare).
-attack_square_(Square, bishop, _, AttackSquare) :-
+attack_square(Square, bishop, _, AttackSquare) :-
     ur_diag_attacks(Square, AttackSquare).
-attack_square_(Square, bishop, _, AttackSquare) :-
+attack_square(Square, bishop, _, AttackSquare) :-
     dr_diag_attacks(Square, AttackSquare).
 % queen
-attack_square_(Square, queen, _, AttackSquare) :-
+attack_square(Square, queen, _, AttackSquare) :-
     u_attacks(Square, AttackSquare).
-attack_square_(Square, queen, _, AttackSquare) :-
+attack_square(Square, queen, _, AttackSquare) :-
     d_attacks(Square, AttackSquare).
-attack_square_(Square, queen, _, AttackSquare) :-
+attack_square(Square, queen, _, AttackSquare) :-
     l_attacks(Square, AttackSquare).
-attack_square_(Square, queen, _, AttackSquare) :-
+attack_square(Square, queen, _, AttackSquare) :-
     r_attacks(Square, AttackSquare).
-attack_square_(Square, queen, _, AttackSquare) :-
+attack_square(Square, queen, _, AttackSquare) :-
     ul_diag_attacks(Square, AttackSquare).
-attack_square_(Square, queen, _, AttackSquare) :-
+attack_square(Square, queen, _, AttackSquare) :-
     dl_diag_attacks(Square, AttackSquare).
-attack_square_(Square, queen, _, AttackSquare) :-
+attack_square(Square, queen, _, AttackSquare) :-
     ur_diag_attacks(Square, AttackSquare).
-attack_square_(Square, queen, _, AttackSquare) :-
+attack_square(Square, queen, _, AttackSquare) :-
     dr_diag_attacks(Square, AttackSquare).
 
 /**
@@ -257,7 +257,7 @@ attack_square_(Square, queen, _, AttackSquare) :-
  * @param SquareSet A square set representing all squares that the input piece attacks.
  */
 attack_squares(Square, PieceType, Side, SquareSet) :-
-    findall(AttackSquare, attack_square_(Square, PieceType, Side, AttackSquare), SquareSet).
+    findall(AttackSquare, attack_square(Square, PieceType, Side, AttackSquare), SquareSet).
 
 /**
  * between_(+FileA:int, +RankA:int, +FileB:int, +RankB:int, +DelFile:int, +DelRank:int, +SignFile:int, +SignRank:int, -FileBet:int, -RankBet:int) is det
@@ -268,8 +268,8 @@ attack_squares(Square, PieceType, Side, SquareSet) :-
  * @param RankA
  * @param FileB
  * @param RankB
- * @param DelFile DelFile = FileB - FileA
- * @param DelRank DelRank = RankB - RankA
+ * @param DelFile DelFile = abs(FileB - FileA)
+ * @param DelRank DelRank = abs(RankB - RankA)
  * @param SignFile sign(DelFile)
  * @param SignRank sign(DelRank)
  * @param FileBet
@@ -321,5 +321,7 @@ sq_between(A, B, Bet) :-
     DelRank is RankB - RankA,
     SignFile is sign(DelFile),
     SignRank is sign(DelRank),
-    between_(FileA, RankA, FileB, RankB, DelFile, DelRank, SignFile, SignRank, FileBet, RankBet),
+    MagFile is abs(DelFile),
+    MagRank is abs(DelRank),
+    between_(FileA, RankA, FileB, RankB, MagFile, MagRank, SignFile, SignRank, FileBet, RankBet),
     coords(Bet, FileBet, RankBet).

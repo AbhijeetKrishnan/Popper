@@ -43,19 +43,45 @@ pieces([_|T], Type, Color, SquareSet) :-
  * @param At
  * @param Piece
  */
-piece_at(BaseBoard, Piece, At) :-
-    member(contents(Piece, square(At)), BaseBoard).
-piece_at(_, empty, _).
+piece_at(BaseBoard, piece(Type, Side), At) :-
+    member(contents(piece(Type, Side), square(At)), BaseBoard).
+piece_at(BaseBoard, empty, At) :-
+    \+ member(contents(piece(_, _), square(At)), BaseBoard).
 
-% attacks(++BaseBoard, +Square, -SquareSet)
-% Gets the set of attacked squares from the given square.
-% There will be no attacks if the square is empty. Pinned pieces are still attacking other squares.
-% Returns a set of squares (SquareSet i.e., list of square/1 predicates).
+/**
+ * is_empty(+BaseBoard:baseboard, +SquareSet:sqset) is det
+ *
+ * is_empty/2 succeeds if all squares in SquareSet are empty i.e. have no piece on them.
+ *
+ * @param BaseBoard
+ * @param SquareSet
+ */
+is_empty(_, []).
+is_empty(BaseBoard, [H|T]) :-
+    piece_at(BaseBoard, empty, H),
+    is_empty(BaseBoard, T).
+
+/**
+ * can_attack(+BaseBoard:baseboard, +Square:square, -AttackSquare:square) is nondet
+ *
+ * Checks if the piece at the given Square can attack another square.
+ *
+ * @param BaseBoard
+ * @param Square
+ * @param AttackSquare
+ */
+can_attack(BaseBoard, Square, AttackSquare) :-
+    piece_at(BaseBoard, piece(Type, Side), Square),
+    attack_square(Square, Type, Side, AttackSquare),
+    findall(Bet, sq_between(Square, AttackSquare, Bet), BetweenSquares), % n^2!
+    is_empty(BaseBoard, BetweenSquares).
+
 /**
  * attacks(+BaseBoard:baseboard, +Square:square, -SquareSet:sqset) is nondet
  *
  * Gets the set of attacked squares from the given square.
  * There will be no attacks if the square is empty. Pinned pieces are still considered to be attacking other squares.
+ * Assumes no other pieces on board.
  *
  * @param BaseBoard
  * @param Square
@@ -64,6 +90,30 @@ piece_at(_, empty, _).
 attacks(BaseBoard, Square, SquareSet) :-
     piece_at(BaseBoard, piece(Type, Side), Square),
     attack_squares(Square, Type, Side, SquareSet).
+
+/**
+ * attack_squares(+Square:square, +PieceType:p_type, +Side:color, -SquareSet:sqset) is nondet
+ *
+ * Find all possible attack squares for a piece.
+ *
+ * @param Square
+ * @param PieceType
+ * @param Side
+ * @param SquareSet A square set representing all squares that the input piece attacks.
+ */
+attack_squares(Square, PieceType, Side, SquareSet) :-
+    findall(AttackSquare, attack_square(Square, PieceType, Side, AttackSquare), SquareSet).
+
+/**
+ * is_attacked(+BaseBoard:baseboard, +Square:square, -Piece:piece) is nondet
+ *
+ * Checks if any piece is attacking the given square.
+ *
+ * @param 
+ */
+is_attacked(BaseBoard, Square, Piece) :-
+    piece_at(BaseBoard, Piece, At),
+    can_attack(BaseBoard, At, Square).
 
 /**
  * remove_piece_at(+BaseBoard:baseboard, +At:square, -NewBaseBoard:baseboard) is det
