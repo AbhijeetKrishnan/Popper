@@ -275,46 +275,47 @@ attack_squares(Square, PieceType, Side, SquareSet) :-
  * @param FileBet
  * @param RankBet
  */
-between_(FileA, RankA, FileA, RankB, 0, N, 0, _, FileA, RankBet) :-
+between_(FileA, RankA, FileA, RankB, 0, N, 0, _, Inclusive, FileA, RankBet) :-
     LeftLimit is min(RankA, RankB) + 1,
-    RightLimit is max(RankA, RankB) - 1,
+    RightLimit is max(RankA, RankB) - Inclusive,
     between(LeftLimit, RightLimit, RankBet).
-between_(FileA, RankA, FileB, RankA, N, 0, _, 0, FileBet, RankA) :-
+between_(FileA, RankA, FileB, RankA, N, 0, _, 0, Inclusive, FileBet, RankA) :-
     BotLimit is min(FileA, FileB) + 1,
-    TopLimit is max(FileA, FileB) - 1,
+    TopLimit is max(FileA, FileB) - Inclusive,
     between(BotLimit, TopLimit, FileBet).
-between_(FileA, RankA, FileB, RankB, N, N, 1, 1, FileBet, RankBet) :-
-    M is N - 1,
+between_(FileA, RankA, FileB, RankB, N, N, 1, 1, Inclusive, FileBet, RankBet) :-
+    M is N - Inclusive,
     between(1, M, T),
     FileBet is FileA + T,
     RankBet is RankA + T.
-between_(FileA, RankA, FileB, RankB, N, N, -1, -1, FileBet, RankBet) :-
-    M is N - 1,
+between_(FileA, RankA, FileB, RankB, N, N, -1, -1, Inclusive, FileBet, RankBet) :-
+    M is N - Inclusive,
     between(1, M, T),
     FileBet is FileA - T,
     RankBet is RankA - T.
-between_(FileA, RankA, FileB, RankB, N, N, 1, -1, FileBet, RankBet) :-
-    M is N - 1,
+between_(FileA, RankA, FileB, RankB, N, N, 1, -1, Inclusive, FileBet, RankBet) :-
+    M is N - Inclusive,
     between(1, M, T),
     FileBet is FileA - T,
     RankBet is RankA + T.
-between_(FileA, RankA, FileB, RankB, N, N, -1, 1, FileBet, RankBet) :-
-    M is N - 1,
+between_(FileA, RankA, FileB, RankB, N, N, -1, 1, Inclusive, FileBet, RankBet) :-
+    M is N - Inclusive,
     between(1, M, T),
     FileBet is FileA + T,
     RankBet is RankA - T.
 
 /**
- * sq_between(+A:square, +B:square, +Bet:square) is det
+ * sq_between(+A:square, +B:square, +Inclusive:int, +Bet:square) is det
  *
  * Describes a square that lies on the straight line path between squares A and B.
  * If A and B are not on a straight line, no square lies in between them.
  *
  * @param A
  * @param B
+ * @param Inclusive 0 for (From, To], 1 for (From, To)
  * @param Bet
  */
-sq_between(A, B, Bet) :-
+sq_between(A, B, Inclusive, Bet) :-
     coords(A, FileA, RankA),
     coords(B, FileB, RankB),
     DelFile is FileB - FileA,
@@ -323,5 +324,5 @@ sq_between(A, B, Bet) :-
     SignRank is sign(DelRank),
     MagFile is abs(DelFile),
     MagRank is abs(DelRank),
-    between_(FileA, RankA, FileB, RankB, MagFile, MagRank, SignFile, SignRank, FileBet, RankBet),
+    between_(FileA, RankA, FileB, RankB, MagFile, MagRank, SignFile, SignRank, Inclusive, FileBet, RankBet),
     coords(Bet, FileBet, RankBet).

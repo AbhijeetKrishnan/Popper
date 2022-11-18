@@ -465,7 +465,9 @@ ply(Board, Ply) :-
  * @param Board
  * @param Move
  */
-castling_move(Board, Move) :-
+castling_move(Board, [From, To]) :-
+    piece_at(Board, piece(king, Side), From),
+    turn(Board, Side),
     fail.
 
 /**
