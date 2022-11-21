@@ -73,7 +73,7 @@ is_empty(BaseBoard, [H|T]) :-
 can_attack(BaseBoard, Square, AttackSquare) :-
     piece_at(BaseBoard, piece(Type, Side), Square),
     attack_square(Square, Type, Side, AttackSquare),
-    findall(Bet, sq_between(Square, AttackSquare, Bet), BetweenSquares), % n^2!
+    findall(Bet, sq_between(Square, AttackSquare, 1, Bet), BetweenSquares), % n^2!
     is_empty(BaseBoard, BetweenSquares).
 
 /**

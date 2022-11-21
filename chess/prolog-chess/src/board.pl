@@ -465,10 +465,36 @@ ply(Board, Ply) :-
  * @param Board
  * @param Move
  */
-castling_move(Board, [From, To]) :-
-    piece_at(Board, piece(king, Side), From),
-    turn(Board, Side),
-    fail.
+castling_move(Board, [e1, g1]) :-
+    piece_at(Board, piece(king, white), e1),
+    piece_at(Board, piece(rook, white), h1),
+    turn(Board, white),
+    is_empty(Board, [f1, g1]),
+    \+ is_attacked(Board, f1, piece(_, black)),
+    \+ is_attacked(Board, g1, piece(_, black)).
+castling_move(Board, [e1, c1]) :-
+    piece_at(Board, piece(king, white), e1),
+    piece_at(Board, piece(rook, white), a1),
+    turn(Board, white),
+    is_empty(Board, [d1, c1, b1]),
+    \+ is_attacked(Board, d1, piece(_, black)),
+    \+ is_attacked(Board, c1, piece(_, black)).
+castling_move(Board, [e8, g8]) :-
+    piece_at(Board, piece(king, black), e8),
+    piece_at(Board, piece(rook, black), h8),
+    turn(Board, black),
+    is_empty(Board, [f8, g8]),
+    \+ is_attacked(Board, f8, piece(_, white)),
+    \+ is_attacked(Board, g8, piece(_, white)).
+castling_move(Board, [e8, c8]) :-
+    piece_at(Board, piece(king, black), e8),
+    piece_at(Board, piece(rook, black), a8),
+    turn(Board, black),
+    is_empty(Board, [d8, c8, b8]),
+    \+ is_attacked(Board, d8, piece(_, white)),
+    \+ is_attacked(Board, c8, piece(_, white)).
+
+
 
 /**
  * is_into_check(+Board:board, +Move:move) is det
