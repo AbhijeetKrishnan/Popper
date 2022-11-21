@@ -135,7 +135,6 @@ increment_halfmove_clock(Board, NewBoard) :-
 reset_halfmove_clock(Board, NewBoard) :-
     set_halfmove_clock(Board, 0, NewBoard).
 
-% en_passant(++Board, -Square)
 /**
  * en_passant(+Board:board, -Square:square) is det
  *
@@ -494,6 +493,22 @@ castling_move(Board, [e8, c8]) :-
     \+ is_attacked(Board, d8, piece(_, white)),
     \+ is_attacked(Board, c8, piece(_, white)).
 
+/**
+ * pseudo_legal_ep(+Board:board, -Move:move) is nondet
+ *
+ * Generates pseudo-legal en passant captures for the current side in the input board.
+ *
+ * @param Board
+ * @param Move
+ */
+pseudo_legal_ep(Board, [From, To]) :-
+    en_passant(Board, EpSq),
+    EpSq \== empty,                           % en passant square must exist
+    To = EpSq,                                % move must be to en passant square
+    is_empty(Board, [EpSq]),                  % en passant square must not be occupied
+    turn(Board, Side),
+    piece_at(Board, piece(pawn, Side), From),
+    attack_square(From, pawn, Side, EpSq).    % pawn of playing side must attack en passant square
 
 
 /**
