@@ -26,8 +26,10 @@
  * @param ToFile
  * @param ToRank
  */
-pawn_single_move_(Side, FromFile, FromRank, FromFile, ToRank) :-
+pawn_single_move_(white, FromFile, FromRank, FromFile, ToRank) :-
     ToRank is FromRank + 1.
+pawn_single_move_(black, FromFile, FromRank, FromFile, ToRank) :-
+    ToRank is FromRank - 1.
 
 /**
  * pawn_single_move(+Side:color, +From:square, -To:square) is det
@@ -335,34 +337,34 @@ attack_squares(Square, PieceType, Side, SquareSet) :-
  * @param FileBet
  * @param RankBet
  */
-between_(FileA, RankA, FileA, RankB, 0, N, 0, _, Inclusive, FileA, RankBet) :-
+between_(FileA, RankA, FileA, RankB, 0, N, 0, _, Inclusive, FileA, RankBet) :- % A r B
     LeftLimit is min(RankA, RankB) + 1,
     RightLimit is max(RankA, RankB) - Inclusive,
     between(LeftLimit, RightLimit, RankBet).
-between_(FileA, RankA, FileB, RankA, N, 0, _, 0, Inclusive, FileBet, RankA) :-
+between_(FileA, RankA, FileB, RankA, N, 0, _, 0, Inclusive, FileBet, RankA) :- % A u B
     BotLimit is min(FileA, FileB) + 1,
     TopLimit is max(FileA, FileB) - Inclusive,
     between(BotLimit, TopLimit, FileBet).
-between_(FileA, RankA, FileB, RankB, N, N, 1, 1, Inclusive, FileBet, RankBet) :-
+between_(FileA, RankA, FileB, RankB, N, N, 1, 1, Inclusive, FileBet, RankBet) :- % A ur B
     M is N - Inclusive,
     between(1, M, T),
     FileBet is FileA + T,
     RankBet is RankA + T.
-between_(FileA, RankA, FileB, RankB, N, N, -1, -1, Inclusive, FileBet, RankBet) :-
+between_(FileA, RankA, FileB, RankB, N, N, -1, -1, Inclusive, FileBet, RankBet) :- % A dl B
     M is N - Inclusive,
     between(1, M, T),
     FileBet is FileA - T,
     RankBet is RankA - T.
-between_(FileA, RankA, FileB, RankB, N, N, 1, -1, Inclusive, FileBet, RankBet) :-
-    M is N - Inclusive,
-    between(1, M, T),
-    FileBet is FileA - T,
-    RankBet is RankA + T.
-between_(FileA, RankA, FileB, RankB, N, N, -1, 1, Inclusive, FileBet, RankBet) :-
+between_(FileA, RankA, FileB, RankB, N, N, 1, -1, Inclusive, FileBet, RankBet) :- % A dr B
     M is N - Inclusive,
     between(1, M, T),
     FileBet is FileA + T,
     RankBet is RankA - T.
+between_(FileA, RankA, FileB, RankB, N, N, -1, 1, Inclusive, FileBet, RankBet) :- % A ul B
+    M is N - Inclusive,
+    between(1, M, T),
+    FileBet is FileA - T,
+    RankBet is RankA + T.
 
 /**
  * sq_between(+A:square, +B:square, +Inclusive:int, +Bet:square) is det
