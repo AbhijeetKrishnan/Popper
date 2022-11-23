@@ -22,6 +22,18 @@ piece_type(queen).
 piece_type(king).
 
 /**
+ * promo_piece(+PieceType:p_type) is det
+ *
+ * Defines all valid promo piece types in chess.
+ *
+ * @param PieceType
+ */
+promo_piece(knight).
+promo_piece(bishop).
+promo_piece(rook).
+promo_piece(queen).
+
+/**
  * piece_type_string(+PieceType:p_type, -String:str) is det
  * 
  * Produces the string representation of a piece for display

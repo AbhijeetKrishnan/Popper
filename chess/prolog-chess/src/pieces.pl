@@ -49,3 +49,14 @@ piece_char('b', piece(bishop, black)).
 piece_char('r', piece(rook, black)).
 piece_char('q', piece(queen, black)).
 piece_char('k', piece(king, black)).
+
+/**
+ * pawn_start_rank(+Side:side, +Rank:int) is det
+ *
+ * Defines the start rank of a pawn in chess.
+ *
+ * @param Side
+ * @param Rank
+ */
+pawn_start_rank(white, 2).
+pawn_start_rank(black, 7).

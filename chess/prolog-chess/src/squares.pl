@@ -70,3 +70,25 @@ mirror(Square, Mirror):-
     coords(Square, File, Rank),
     MirrorRank is 9 - Rank,
     coords(Mirror, File, MirrorRank).
+
+/**
+ * promo_rank(+Side:color, -Rank:int) is det
+ *
+ * Returns the rank at which the input side can make a promo with a subsequent single pawn move.
+ *
+ * @param Side
+ * @param Rank
+ */
+promo_rank(white, 7).
+promo_rank(black, 2).
+
+/**
+ * backrank(+Side:color, -Rank:int) is det
+ *
+ * Returns the back rank for the input side.
+ *
+ * @param Side
+ * @param Rank
+ */
+backrank(white, 1).
+backrank(black, 8).

@@ -465,6 +465,7 @@ ply(Board, Ply) :-
  * @param Move
  */
 castling_move(Board, [e1, g1]) :-
+    kingside_castle(Board, white),
     piece_at(Board, piece(king, white), e1),
     piece_at(Board, piece(rook, white), h1),
     turn(Board, white),
@@ -472,6 +473,7 @@ castling_move(Board, [e1, g1]) :-
     \+ is_attacked(Board, f1, piece(_, black)),
     \+ is_attacked(Board, g1, piece(_, black)).
 castling_move(Board, [e1, c1]) :-
+    queenside_castle(Board, white),
     piece_at(Board, piece(king, white), e1),
     piece_at(Board, piece(rook, white), a1),
     turn(Board, white),
@@ -479,6 +481,7 @@ castling_move(Board, [e1, c1]) :-
     \+ is_attacked(Board, d1, piece(_, black)),
     \+ is_attacked(Board, c1, piece(_, black)).
 castling_move(Board, [e8, g8]) :-
+    kingside_castle(Board, black),
     piece_at(Board, piece(king, black), e8),
     piece_at(Board, piece(rook, black), h8),
     turn(Board, black),
@@ -486,6 +489,7 @@ castling_move(Board, [e8, g8]) :-
     \+ is_attacked(Board, f8, piece(_, white)),
     \+ is_attacked(Board, g8, piece(_, white)).
 castling_move(Board, [e8, c8]) :-
+    queenside_castle(Board, black),
     piece_at(Board, piece(king, black), e8),
     piece_at(Board, piece(rook, black), a8),
     turn(Board, black),
@@ -510,18 +514,31 @@ pseudo_legal_ep(Board, [From, To]) :-
     piece_at(Board, piece(pawn, Side), From),
     attack_square(From, pawn, Side, EpSq).    % pawn of playing side must attack en passant square
 
-
 /**
- * is_into_check(+Board:board, +Move:move) is det
+ * pawn_capture(+Board:board, -Move:move) is nondet
  *
- * Check if a given move would put the king into check.
+ * Defines a pseudo-legal pawn capture on the current board.
  *
  * @param Board
  * @param Move
  */
-is_into_check(Board, Move) :-
-    fail.
-
+pawn_capture(Board, [From, To]) :-
+    turn(Board, Side),
+    coords(From, FromFile, FromRank),
+    \+ promo_rank(Side, FromRank),
+    other_color(Side, OtherSide),
+    piece_at(Board, piece(pawn, Side), From),
+    can_attack(Board, From, To),
+    piece_at(Board, piece(_, OtherSide), To).
+pawn_capture(Board, [From, To, Promo]) :-
+    turn(Board, Side),
+    coords(From, FromFile, FromRank),
+    promo_rank(Side, FromRank),
+    promo_piece(Promo),
+    other_color(Side, OtherSide),
+    piece_at(Board, piece(pawn, Side), From),
+    can_attack(Board, From, To),
+    piece_at(Board, piece(_, OtherSide), To).
 
 /**
  * pseudo_legal_move(+Board:board, +Move:move) is det
@@ -538,7 +555,55 @@ is_into_check(Board, Move) :-
  * @param Board
  * @param Move
  */
-pseudo_legal_move(Board, Move) :-
+pseudo_legal_move(Board, [From, To]) :- % piece move
+    turn(Board, Side),
+    piece_at(Board, piece(Type, Side), From),
+    Type \== pawn,
+    can_attack(Board, From, To),
+    piece_at(Board, empty, To).
+pseudo_legal_move(Board, [From, To]) :- % piece capture
+    turn(Board, Side),
+    other_color(Side, OtherSide),
+    piece_at(Board, piece(Type, Side), From),
+    Type \== pawn,
+    can_attack(Board, From, To),
+    piece_at(Board, piece(_, OtherSide), To).
+pseudo_legal_move(Board, Move) :- % castling move
+    castling_move(Board, Move).
+pseudo_legal_move(Board, Move) :- % pawn capture (with promo)
+    pawn_capture(Board, Move).
+pseudo_legal_move(Board, [From, To]) :- % pawn single move (non-promo)
+    turn(Board, Side),
+    piece_at(Board, piece(pawn, Side), From),
+    coords(From, FromFile, FromRank),
+    \+ promo_rank(Side, FromRank),
+    pawn_single_move(Side, From, To),
+    is_empty(Board, [To]).
+pseudo_legal_move(Board, [From, To, Promo]) :- % pawn single move (promo)
+    turn(Board, Side),
+    piece_at(Board, piece(pawn, Side), From),
+    coords(From, FromFile, FromRank),
+    promo_rank(Side, FromRank),
+    promo_piece(Promo),
+    pawn_single_move(Side, From, To),
+    is_empty(Board, [To]).
+pseudo_legal_move(Board, Move) :- % pawn double move
+    turn(Board, Side),                        % piece being moved belongs to side whose turn it is
+    piece_at(Board, piece(pawn, Side), From), % piece being moved is a pawn
+    pawn_double_move(Side, From, Middle, To),
+    is_empty(Board, [Middle, To]).
+pseudo_legal_move(Board, Move) :- % en passant move
+    pseudo_legal_ep(Board, Move).
+
+/**
+ * is_into_check(+Board:board, +Move:move) is det
+ *
+ * Check if a given move would put the king into check.
+ *
+ * @param Board
+ * @param Move
+ */
+is_into_check(Board, Move) :-
     fail.
 
 % legal_move(++Board, +Move)

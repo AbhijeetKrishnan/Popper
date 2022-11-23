@@ -16,6 +16,66 @@
 :- ['moves.pl'].
 
 /**
+ * pawn_single_move_(+Side:color, +FromFile:int, +FromRank:int, -ToFile:int, -ToRank:int) is det
+ *
+ * Helper rule to define a pawn single move from any position.
+ *
+ * @param Side
+ * @param FromFile
+ * @param FromRank
+ * @param ToFile
+ * @param ToRank
+ */
+pawn_single_move_(Side, FromFile, FromRank, FromFile, ToRank) :-
+    ToRank is FromRank + 1.
+
+/**
+ * pawn_single_move(+Side:color, +From:square, -To:square) is det
+ *
+ * Defines a pawn single move from a position on the board.
+ *
+ * @param Side
+ * @param From
+ * @param To
+ */
+pawn_single_move(Side, From, To) :-
+    coords(From, FromFile, FromRank),
+    pawn_single_move_(Side, FromFile, FromRank, ToFile, ToRank),
+    coords(To, ToFile, ToRank).
+
+/**
+ * pawn_double_move_(+Side:color, +FromFile:int, +FromRank:int, -MiddleFile:int, -MiddleRank:int, -ToFile:int, -ToRank:int) is det
+ *
+ * Helper rule to define a pawn double move from its initial position.
+ *
+ * @param Side
+ * @param FromFile
+ * @param FromRank
+ * @param MiddleFile
+ * @param MiddleRank
+ * @param ToFile
+ * @param ToRank
+ */
+pawn_double_move_(white, FromFile, 2, FromFile, 3, FromFile, 4).
+pawn_double_move_(black, FromFile, 7, FromFile, 6, FromFile, 5).
+
+/**
+ * pawn_double_move(+Side:color, +From:square, -Middle:square, -To:square) is det
+ *
+ * Defines a pawn double move from its initial position.
+ *
+ * @param Side
+ * @param From
+ * @param Middle
+ * @param To
+ */
+pawn_double_move(Side, From, Middle, To) :-
+    coords(From, FromFile, FromRank),
+    pawn_double_move_(Side, FromFile, FromRank, MiddleFile, MiddleRank, ToFile, ToRank),
+    coords(Middle, MiddleFile, MiddleRank),
+    coords(To, ToFile, ToRank).
+
+/**
  * pawn_attack_delta(+Side:color, +FileDelta:int, +RankDelta:int) is det
  *
  * Allowable movement deltas for pawns.
