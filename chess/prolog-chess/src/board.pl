@@ -411,7 +411,7 @@ perform_castling(Board, _, _, PlacedPiece, Board).
  * @param NewBoard
  */
 make_move(Board, Move, NewBoard) :-
-    move(Move, From, To, Promo),
+    move(Move, square(From), square(To), PromoList),
 
     increment_halfmove_clock(Board, Board_1),
     increment_fullmove(Board_1, Board_2),
@@ -428,7 +428,7 @@ make_move(Board, Move, NewBoard) :-
     set_ep_square(Board_7, MovedPiece, From, To, Board_8),
 
     % handle promotion - if promo, set new piece type to promo type
-    placed_piece(MovedPiece, Promo, PlacedPiece),
+    placed_piece(MovedPiece, PromoList, PlacedPiece),
 
     % handle castling - if possible (piece to be moved is King and adjacent square has own rook), perform that castle
     perform_castling(Board_8, From, To, PlacedPiece, Board_9),
@@ -541,19 +541,16 @@ pawn_capture(Board, [From, To, Promo]) :-
     piece_at(Board, piece(_, OtherSide), To).
 
 /**
- * pseudo_legal_move(+Board:board, +Move:move) is det
+ * pseudo_legal_move_(+Board:board, +Type: p_type, +Side:color, -From:square, -To:square[, -Promo:p_type]) is nondet
  *
- * Checks if a given move is pseudo-legal.
- * A move is pseudo-legal if -
- * 1. it is a valid move i.e., it is [From, To] or [From, To, Promo]
- * 2. the source square contains a piece
- * 3. piece being moved belongs to side whose turn it is to play
- * 4. if the move is a promotion, the moved piece is a pawn on the correct rank
- * 5. if the move is a castle, it is permissible depending on available castling rights
- * 6. the destination square is NOT occupied
+ * Helper method for generating pseudo-legal moves (or checking if a move is pseudo-legal).
  *
  * @param Board
- * @param Move
+ * @param Type
+ * @param Side
+ * @param From
+ * @param To
+ * @param [Promo]
  */
 pseudo_legal_move_(Board, pawn, Side, From, To) :- % pawn capture (non-promo)
     coords(From, FromFile, FromRank),
@@ -596,6 +593,21 @@ pseudo_legal_move_(Board, Type, Side, From, To) :- % piece capture
     can_attack(Board, From, To),
     piece_at(Board, piece(_, OtherSide), To).
 
+/**
+ * pseudo_legal_move(+Board:board, +Move:move) is det
+ *
+ * Checks if a given move is pseudo-legal.
+ * A move is pseudo-legal if -
+ * 1. it is a valid move i.e., it is [From, To] or [From, To, Promo]
+ * 2. the source square contains a piece
+ * 3. piece being moved belongs to side whose turn it is to play
+ * 4. if the move is a promotion, the moved piece is a pawn on the correct rank
+ * 5. if the move is a castle, it is permissible depending on available castling rights
+ * 6. the destination square is NOT occupied
+ *
+ * @param Board
+ * @param Move
+ */
 pseudo_legal_move(Board, [From, To, Promo]) :-
     turn(Board, Side),
     piece_at(Board, piece(pawn, Side), From),
@@ -606,19 +618,34 @@ pseudo_legal_move(Board, [From, To]) :-
     pseudo_legal_move_(Board, Type, Side, From, To).
 
 /**
- * is_into_check(+Board:board, +Move:move) is det
+ * into_check(+Board:board, +Move:move, -Checker:piece) is nondet
  *
  * Check if a given move would put the king into check.
+ * In the position after the move is played, search for a piece that could "capture" the king.
+ *
+ * @param Board
+ * @param Move
+ * @param Checker The piece which is checking the king after the move
+ */
+into_check(Board, Move, Checker) :-
+    turn(Board, Side),
+    make_move(Board, Move, NewBoard),
+    piece_at(NewBoard, piece(king, Side), KingSq),
+    pseudo_legal_move(NewBoard, [From, KingSq|_]), % check if any piece can "capture" the king
+    piece_at(NewBoard, Checker, From).
+
+/**
+ * legal_move(+Board:board, -Move:move) is nondet
+ *
+ * Defines a legal chess move.
+ * A move is legal if it is pseudo-legal and does not lead to the king being in check.
  *
  * @param Board
  * @param Move
  */
-is_into_check(Board, Move) :-
-    fail.
-
-% legal_move(++Board, +Move)
 legal_move(Board, Move) :-
-    fail.
+    pseudo_legal_move(Board, Move),
+    \+ into_check(Board, Move, _).
 
 % Gets the pieces currently giving check
 checkers(Board, Checkers) :-
