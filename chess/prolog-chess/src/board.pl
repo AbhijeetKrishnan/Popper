@@ -219,7 +219,7 @@ set_board_fen(Fen, Board) :-
 is_capture(Board, [_, To|_]) :-
     turn(Board, Side),
     other_color(Side, OpposingSide),
-    piece_at(Board, To, piece(_, OpposingSide)).
+    piece_at(Board, piece(_, OpposingSide), To).
 
 /**
  * is_zeroing(+Board:board, +Move:move) is semidet
@@ -231,7 +231,7 @@ is_capture(Board, [_, To|_]) :-
  * @param Move
  */
 is_zeroing(Board, [From, _|_]) :-
-    piece_at(Board, From, pawn).
+    piece_at(Board, piece(pawn, _), From).
 is_zeroing(Board, [From, To|_]) :-
     is_capture(Board, [From, To]).
 
@@ -245,9 +245,12 @@ is_zeroing(Board, [From, To|_]) :-
  * @param NewBoard
  */
 reset_if_zeroing(Board, Move, NewBoard) :-
-    is_zeroing(Board, Move),
-    reset_halfmove_clock(Board, NewBoard).
-reset_if_zeroing(Board, _, Board).
+    (
+        is_zeroing(Board, Move) ->
+            reset_halfmove_clock(Board, NewBoard)
+        ;
+            increment_halfmove_clock(Board, NewBoard)
+    ).
 
 /**
  * update_castling_rights(+Board:board, +Move:move, -NewBoard:board) is det
@@ -260,25 +263,25 @@ reset_if_zeroing(Board, _, Board).
  * @param Move
  * @param NewBoard
  */
-update_castling_rights(Board, [square(e1), _|_], NewBoard) :-
-    piece_at(Board, piece(king, white), square(e1)),
+update_castling_rights(Board, [e1, _|_], NewBoard) :-
+    piece_at(Board, piece(king, white), e1),
     delete(Board, kingside_castle(white), Board_1),
     delete(Board_1, queenside_castle(white), NewBoard).
-update_castling_rights(Board, [square(e8), _|_], NewBoard) :-
-    piece_at(Board, piece(king, black), square(e8)),
+update_castling_rights(Board, [e8, _|_], NewBoard) :-
+    piece_at(Board, piece(king, black), e8),
     delete(Board, kingside_castle(black), Board_1),
     delete(Board_1, queenside_castle(black), NewBoard).
-update_castling_rights(Board, [square(a1), _|_], NewBoard) :-
-    piece_at(Board, piece(rook, white), square(a1)),
+update_castling_rights(Board, [a1, _|_], NewBoard) :-
+    piece_at(Board, piece(rook, white), a1),
     delete(Board, queenside_castle(white), NewBoard).
-update_castling_rights(Board, [square(h1), _|_], NewBoard) :-
-    piece_at(Board, piece(rook, white), square(h1)),
+update_castling_rights(Board, [h1, _|_], NewBoard) :-
+    piece_at(Board, piece(rook, white), h1),
     delete(Board, kingside_castle(white), NewBoard).
-update_castling_rights(Board, [square(a8), _|_], NewBoard) :-
-    piece_at(Board, piece(rook, black), square(a8)),
+update_castling_rights(Board, [a8, _|_], NewBoard) :-
+    piece_at(Board, piece(rook, black), a8),
     delete(Board, queenside_castle(black), NewBoard).
-update_castling_rights(Board, [square(h8), _|_], NewBoard) :-
-    piece_at(Board, piece(rook, black), square(h8)),
+update_castling_rights(Board, [h8, _|_], NewBoard) :-
+    piece_at(Board, piece(rook, black), h8),
     delete(Board, kingside_castle(black), NewBoard).
 update_castling_rights(Board, _, Board).
 
@@ -335,14 +338,14 @@ set_ep_square(Board, _, _, _, NewBoard) :-
  * @param ToPred
  * @param NewBoard
  */
-make_ep_capture(Board, piece(pawn, Side), empty, square(FromAtom), square(ToAtom), NewBoard) :-
+make_ep_capture(Board, piece(pawn, Side), empty, FromAtom, ToAtom, NewBoard) :-
     coords(FromAtom, FileF, RankF),
     coords(ToAtom, FileT, RankT),
     DelF is FileT - FileF,
     DelR is RankT - RankF,
     pawn_attack_delta(Side, DelF, DelR),
 
-    en_passant(Board, square(ToAtom)),
+    en_passant(Board, ToAtom),
     
     other_color(Side, OtherSide),
     coords(Target, FileT, RankF),
@@ -387,18 +390,18 @@ swap_turn(Board, NewBoard) :-
  * @param Piece The piece being moved
  * @param NewBoard
  */
-perform_castling(Board, square(e1), square(g1), piece(king, white), NewBoard) :-
-    remove_piece_at(Board, square(h1), Board_1),
-    set_piece_at(Board_1, piece(rook, white), square(f1), NewBoard).
-perform_castling(Board, square(e1), square(c1), piece(king, white), NewBoard) :-
-    remove_piece_at(Board, square(a1), Board_1),
-    set_piece_at(Board_1, piece(rook, white), square(d1), NewBoard).
-perform_castling(Board, square(e8), square(g8), piece(king, black), NewBoard) :-
-    remove_piece_at(Board, square(h8), Board_1),
-    set_piece_at(Board_1, piece(rook, black), square(f8), NewBoard).
-perform_castling(Board, square(e8), square(c8), piece(king, black), NewBoard) :-
-    remove_piece_at(Board, square(a8), Board_1),
-    set_piece_at(Board_1, piece(rook, black), square(d8), NewBoard).
+perform_castling(Board, e1, g1, piece(king, white), NewBoard) :-
+    remove_piece_at(Board, h1, Board_1),
+    set_piece_at(Board_1, piece(rook, white), f1, NewBoard).
+perform_castling(Board, e1, c1, piece(king, white), NewBoard) :-
+    remove_piece_at(Board, a1, Board_1),
+    set_piece_at(Board_1, piece(rook, white), d1, NewBoard).
+perform_castling(Board, e8, g8, piece(king, black), NewBoard) :-
+    remove_piece_at(Board, h8, Board_1),
+    set_piece_at(Board_1, piece(rook, black), f8, NewBoard).
+perform_castling(Board, e8, c8, piece(king, black), NewBoard) :-
+    remove_piece_at(Board, a8, Board_1),
+    set_piece_at(Board_1, piece(rook, black), d8, NewBoard).
 perform_castling(Board, _, _, PlacedPiece, Board).
 
 /**
@@ -413,30 +416,30 @@ perform_castling(Board, _, _, PlacedPiece, Board).
 make_move(Board, Move, NewBoard) :-
     move(Move, square(From), square(To), PromoList),
 
-    increment_halfmove_clock(Board, Board_1),
-    increment_fullmove(Board_1, Board_2),
-    reset_if_zeroing(Board_2, Move, Board_3),
-    update_castling_rights(Board_3, Move, Board_4),
+    increment_fullmove(Board, Board_1),
+    reset_if_zeroing(Board_1, Move, Board_2),
+    update_castling_rights(Board_2, Move, Board_3),
 
     piece_at(Board, MovedPiece, From),
     piece_at(Board, CapturedPiece, To),
-    remove_piece_at(Board_4, From, Board_5),
-    remove_piece_at(Board_5, To, Board_6),
+    remove_piece_at(Board_3, From, Board_4),
+    remove_piece_at(Board_4, To, Board_5),
     
     % handle special pawn moves (set ep square, remove pawn captured by ep)
-    make_ep_capture(Board_6, MovedPiece, CapturedPiece, From, To, Board_7),
-    set_ep_square(Board_7, MovedPiece, From, To, Board_8),
+    make_ep_capture(Board_5, MovedPiece, CapturedPiece, From, To, Board_6),
+    set_ep_square(Board_6, MovedPiece, From, To, Board_7),
 
     % handle promotion - if promo, set new piece type to promo type
     placed_piece(MovedPiece, PromoList, PlacedPiece),
 
     % handle castling - if possible (piece to be moved is King and adjacent square has own rook), perform that castle
-    perform_castling(Board_8, From, To, PlacedPiece, Board_9),
+    perform_castling(Board_7, From, To, PlacedPiece, Board_8),
     % if castling not possible, put target piece on target square
-    set_piece_at(Board_9, PlacedPiece, To, Board_10),
+    set_piece_at(Board_8, PlacedPiece, To, Board_9),
 
-    swap_turn(Board_10, Board_11),
-    NewBoard = Board_11.
+    swap_turn(Board_9, Board_10),
+    NewBoard = Board_10,
+    !.
 
 /**
  * ply(+Board:board, -Ply:int) is det
@@ -470,6 +473,7 @@ castling_move(Board, [e1, g1]) :-
     piece_at(Board, piece(rook, white), h1),
     turn(Board, white),
     is_empty(Board, [f1, g1]),
+    \+ is_attacked(Board, e1, piece(_, black)),
     \+ is_attacked(Board, f1, piece(_, black)),
     \+ is_attacked(Board, g1, piece(_, black)).
 castling_move(Board, [e1, c1]) :-
@@ -478,6 +482,7 @@ castling_move(Board, [e1, c1]) :-
     piece_at(Board, piece(rook, white), a1),
     turn(Board, white),
     is_empty(Board, [d1, c1, b1]),
+    \+ is_attacked(Board, e1, piece(_, black)),
     \+ is_attacked(Board, d1, piece(_, black)),
     \+ is_attacked(Board, c1, piece(_, black)).
 castling_move(Board, [e8, g8]) :-
@@ -486,6 +491,7 @@ castling_move(Board, [e8, g8]) :-
     piece_at(Board, piece(rook, black), h8),
     turn(Board, black),
     is_empty(Board, [f8, g8]),
+    \+ is_attacked(Board, e8, piece(_, white)),
     \+ is_attacked(Board, f8, piece(_, white)),
     \+ is_attacked(Board, g8, piece(_, white)).
 castling_move(Board, [e8, c8]) :-
@@ -494,6 +500,7 @@ castling_move(Board, [e8, c8]) :-
     piece_at(Board, piece(rook, black), a8),
     turn(Board, black),
     is_empty(Board, [d8, c8, b8]),
+    \+ is_attacked(Board, e8, piece(_, white)),
     \+ is_attacked(Board, d8, piece(_, white)),
     \+ is_attacked(Board, c8, piece(_, white)).
 

@@ -252,7 +252,7 @@ r_attacks(Square, AttackSquare) :-
  * @param AttackSquare
  */
 % pawn
-attack_square(Square, pawn, SideAtom, AttackSquare) :-
+attack_square(Square, pawn, Side, AttackSquare) :-
     coords(Square, X, Y),
     pawn_attack_delta(Side, DelX, DelY),
     X_a is X + DelX,

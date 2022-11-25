@@ -31,7 +31,7 @@
  * If 1, the list contains a single piece_type/1 predicate representing the piece being promoted to.
  */
 move([From, To], square(From), square(To), []).
-move([From, To, Promo], square(From), square(To), piece_type(Promo)).
+move([From, To, Promo], square(From), square(To), [piece_type(Promo)]).
 
 /**
  * is_promo(+Move:move) is det
