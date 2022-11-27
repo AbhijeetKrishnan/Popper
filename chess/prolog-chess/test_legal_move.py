@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 
 from collections.abc import Iterable
+import io
 import os
+import pickle
 import re
 import sys
-from typing import List
+from typing import List, Tuple
 
 import chess, chess.pgn
 import pyswip
+from tqdm import tqdm
+
+
+PGN_PATH = os.path.join(os.path.expanduser('~'), 'phd/interpretable-chess-tactics/tactics/data/lichess_db_standard_rated_2013-01.pgn')
+TOTAL_POS = 8155127
 
 prolog = pyswip.Prolog()
 prolog.consult('load.pl')
-
 
 def contents_to_board(contents: List[str]) -> chess.Board:
     board = chess.Board().empty()
@@ -45,7 +51,6 @@ def contents_to_board(contents: List[str]) -> chess.Board:
                 board.castling_rights |= chess.BB_A8
     return board
 
-
 def push_prolog(board: chess.Board, move: chess.Move) -> chess.Board:
     prolog_move = move_to_prolog(move)
     make_move_query = f'set_board_fen("{board.fen()}", Board), make_move(Board, [{", ".join(prolog_move)}], NewBoard)'
@@ -72,18 +77,38 @@ def get_prolog_legal_moves(board: chess.Board) -> Iterable[chess.Move]:
     legal_moves = map(lambda move: prolog_move_to_uci(move), legal_moves_res)
     return legal_moves
 
+def save_state(offset: int, move_num: int, pos_seen: int) -> None:
+    state = (offset, move_num, pos_seen)
+    with open('state.pickle', 'wb') as statefile:
+        pickle.dump(state, statefile)
+
+def load_state() -> Tuple[int, int, int]:
+    with open('state.pickle', 'rb') as statefile:
+        state = pickle.load(statefile)
+    return state
 
 if __name__ == '__main__':
-    PGN_PATH = os.path.join(os.path.expanduser('~'), 'phd/interpretable-chess-tactics/tactics/data/lichess_db_standard_rated_2013-01.pgn')
     pgn = open(PGN_PATH, 'r')
+    if os.path.exists('state.pickle'):
+        offset, move_num, pos_seen = load_state()
+        pgn.seek(offset)
+    else:
+        offset = None
+        move_num = 0
+        pos_seen = 0
+    progress_bar = tqdm(desc='Positions seen', unit='pos', initial=pos_seen-move_num, total=TOTAL_POS)
 
     while game := chess.pgn.read_game(pgn):
         prolog_board = chess.Board()
         python_board = chess.Board()
+        move_num = 0
 
         for move in game.mainline_moves():
             prolog_board = push_prolog(prolog_board, move)
             python_board.push(move)
+            move_num += 1
+            pos_seen += 1
+            save_state(pgn.tell(), move_num, pos_seen)
 
             if prolog_board.fen() != python_board.fen():
                 python_board.pop()
@@ -92,10 +117,11 @@ if __name__ == '__main__':
                 print(f'Previous board: {prev_board_fen}\nMove: {move.uci()}\nProlog: {prolog_board.fen()}\nPython: {python_board.fen()}')
                 sys.exit(1)
                 
-
             prolog_legal = ', '.join([move.uci() for move in sorted(list(get_prolog_legal_moves(prolog_board)), key=lambda move: move.uci())])
             python_legal = ', '.join([move.uci() for move in sorted(list(python_board.legal_moves), key=lambda move: move.uci())])
             
             if prolog_legal != python_legal:
                 print(f'{python_board.fen()}\nProlog: {prolog_legal}\nPython: {python_legal}')
                 sys.exit(1)
+            progress_bar.update(1)
+    progress_bar.close()
