@@ -6,6 +6,7 @@ stockfish_14_x64/*
 tactics/bin/stockfish_14_x64
 tactics/bin/maia_weights/*
 tactics/data/*
+*.pickle
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
