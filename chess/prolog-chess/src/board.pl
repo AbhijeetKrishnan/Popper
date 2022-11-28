@@ -402,7 +402,7 @@ perform_castling(Board, e8, g8, piece(king, black), NewBoard) :-
 perform_castling(Board, e8, c8, piece(king, black), NewBoard) :-
     remove_piece_at(Board, a8, Board_1),
     set_piece_at(Board_1, piece(rook, black), d8, NewBoard).
-perform_castling(Board, _, _, PlacedPiece, Board).
+perform_castling(Board, _, _, _, Board).
 
 /**
  * make_move(+Board:board, +Move:move, -NewBoard:board) is det
@@ -531,7 +531,7 @@ pseudo_legal_ep(Board, [From, To]) :-
  */
 pawn_capture(Board, [From, To]) :-
     turn(Board, Side),
-    coords(From, FromFile, FromRank),
+    coords(From, _, FromRank),
     \+ promo_rank(Side, FromRank),
     other_color(Side, OtherSide),
     piece_at(Board, piece(pawn, Side), From),
@@ -539,7 +539,7 @@ pawn_capture(Board, [From, To]) :-
     piece_at(Board, piece(_, OtherSide), To).
 pawn_capture(Board, [From, To, Promo]) :-
     turn(Board, Side),
-    coords(From, FromFile, FromRank),
+    coords(From, _, FromRank),
     promo_rank(Side, FromRank),
     promo_piece(Promo),
     other_color(Side, OtherSide),
@@ -559,38 +559,38 @@ pawn_capture(Board, [From, To, Promo]) :-
  * @param To
  * @param [Promo]
  */
-pseudo_legal_move_(Board, pawn, Side, From, To) :- % pawn capture (non-promo)
-    coords(From, FromFile, FromRank),
-    \+ promo_rank(Side, FromRank),
-    other_color(Side, OtherSide),
-    can_attack(Board, From, To),
-    piece_at(Board, piece(_, OtherSide), To).
 pseudo_legal_move_(Board, pawn, Side, From, To, Promo) :- % pawn capture (promo)
-    coords(From, FromFile, FromRank),
+    coords(From, _, FromRank),
     promo_rank(Side, FromRank),
     promo_piece(Promo),
     other_color(Side, OtherSide),
     can_attack(Board, From, To),
     piece_at(Board, piece(_, OtherSide), To).
-pseudo_legal_move_(Board, pawn, Side, From, To) :- % pawn single move (non-promo)
-    coords(From, FromFile, FromRank),
-    \+ promo_rank(Side, FromRank),
-    pawn_single_move(Side, From, To),
-    is_empty(Board, [To]).
 pseudo_legal_move_(Board, pawn, Side, From, To, Promo) :- % pawn single move (promo)
-    coords(From, FromFile, FromRank),
+    coords(From, _, FromRank),
     promo_rank(Side, FromRank),
     promo_piece(Promo),
     pawn_single_move(Side, From, To),
     is_empty(Board, [To]).
+pseudo_legal_move_(Board, pawn, Side, From, To) :- % pawn single move (non-promo)
+    coords(From, _, FromRank),
+    \+ promo_rank(Side, FromRank),
+    pawn_single_move(Side, From, To),
+    is_empty(Board, [To]).
+    pseudo_legal_move_(Board, pawn, Side, From, To) :- % pawn capture (non-promo)
+    coords(From, _, FromRank),
+    \+ promo_rank(Side, FromRank),
+    other_color(Side, OtherSide),
+    can_attack(Board, From, To),
+    piece_at(Board, piece(_, OtherSide), To).
 pseudo_legal_move_(Board, pawn, Side, From, To) :- % pawn double move
     pawn_double_move(Side, From, Middle, To),
     is_empty(Board, [Middle, To]).
-pseudo_legal_move_(Board, pawn, Side, From, To) :- % en passant move
+pseudo_legal_move_(Board, pawn, _, From, To) :- % en passant move
     pseudo_legal_ep(Board, [From, To]).
-pseudo_legal_move_(Board, king, Side, From, To) :- % castling move
+pseudo_legal_move_(Board, king, _, From, To) :- % castling move
     castling_move(Board, [From, To]).
-pseudo_legal_move_(Board, Type, Side, From, To) :- % piece move
+pseudo_legal_move_(Board, Type, _, From, To) :- % piece move
     Type \== pawn,
     can_attack(Board, From, To),
     piece_at(Board, empty, To).
@@ -654,44 +654,43 @@ legal_move(Board, Move) :-
     pseudo_legal_move(Board, Move),
     \+ into_check(Board, Move, _).
 
-% Gets the pieces currently giving check
-checkers(Board, Checkers) :-
-    fail.
+% % Gets the pieces currently giving check
+% checkers(Board, Checkers) :-
+%     fail.
 
-% Tests if the current side to move is in check
-in_check(Board) :-
-    fail.
+% % Tests if the current side to move is in check
+% in_check(Board) :-
+%     fail.
 
-% Probes if the given move would put the opponent in check. The move must be at least pseudo-legal.
-gives_check(Board, Move) :-
-    pseudo_legal_move(Board, Move),
-    make_move(Board, Move, NewBoard),
-    in_check(NewBoard).
+% % Probes if the given move would put the opponent in check. The move must be at least pseudo-legal.
+% gives_check(Board, Move) :-
+%     pseudo_legal_move(Board, Move),
+%     make_move(Board, Move, NewBoard),
+%     in_check(NewBoard).
 
-outcome(checkmate).
-outcome(stalemate).
-outcome(insufficient_material).
-outcome(seventyfile_move_rule).
-outcome(fivefold_repetition).
-outcome(Board, Outcome) :-
-    outcome(Outcome),
-    fail.
+% outcome(checkmate).
+% outcome(stalemate).
+% outcome(insufficient_material).
+% outcome(seventyfile_move_rule).
+% outcome(fivefold_repetition).
+% outcome(Board, Outcome) :-
+%     outcome(Outcome),
+%     fail.
 
-is_checkmate(Board) :-
-    fail.
+% is_checkmate(Board) :-
+%     fail.
 
-is_stalemate(Board) :-
-    fail.
+% is_stalemate(Board) :-
+%     fail.
 
-is_insufficient_material(Board) :-
-    fail.
+% is_insufficient_material(Board) :-
+%     fail.
 
-has_insufficient_material(Board, Color) :-
-    fail.
+% has_insufficient_material(Board, Color) :-
+%     fail.
 
-is_seventyfive_moves(Board) :-
-    fail.
+% is_seventyfive_moves(Board) :-
+%     fail.
 
-is_fivefold_repetition(Board) :-
-    fail.
-
+% is_fivefold_repetition(Board) :-
+%     fail.

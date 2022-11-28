@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from collections.abc import Iterable
-import io
 import os
 import pickle
 import re
