@@ -1,7 +1,6 @@
 import clingo
 import clingo.script
 import signal
-import string
 import argparse
 import os
 import logging
