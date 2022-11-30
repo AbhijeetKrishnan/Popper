@@ -1,21 +1,43 @@
-from pyswip import Prolog
-
 import os
-import sys
-import time
+import numpy as np
 import pkg_resources
+from pyswip import Prolog
 from contextlib import contextmanager
-from . core import Clause, Literal
-from datetime import datetime
+from . util import format_rule, order_rule, order_prog, prog_is_recursive, format_prog
 
 class Tester():
+
+    def query(self, query, key):
+        return set(next(self.prolog.query(query))[key])
+
+    def bool_query(self, query,):
+        return len(list(self.prolog.query(query))) > 0
+
+    # TODO: COULD PUSH TO CLINGO TO SAVE PROLOG FROM HAVING TO INDEX STUFF
+    def get_examples(self):
+        pos = set()
+        neg = set()
+
+        pos = self.query('findall(X,pos(X),Xs)', 'Xs')
+
+        if self.bool_query('current_predicate(neg/1)'):
+            neg = self.query('findall(X,neg(X),Xs)', 'Xs')
+
+        self.settings.stats.logger.info(f'Num. pos examples: {len(pos)}')
+        self.settings.stats.logger.info(f'Num. neg examples: {len(neg)}')
+
+        if self.settings.max_examples < len(pos):
+            self.settings.stats.logger.info(f'Sampling {self.settings.max_examples} pos examples')
+            pos = np.random.choice(list(pos), self.settings.max_examples)
+        if self.settings.max_examples < len(neg):
+            self.settings.stats.logger.info(f'Sampling {self.settings.max_examples} neg examples')
+            neg = np.random.choice(list(neg), self.settings.max_examples)
+
+        return pos, neg
+
     def __init__(self, settings):
         self.settings = settings
         self.prolog = Prolog()
-        self.eval_timeout = settings.eval_timeout
-        self.already_checked_redundant_literals = set()
-        self.seen_tests = {}
-        self.seen_prog = {}
 
         bk_pl_path = self.settings.bk_file
         exs_pl_path = self.settings.ex_file
@@ -26,24 +48,58 @@ class Tester():
                 x = x.replace('\\', '\\\\')
             self.prolog.consult(x)
 
-        # load examples
-        list(self.prolog.query('load_examples'))
+        self.pos_index = {}
+        self.neg_index = {}
 
-        self.pos = [x['I'] for x in self.prolog.query('current_predicate(pos_index/2),pos_index(I,_)')]
-        self.neg = [x['I'] for x in self.prolog.query('current_predicate(neg_index/2),neg_index(I,_)')]
+        pos, neg = self.get_examples()
+        self.num_pos = len(pos)
+        self.num_neg = len(neg)
 
-        self.prolog.assertz(f'timeout({self.eval_timeout})')
+        for i, atom in enumerate(pos):
+            k = i+1
+            self.prolog.assertz(f'pos_index({k},{atom})')
+            self.pos_index[k] = atom
 
-    def first_result(self, q):
-        return list(self.prolog.query(q))[0]
+        for i, atom in enumerate(neg):
+            k = -(i+1)
+            self.prolog.assertz(f'neg_index({k},{atom})')
+            self.neg_index[k] = atom
+
+        self.settings.pos = frozenset(self.pos_index.values())
+        self.settings.neg = frozenset(self.neg_index.values())
+
+        if self.settings.recursion_enabled:
+            self.prolog.assertz(f'timeout({self.settings.eval_timeout})')
+
+
+    # neg_covered = frozenset(next(self.prolog.query('neg_covered(Xs)'))['Xs'])
+    # neg_covered = frozenset(self.neg_index[i] for i in neg_covered)
+
+    def test_prog(self, prog):
+        with self.using(prog):
+            pos_covered = frozenset(self.query('pos_covered(Xs)', 'Xs'))
+            pos_covered = frozenset(self.pos_index[i] for i in pos_covered)
+            inconsistent = False
+            if len(self.neg_index):
+                inconsistent = len(list(self.prolog.query("inconsistent"))) > 0
+        return pos_covered, inconsistent
+
+    def is_inconsistent(self, prog):
+        if len(self.neg_index) == 0:
+            return False
+        with self.using(prog):
+            return len(list(self.prolog.query("inconsistent"))) > 0
 
     @contextmanager
-    def using(self, rules):
+    def using(self, prog):
+        if self.settings.recursion_enabled:
+            prog = order_prog(prog)
         current_clauses = set()
         try:
-            for rule in rules:
-                (head, body) = rule
-                self.prolog.assertz(Clause.to_code(Clause.to_ordered(rule)))
+            for rule in prog:
+                head, _body = rule
+                x = format_rule(order_rule(rule))[:-1]
+                self.prolog.assertz(x)
                 current_clauses.add((head.predicate, head.arity))
             yield
         finally:
@@ -51,66 +107,44 @@ class Tester():
                 args = ','.join(['_'] * arity)
                 self.prolog.retractall(f'{predicate}({args})')
 
-    def check_redundant_literal(self, program):
-        for clause in program:
-            k = Clause.clause_hash(clause)
-            if k in self.already_checked_redundant_literals:
+    def is_non_functional(self, prog):
+        with self.using(prog):
+            return self.bool_query('non_functional')
+
+    def reduce_inconsistent(self, program):
+        if len(program) < 3:
+            return program
+        for i in range(len(program)):
+            subprog = program[:i] + program[i+1:]
+            if not prog_is_recursive(subprog):
                 continue
-            self.already_checked_redundant_literals.add(k)
-            (head, body) = clause
-            C = f"[{','.join(('not_'+ Literal.to_code(head),) + tuple(Literal.to_code(lit) for lit in body))}]"
-            res = list(self.prolog.query(f'redundant_literal({C})'))
-            if res:
-                yield clause
+            with self.using(subprog):
+                if self.is_inconsistent(subprog):
+                    return self.reduce_inconsistent(subprog)
+        return program
 
-    def check_redundant_clause(self, program):
-        # AC: if the overhead of this call becomes too high, such as when learning programs with lots of clauses, we can improve it by not comparing already compared clauses
-        prog = []
-        for (head, body) in program:
-            C = f"[{','.join(('not_'+ Literal.to_code(head),) + tuple(Literal.to_code(lit) for lit in body))}]"
-            prog.append(C)
-        prog = f"[{','.join(prog)}]"
-        return list(self.prolog.query(f'redundant_clause({prog})'))
+    def reduce_solution(self, prog):
+        if len(prog) < 3:
+            return prog
+        pos_covered, _inconsistent = self.test_prog(prog)
+        return self.reduce_solution_aux(prog, pos_covered)
 
-    def is_non_functional(self, program):
-        with self.using(program):
-            return list(self.prolog.query(f'non_functional.'))
+    def reduce_solution_aux(self, prog, orignal_covered):
+        if len(prog) < 3:
+            return prog
+        # print('HELLO')
+        for i in range(len(prog)):
+            subprog = prog[:i] + prog[i+1:]
+            if not prog_is_recursive(subprog):
+                continue
+            # for rule in subprog:
+                # print('\t', format_rule(rule))
+            with self.using(subprog):
+                pos_covered, inconsistent = self.test_prog(subprog)
+                # print(inconsistent, len(pos_covered), len(orignal_covered))
+                if inconsistent:
+                    continue
+                if pos_covered == orignal_covered:
+                    return self.reduce_solution_aux(subprog, orignal_covered)
 
-    def success_set(self, rules):
-        prog_hash = frozenset(rule for rule in rules)
-        if prog_hash not in self.seen_prog:
-            with self.using(rules):
-                self.seen_prog[prog_hash] = set(next(self.prolog.query('success_set(Xs)'))['Xs'])
-        return self.seen_prog[prog_hash]
-
-    def test(self, rules):
-        if all(Clause.is_separable(rule) for rule in rules):
-            covered = set()
-            for rule in rules:
-                covered.update(self.success_set([rule]))
-        else:
-            covered = self.success_set(rules)
-
-        tp, fn, tn, fp = 0, 0, 0, 0
-        for p in self.pos:
-            if p in covered:
-                tp +=1
-            else:
-                fn +=1
-        for n in self.neg:
-            if n in covered:
-                fp +=1
-            else:
-                tn +=1
-
-        return tp, fn, tn, fp
-
-    def is_totally_incomplete(self, rule):
-        if not Clause.is_separable(rule):
-            return False
-        return not any(x in self.success_set([rule]) for x in self.pos)
-
-    def is_inconsistent(self, rule):
-        if not Clause.is_separable(rule):
-            return False
-        return any(x in self.success_set([rule]) for x in self.neg)
+        return prog

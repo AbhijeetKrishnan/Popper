@@ -1,227 +1,207 @@
-#!/usr/bin/env python3
-
-import logging
-import sys
-from . util import Settings, Stats, timeout, parse_settings, format_program
-from . asp import ClingoGrounder, ClingoSolver
+import time
+import numbers
+from . combine import Combiner
+from . util import timeout, format_rule, rule_is_recursive, order_prog, prog_is_recursive
 from . tester import Tester
-from . constrain import Constrain
-from . generate import generate_program
-from . core import Grounding, Clause
-from . chess_test import ChessTester
+from . generate import Generator, Grounder
+from . bkcons import deduce_bk_cons
+from clingo import Function, Number, Tuple_
 
-class Outcome:
-    ALL = 'all'
-    SOME = 'some'
-    NONE = 'none'
 
-class Con:
-    GENERALISATION = 'generalisation'
-    SPECIALISATION = 'specialisation'
-    REDUNDANCY = 'redundancy'
-    BANISH = 'banish'
+def prog_size(prog):
+    return sum(1 + len(body) for head, body in prog)
 
-OUTCOME_TO_CONSTRAINTS = {
-        (Outcome.ALL, Outcome.NONE)  : (Con.BANISH,),
-        (Outcome.ALL, Outcome.SOME)  : (Con.GENERALISATION,),
-        (Outcome.SOME, Outcome.NONE) : (Con.SPECIALISATION,),
-        (Outcome.SOME, Outcome.SOME) : (Con.SPECIALISATION, Con.GENERALISATION),
-        (Outcome.NONE, Outcome.NONE) : (Con.SPECIALISATION, Con.REDUNDANCY),
-        (Outcome.NONE, Outcome.SOME) : (Con.SPECIALISATION, Con.REDUNDANCY, Con.GENERALISATION)
-    }
+def arg_to_symbol(arg):
+    if isinstance(arg, numbers.Number):
+        return Number(arg)
+    if isinstance(arg, tuple):
+        return Tuple_(tuple(arg_to_symbol(a) for a in arg))
+    if isinstance(arg, str):
+        return Function(arg)
+    assert False, f'Unhandled argtype({type(arg)}) in aspsolver.py arg_to_symbol()'
 
-def ground_rules(stats, grounder, max_clauses, max_vars, clauses):
-    out = set()
-    for clause in clauses:
-        head, body = clause
-        # find bindings for variables in the constraint
-        assignments = grounder.find_bindings(clause, max_clauses, max_vars)
+def atom_to_symbol(pred, args):
+    xs = tuple(arg_to_symbol(arg) for arg in args)
+    return Function(name = pred, arguments = xs)
 
-        # keep only standard literals
-        body = tuple(literal for literal in body if not literal.meta)
+cached_clingo_atoms = {}
+def constrain(settings, generator, cons, model):
+    with settings.stats.duration('constrain'):
+        ground_bodies = set()
+        for con in cons:
+            for ground_rule in generator.get_ground_rules((None, con)):
+                _ground_head, ground_body = ground_rule
+                ground_bodies.add(ground_body)
 
-        # ground the clause for each variable assignment
-        for assignment in assignments:
-            out.add(Grounding.ground_clause((head, body), assignment))
-    
-    stats.register_ground_rules(out)
+        nogoods = []
+        for ground_body in ground_bodies:
+            nogood = []
+            for sign, pred, args in ground_body:
+                k = hash((sign, pred, args))
+                if k in cached_clingo_atoms:
+                    nogood.append(cached_clingo_atoms[k])
+                else:
+                    x = (atom_to_symbol(pred, args), sign)
+                    nogood.append(x)
+                    cached_clingo_atoms[k] = x
+            nogoods.append(nogood)
 
-    return out
+        for nogood in nogoods:
+            model.context.add_nogood(nogood)
 
-def decide_outcome(conf_matrix):
-    tp, fn, tn, fp = conf_matrix
-    if fn == 0:
-        positive_outcome = Outcome.ALL # complete
-    elif tp == 0 and fn > 0:
-        positive_outcome = Outcome.NONE # totally incomplete
-    else:
-        positive_outcome = Outcome.SOME # incomplete
+def popper(settings):
+    if settings.bkcons:
+        deduce_bk_cons(settings)
 
-    if fp == 0:
-        negative_outcome = Outcome.NONE  # consistent
-    # elif FP == self.num_neg:     # AC: this line may not work with minimal testing
-        # negative_outcome = Outcome.ALL # totally inconsistent
-    else:
-        negative_outcome = Outcome.SOME # inconsistent
+    tester = Tester(settings)
+    grounder = Grounder()
+    combiner = Combiner(settings, tester)
+    generator = Generator(settings, grounder)
+    pos = settings.pos
 
-    return (positive_outcome, negative_outcome)
+    success_sets = {}
+    last_size = None
 
-def write_valid_programs(programs):
-    for program in programs:
-        print(program)
+    # TMP SETS
+    seen_covers_only_one_gen = set()
+    seen_covers_only_one_spec = set()
+    seen_incomplete_gen = set()
+    seen_incomplete_spec = set()
 
-def build_rules(settings, stats, constrainer, tester, program, before, min_clause, outcome, conf_matrix):
-    (positive_outcome, negative_outcome) = outcome
-    # RM: If you don't use these two lines you need another three entries in the OUTCOME_TO_CONSTRAINTS table (one for every positive outcome combined with negative outcome ALL).
-    if negative_outcome == Outcome.ALL:
-         negative_outcome = Outcome.SOME
-
-    rules = set()
-
-    tp, fn, tn, fp = conf_matrix
-    if tp + fp == 0: # if coverage is 0, exclude specializations of this program (specializations will also have 0 coverage)
-        # print('% adding constraints')
-        rules.update(constrainer.specialisation_constraint(program, before, min_clause))
-
-    # for constraint_type in OUTCOME_TO_CONSTRAINTS[(positive_outcome, negative_outcome)]:
-    #     if constraint_type == Con.GENERALISATION:
-    #         rules.update(constrainer.generalisation_constraint(program, before, min_clause))
-    #     elif constraint_type == Con.SPECIALISATION:
-    #         rules.update(constrainer.specialisation_constraint(program, before, min_clause))
-    #     elif constraint_type == Con.REDUNDANCY:
-    #         rules.update(constrainer.redundancy_constraint(program, before, min_clause))
-    #     elif constraint_type == Con.BANISH:
-    #         rules.update(constrainer.banish_constraint(program, before, min_clause))
-
-    # if settings.functional_test and tester.is_non_functional(program):
-    #     rules.update(constrainer.generalisation_constraint(program, before, min_clause))
-
-    # eliminate generalisations of clauses that contain redundant literals
-    # for rule in tester.check_redundant_literal(program):
-    #     rules.update(constrainer.redundant_literal_constraint(rule, before, min_clause))
-
-    # eliminate generalisations of programs that contain redundant clauses
-    # if tester.check_redundant_clause(program):
-    #     rules.update(constrainer.generalisation_constraint(program, before, min_clause))
-
-    # if len(program) > 1:
-    #     # evaluate inconsistent sub-clauses
-    #     for rule in program:
-    #         if Clause.is_separable(rule) and tester.is_inconsistent(rule):
-    #             for x in constrainer.generalisation_constraint([rule], before, min_clause):
-    #                 rules.add(x)
-
-        # # eliminate totally incomplete rules
-        # if all(Clause.is_separable(rule) for rule in program):
-        #     for rule in program:
-        #         if tester.is_totally_incomplete(rule):
-        #             for x in constrainer.redundancy_constraint([rule], before, min_clause):
-        #                 rules.add(x)
-
-    stats.register_rules(rules)
-
-    return rules
-
-PROG_KEY = 'prog'
-
-def calc_score(conf_matrix):
-    tp, fn, tn, fp = conf_matrix
-    return tp + tn
-
-def popper(settings, stats):
-    solver = ClingoSolver(settings)
-    tester = ChessTester(settings)
-    settings.num_pos, settings.num_neg = len(tester.pos), len(tester.neg)
-    grounder = ClingoGrounder()
-    constrainer = Constrain()
-    constraint_rule_buffer = []
-    valid_tactics = set()
-    BUFFER_LIMIT = 1000 # update after every `BUFFER_LIMIT` constraints added
-
-    for size in range(1, settings.max_literals + 1):
-        stats.update_num_literals(size)
-        solver.update_number_of_literals(size)
-        solver.solver.configuration.solve.models = 0
-        all_rules = []
-
-        print(f'% searching programs of size:{size}')
+    with generator.solver.solve(yield_ = True) as handle:
+        handle = iter(handle)
 
         while True:
-            with solver.solver.solve(yield_ = True) as handle:
-                for m in handle:
-                    model = m.symbols(shown = True)
-                    # GENERATE HYPOTHESIS
-                    with stats.duration('generate'):
-                        program, before, min_clause = generate_program(model)
+            model = None
 
-                    # TEST HYPOTHESIS
-                    with stats.duration('test'):
-                        conf_matrix = tester.test(program)
-                        outcome = decide_outcome(conf_matrix)
-                        score = calc_score(conf_matrix)
+            with settings.stats.duration('generate'):
+                model = next(handle, None)
+                if model is None:
+                    break
+                atoms = model.symbols(shown = True)
+                prog, rule_ordering = generator.parse_model(atoms)
 
-                    stats.register_program(program, conf_matrix)
+            new_cons = set()
 
-                    # # UPDATE BEST PROGRAM
-                    # if best_score == None or score > best_score:
-                    #     best_score = score
+            with settings.stats.duration('test'):
+                pos_covered, inconsistent = tester.test_prog(prog)
 
-                    #     if outcome == (Outcome.ALL, Outcome.NONE):
-                    #         stats.register_solution(program, conf_matrix)
-                    #         return stats.solution.code
+            settings.stats.total_programs += 1
+            settings.logger.debug(f'Program {settings.stats.total_programs}:')
+            for rule in order_prog(prog):
+                settings.logger.debug(format_rule(rule))
 
-                    #     stats.register_best_program(program, conf_matrix)
+            if inconsistent and prog_is_recursive(prog):
+                combiner.add_inconsistent(prog)
 
-                    # BUILD RULES
-                    with stats.duration('build'):
-                        rules = build_rules(settings, stats, constrainer, tester, program, before, min_clause, outcome, conf_matrix)
+            k = prog_size(prog)
+            if last_size == None or k != last_size:
+                last_size = k
+                settings.logger.info(f'Searching programs of size: {k}')
 
-                    # GROUND RULES
-                    with stats.duration('ground'):
-                        rules = ground_rules(stats, grounder, solver.max_clauses, solver.max_vars, rules)
+            add_spec = False
+            add_gen = False
 
-                    # if we generate constraints, add them to the buffer
-                    if rules:
-                        constraint_rule_buffer.append(rules)
-                    else:
-                        print(f'% {format_program(program)}')
-                        valid_tactics.add(format_program(program))
-                    
-                    # if the buffer exceeds the limit, apply the constraints and restart the solver
-                    if len(constraint_rule_buffer) >= BUFFER_LIMIT:
-                        break
+            if inconsistent:
+                # if inconsistent, prune generalisations
+                add_gen = True
+                # if the program has multiple rules, test the consistency of each non-recursive rule as we might not have seen it before
+                if len(prog) > 1:
+                    for rule in prog:
+                        if rule_is_recursive(rule):
+                            continue
+                        subprog = frozenset([rule])
+                        # TODO: ADD CACHING IF THIS STEP BECOMES TOO EXPENSIVE
+                        if tester.is_inconsistent(subprog):
+                            new_cons.add(generator.build_generalisation_constraint(subprog))
+            else:
+                # if consistent, prune specialisations
+                add_spec = True
 
-            # UPDATE SOLVER
-            if len(constraint_rule_buffer) >= BUFFER_LIMIT:
-                with stats.duration('add'):
-                    for rules in constraint_rule_buffer:
-                        solver.add_ground_clauses(rules)
-                    constraint_rule_buffer = []
-                continue
+            # if consistent and partially complete test whether functional
+            if not inconsistent and settings.functional_test and len(pos_covered) > 0 and tester.is_non_functional(prog):
+                # if not functional, rule out generalisations and set as inconsistent
+                add_gen = True
+                # v.important: do not prune specialisations!
+                add_spec = False
+                inconsistent = True
 
-            # all models of this size exhausted, restart with new size
-            break
+            # if it does not cover any example, prune specialisations
+            if len(pos_covered) == 0:
+                add_spec = True
 
-    write_valid_programs(valid_tactics)
-    stats.register_completion()
-    return stats.best_program.code if stats.best_program else None
+            # check whether subsumed by an already seen program
+            subsumed = False
+            if len(pos_covered) > 0 and not prog_is_recursive(prog):
+                subsumed = pos_covered in success_sets or any(pos_covered.issubset(xs) for xs in success_sets)
+                # if so, prune specialisations
+                if subsumed:
+                    add_spec = True
 
-def show_hspace(settings):
-    f = lambda i, m: print(f'% program {i}\n{format_program(generate_program(m)[0])}')
-    ClingoSolver.get_hspace(settings, f)
+            # HACKY TMP IDEAS
+            if not settings.recursion_enabled:
+
+                # if we already have a solution, a new rule must cover at least two examples
+                if not add_spec and combiner.solution_found and len(pos_covered) == 1:
+                    add_spec = True
+
+                # backtracking idea
+                # keep track of programs that only cover one example
+                # once we find a solution, we apply specialisation/generalisation constraints
+                if len(pos_covered) == 1:
+                    if not add_gen:
+                        seen_covers_only_one_gen.add(prog)
+                    if not add_spec:
+                        seen_covers_only_one_spec.add(prog)
+                if len(pos_covered) != len(pos):
+                    if not add_gen:
+                        seen_incomplete_gen.add(prog)
+                    if not add_spec:
+                        seen_incomplete_spec.add(prog)
+
+                if combiner.solution_found:
+                    for x in seen_covers_only_one_gen:
+                        new_cons.add(generator.build_generalisation_constraint(x))
+                    seen_covers_only_one_gen = set()
+                    for x in seen_covers_only_one_spec:
+                        new_cons.add(generator.build_specialisation_constraint(x))
+                    seen_covers_only_one_spec = set()
+
+                    if len(combiner.best_prog) <= 2:
+                        for x in seen_incomplete_gen:
+                            new_cons.add(generator.build_generalisation_constraint(x))
+                        for x in seen_incomplete_spec:
+                            new_cons.add(generator.build_specialisation_constraint(x))
+                        seen_incomplete_gen = set()
+                        seen_incomplete_spec = set()
+
+
+            # if consistent, covers at least one example, and is not subsumed, try to find a solution
+            if not inconsistent and not subsumed and len(pos_covered) > 0:
+                # update success sets
+                success_sets[pos_covered] = prog
+
+                with settings.stats.duration('combine'):
+                    new_solution_found = combiner.update_best_prog(prog, pos_covered)
+
+                # if we find a new solution, update the maximum program size
+                if new_solution_found:
+                    for i in range(combiner.max_size, settings.max_literals+1):
+                        size_con = [(atom_to_symbol("size", (i,)), True)]
+                        model.context.add_nogood(size_con)
+                    settings.max_literals = combiner.max_size-1
+
+            # if it covers all examples, stop
+            if not inconsistent and len(pos_covered) == len(pos):
+                return
+
+            if add_spec:
+                new_cons.add(generator.build_specialisation_constraint(prog, rule_ordering))
+            if add_gen:
+                new_cons.add(generator.build_generalisation_constraint(prog, rule_ordering))
+
+            constrain(settings, generator, new_cons, model)
 
 def learn_solution(settings):
-    stats = Stats(log_best_programs=settings.info, stats_file=settings.stats_file)
-    log_level = logging.DEBUG if settings.debug else logging.INFO
-    logging.basicConfig(level=log_level, stream=sys.stderr, format='%(message)s')
-    popper(settings, stats)
-    #timeout(popper, (settings, stats), timeout_duration=int(settings.timeout))
-
-    if stats.solution:
-        prog_stats = stats.solution
-    elif stats.best_programs:
-        prog_stats = stats.best_programs[-1]
-    else:
-        return None, stats
-
-    return prog_stats.code, stats
+    timeout(settings, popper, (settings,), timeout_duration=int(settings.timeout),)
+    return settings.solution, settings.best_prog_score, settings.stats

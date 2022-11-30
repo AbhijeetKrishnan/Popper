@@ -1,14 +1,9 @@
 %% ##################################################
-%% THIS FILE CONTAINS THE ASP PROGRAM GENERATOR
-%% IT IS CALLED ALAN
-%% VERSION 15
+%% THIS FILE CONTAINS THE ASP PROGRAM GENERATOR, CALLED ALAN
 %% ##################################################
 
-#defined functional/2.
-#defined irreflexive/2.
 #defined direction/2.
 #defined type/2.
-#defined size/1.
 #defined invented/2.
 #defined lower/2.
 
@@ -19,17 +14,49 @@
 
 #show head_literal/4.
 #show body_literal/4.
-#show before/2.
-#show min_clause/2.
 #show direction_/3.
+#show before/2.
+#show size/1.
 
-%% HEAD PRED SYMBOL IF GIVEN BY USER OR INVENTED
+#heuristic size(N). [1000-N,true]
+
+max_size(K):-
+    max_body(M),
+    max_clauses(N),
+    K = (M+1)*N.
+
+size(N):-
+    max_size(MaxSize),
+    N = 2..MaxSize,
+    #sum{K+1,C : body_size(C,K)} == N.
+
+pi_or_rec:-
+    recursive.
+pi_or_rec:-
+    pi.
+pi_or_rec_enabled:-
+    enable_pi.
+pi_or_rec_enabled:-
+    enable_recursion.
+
+:-
+    clause(1),
+    not pi_or_rec.
+
+:-
+    enable_recursion,
+    clause(Rule),
+    Rule > 0,
+    not recursive_clause(Rule,_,_).
+
+
+%% head pred symbol if given by user or invented
 head_aux(P,A):-
     head_pred(P,A).
 head_aux(P,A):-
     invented(P,A).
 
-%% BODY PRED SYMBOL IF GIVEN BY USER OR INVENTED
+%% body pred symbol if given by user or invented
 body_aux(P,A):-
     body_pred(P,A).
 body_aux(P,A):-
@@ -38,21 +65,70 @@ body_aux(P,A):-
     head_aux(P,A),
     enable_recursion.
 
-%% GUESS HEAD LITERALS
-%% THE SYMBOL INV_K CANNOT APPEAR IN THE HEAD OF CLAUSE C < K
-{head_literal(C,P,A,Vars)}:-
-    head_vars(A,Vars),
-    head_aux(P,A),
-    index(P,I),
-    C >= I,
-    C = 0..N-1,
-    max_clauses(N).
+%% ********** BASE CASE (RULE 0) **********
+head_literal(0,P,A,Vars):-
+    head_pred(P,A),
+    head_vars(A,Vars).
 
-%% GUESS BODY LITERALS
-{body_literal(C,P,A,Vars)}:-
-    body_aux(P,A),
+1 {body_literal(0,P,A,Vars): body_aux(P,A), vars(A,Vars), not type_mismatch(P,Vars), not bad_body(P,A,Vars)} M :-
+    max_body(M).
+
+%% ********** RECURSIVE CASE (RULE > 0) **********
+%% THE SYMBOL INV_K CANNOT APPEAR IN THE HEAD OF CLAUSE C < K
+0 {head_literal(Rule,P,A,Vars): head_vars(A,Vars), head_aux(P,A), index(P,I), Rule >= I} 1:-
+    Rule = 1..N-1,
+    max_clauses(N),
+    pi_or_rec_enabled.
+
+1 {body_literal(Rule,P,A,Vars): body_aux(P,A), vars(A,Vars), not bad_body(P,A,Vars), not type_mismatch(P,Vars)} M :-
+    clause(Rule),
+    Rule > 0,
+    max_body(M),
+    enable_recursion,
+    not enable_pi.
+
+%% ********** INVENTED RULES **********
+1 {body_literal(Rule,P,A,Vars): body_aux(P,A), vars(A,Vars), not bad_body(P,A,Vars)} M :-
+    clause(Rule),
+    Rule > 0,
+    max_body(M),
+    enable_pi.
+
+bad_body(P,A,Vars):-
+    head_pred(P,A),
     vars(A,Vars),
-    clause(C).
+    not good_vars(A,Vars).
+good_vars(A,Vars1):-
+    head_vars(A,Vars2),
+    var_member(V,Vars1),
+    not var_member(V,Vars2).
+bad_body(P,A,Vars2):-
+    num_in_args(P,1),
+    head_pred(P,A),
+    head_vars(A,Vars1),
+    vars(A,Vars2),
+    var_pos(Var,Vars1,Pos1),
+    var_pos(Var,Vars2,Pos2),
+    direction_(P,Pos1,in),
+    direction_(P,Pos2,in).
+
+type_mismatch(P,Vars):-
+    var_pos(Var,Vars,Pos),
+    type(P,Types),
+    pred_arg_type(P,Pos,T1),
+    fixed_var_type(Var,T2),
+    T1 != T2.
+
+calls_invented(Rule):-
+    invented(P,A),
+    body_literal(Rule,P,A,_).
+:-
+    pi,
+    not recursive,
+    head_literal(Rule,P,A,_),
+    head_pred(P,A),
+    not calls_invented(Rule).
+
 
 %% THERE IS A CLAUSE IF THERE IS A HEAD LITERAL
 clause(C):-
@@ -68,26 +144,6 @@ body_size(C,N):-
     N <= MaxN,
     #count{P,Vars : body_literal(C,P,_,Vars)} == N.
 
-%% AT LEAST ONE HEAD LITERAL
-:-
-    not clause(0).
-
-%% AT MOST ONE HEAD LITERAL PER CLAUSE
-:-
-    clause(C),
-    #count{P,A : head_literal(C,P,A,_)} > 1.
-
-%% AT LEAST 1 AND MOST MAX_N BODY LITERALS PER CLAUSE
-%% THIS CONSTRAINT IS A BIT SNEAKY: WE SAY IT IS IMPOSSIBLE TO HAVE A CLAUSE WITHOUT A SIZE
-:-
-    clause(C),
-    not body_size(C,_).
-
-%% HEAD LITERAL CANNOT BE IN THE BODY
-:-
-    head_literal(C,P,_,Vars),
-    body_literal(C,P,_,Vars).
-
 %% USE CLAUSES IN ORDER
 :-
     clause(C1),
@@ -99,7 +155,7 @@ body_size(C,N):-
 :-
     clause_var(C,Var1),
     Var1 > 1,
-    Var2 = 0..Var1-1,
+    Var2 = Var1-1,
     not clause_var(C,Var2).
 
 %% ##################################################
@@ -175,9 +231,9 @@ var_pos(@pyvar_pos(Pos,Vars),Vars,Pos):-
     vars(A,Vars),
     Pos = 0..A-1.
 
-%% ##################################################
-%% REDUCE CONSTRAINT GROUNDING BY ORDERING CLAUSES
-%% ##################################################
+%% %% ##################################################
+%% %% REDUCE CONSTRAINT GROUNDING BY ORDERING CLAUSES
+%% %% ##################################################
 before(C1,C2):-
     C1 < C2,
     head_literal(C1,P,_,_),
@@ -191,18 +247,65 @@ before(C1,C2):-
     not recursive_clause(C1,P,A),
     recursive_clause(C2,P,A).
 
-count_lower(P,N):-
-    head_literal(_,P,_,_),
-    #count{Q : lower(Q,P)} == N.
+before(C1,C2):-
+    C1 < C2,
+    head_literal(C1,P,A,_),
+    head_literal(C2,P,A,_),
+    not recursive_clause(C1,P,A),
+    not recursive_clause(C2,P,A),
+    body_size(C1,K1),
+    body_size(C2,K2),
+    K1 < K2.
 
-min_clause(C,N+1):-
-    recursive_clause(C,P,A),
-    count_lower(P,N).
+before(C1,C2):-
+    C1 < C2,
+    head_literal(C1,P,_,_),
+    head_literal(C2,P,_,_),
+    recursive_clause(C1,P,A),
+    recursive_clause(C2,P,A),
+    body_size(C1,K1),
+    body_size(C2,K2),
+    K1 < K2.
 
-min_clause(C,N):-
-    head_literal(C,P,A,_),
-    not recursive_clause(C,P,A),
-    count_lower(P,N).
+%% count_lower(P,N):-
+%%     head_literal(_,P,_,_),
+%%     #count{Q : lower(Q,P)} == N.
+
+%% min_clause(C,N+1):-
+%%     recursive_clause(C,P,A),
+%%     count_lower(P,N).
+
+%% min_clause(C,N):-
+%%     head_literal(C,P,A,_),
+%%     not recursive_clause(C,P,A),
+%%     count_lower(P,N).
+
+%% lower(R1,R2):-
+%%     rule(R1),
+%%     rule(R2),
+%%     R1 != R2,
+%%     not recursive(R1),
+%%     not recursive(R2),
+%%     size(R1,K1),
+%%     size(R2,K2),
+%%     K1 < K2.
+
+%% lower(R1,R2):-
+%%     rule(R1),
+%%     rule(R2),
+%%     R1 != R2,
+%%     not recursive(R1),
+%%     recursive(R2).
+
+%% lower(R1,R2):-
+%%     rule(R1),
+%%     rule(R2),
+%%     R1 != R2,
+%%     recursive(R1),
+%%     recursive(R2),
+%%     size(R1,K1),
+%%     size(R2,K2),
+%%     K1 < K2.
 
 %% ##################################################
 %% BIAS CONSTRAINTS
@@ -272,26 +375,19 @@ head_connected(C,Var1):-
     body_literal(C,P,2,(V1,_)),
     #count{V2 : body_literal(C,P,2,(V1,V2))} > 1.
 
-%% TRIADIC FUNCTIONAL
-%% prevents: head:- q(+A,+B,-C),q(+A,+B,-D)
-:-
-    functional(P,3),
-    direction_(P,0,in),
-    direction_(P,1,in),
-    direction_(P,2,out),
-    body_literal(C,P,_,(V1,V2,_)),
-    #count{V3 : body_literal(C,P,_,(V1,V2,V3))} > 1.
+%% ##################################################
+%% ROLF MOREL'S ORDERING CONSTRAINT
+%% IT REDUCES THE NUMBER OF MODELS BUT DRASTICALLY INCREASES GROUNDING AND SOLVING TIME
+%% ##################################################
+%% bfr(C,(P,PArgs),(Q,QArgs)) :- head_literal(C,P,_,PArgs),body_literal(C,Q,_,QArgs).
+%% bfr(C,(P,PArgs),(Q,QArgs)) :- body_literal(C,P,_,PArgs),body_literal(C,Q,_,QArgs),P<Q.
+%% bfr(C,(P,PArgs1),(P,PArgs2)) :- body_literal(C,P,PA,PArgs1),body_literal(C,P,PA,PArgs2),PArgs1<PArgs2.
 
-%% TETRADIC (fancy) FUNCTIONAL
-%% prevents: head:- q(+A,+B,-C,-D),q(+A,+B,-D,-E)
-:-
-    functional(P,4),
-    direction_(P,0,in),
-    direction_(P,1,in),
-    direction_(P,2,out),
-    direction_(P,3,out),
-    body_literal(C,P,_,(V1,V2,_,_)),
-    #count{(V3,V4) : body_literal(C,P,_,(V1,V2,V3,V4))} > 1.
+%% not_var_first_lit(C,V,(P,PArgs)) :- bfr(C,(Q,QArgs),(P,PArgs)),var_member(V,QArgs),var_member(V,PArgs).
+%% var_first_lit(C,V,(P,PArgs)) :- body_literal(C,P,_,PArgs),var_member(V,PArgs),not not_var_first_lit(C,V,(P,PArgs)).
+%% pruned:-var_first_lit(C,V,(P,PArgs)),var_first_lit(C,W,(Q,QArgs)),bfr(C,(P,PArgs),(Q,QArgs)),W<V.
+%% :-pruned.
+
 
 %% ##################################################
 %% SUBSUMPTION
@@ -302,20 +398,17 @@ same_head(C1,C2):-
     head_literal(C2,P,A,Vars).
 
 not_body_subset(C1,C2):-
-    clause(C1),
     clause(C2),
     C1 < C2,
     body_literal(C1,P,A,Vars),
     not body_literal(C2,P,A,Vars).
 
 body_subset(C1,C2):-
-    clause(C1),
     clause(C2),
     C1 < C2,
     not not_body_subset(C1,C2),
     body_literal(C1,P,A,Vars),
     body_literal(C2,P,A,Vars).
-
 :-
     C1 < C2,
     same_head(C1,C2),
@@ -328,6 +421,17 @@ body_subset(C1,C2):-
 def pytype(pos, types):
     return types.arguments[pos.number]
 #end.
+
+fixed_var_type(Var,@pytype(Pos,Types)):-
+    head_literal(_,P,A,Vars),
+    var_pos(Var,Vars,Pos),
+    type(P,Types),
+    head_vars(A,Vars).
+
+pred_arg_type(P,Pos,@pytype(Pos,Types)):-
+    Pos = 0..A-1,
+    body_pred(P,A),
+    type(P,Types).
 
 var_type(C,Var,@pytype(Pos,Types)):-
     var_in_literal(C,P,Vars,Var),
@@ -433,27 +537,6 @@ base_clause(C,P,A):-
     direction_(P,Pos1,in),
     direction_(P,Pos2,in).
 
-%% TODO: REFACTOR
-%% @RM - what is this??
-%% :-
-%%     Clause > 0,
-%%     num_in_args(P,2),
-%%     %% get the head input vars
-%%     head_literal(Clause,P,A,HeadVars),
-%%     var_pos(HeadVar1,HeadVars,Pos1),
-%%     var_pos(HeadVar1,HeadVars,Pos2),
-%%     HeadPos1 != HeadPos2,
-%%     direction_(P,HeadPos1,in),
-%%     direction_(P,HeadPos2,in),
-%%     %% get the body input vars
-%%     body_literal(Clause,P,A,BodyVars),
-%%     var_pos(HeadVar1,BodyVars,BodyPos1),
-%%     var_pos(HeadVar2,BodyVars,BodyPos2),
-%%     BodyPos1 != BodyPos2,
-%%     direction_(P,BodyPos1,in),
-%%     direction_(P,BodyPos2,in).
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% ENSURES INPUT VARS ARE GROUND
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -518,6 +601,8 @@ safe_literal(C,P,Vars):-
 %% ########################################
 %% CLAUSES SPECIFIC TO PREDICATE INVENTION
 %% ########################################
+%% IDEAS FROM THE PAPER:
+%% Predicate invention by learning from failures. A. Cropper and R. Morel
 
 #script (python)
 from itertools import permutations
@@ -527,6 +612,9 @@ def mk_tuple(xs):
 def py_gen_invsym(i):
     return Function(f'inv{i}')
 #end.
+
+pi:-
+    invented(_,_).
 
 %% P IS DEFNED BY AT LEAST TWO CLAUSES
 num_clauses(P,N):-
@@ -541,7 +629,7 @@ multiclause(P,A):-
 index(P,0):-
     head_pred(P,_).
 index(@py_gen_invsym(I),I):-
-    I=1..N,
+    I=1..N-1,
     max_clauses(N).
 
 inv_symbol(P):-
@@ -560,6 +648,7 @@ inv_symbol(P):-
     #count{A : invented(P,A)} != 1.
 
 inv_lower(P,Q):-
+    enable_pi,
     inv_symbol(P),
     inv_symbol(Q),
     I < J,
@@ -751,9 +840,88 @@ only_once(P,A):-
     max_body(MaxN),
     N1 + N2 - 1 <= MaxN.
 
-%% a:-
-%%     invented(P,A),
-%%     head_literal(C1,P,A,_),
-%%     not multiclause(P,A),
-%%     only_once(P,A).
+%% %% ==========================================================================================
+%% %% BK BIAS CONSTRAINTS
+%% %% ==========================================================================================
+%% IDEAS FROM THE PAPER:
+%% Learning logic programs by discovering where not to search. A. Cropper and C. Hocquette
 
+#defined prop/2.
+#defined prop/3.
+
+
+%% :- prop(singleton,P), body_literal(Rule,P,1,_), #count{A : body_literal(Rule,P,A,(A,))} > 1.
+:- prop(singleton,P), body_literal(Rule,P,_,_), #count{Vars : body_literal(Rule,P,A,Vars)} > 1.
+
+:- prop(asymmetric_ab_ba,P), body_literal(Rule,P,_,(A,B)), body_literal(Rule,P,_,(B,A)).
+:- prop(asymmetric_abc_acb,P), body_literal(Rule,P,_,(A,B,C)), body_literal(Rule,P,_,(A,C,B)).
+:- prop(asymmetric_abc_bac,P), body_literal(Rule,P,_,(A,B,C)), body_literal(Rule,P,_,(B,A,C)).
+:- prop(asymmetric_abc_bca,P), body_literal(Rule,P,_,(A,B,C)), body_literal(Rule,P,_,(B,C,A)).
+:- prop(asymmetric_abc_cab,P), body_literal(Rule,P,_,(A,B,C)), body_literal(Rule,P,_,(C,A,B)).
+:- prop(asymmetric_abc_cba,P), body_literal(Rule,P,_,(A,B,C)), body_literal(Rule,P,_,(C,B,A)).
+:- prop(asymmetric_abcd_abdc,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(A,B,D,C)).
+:- prop(asymmetric_abcd_acbd,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(A,C,B,D)).
+:- prop(asymmetric_abcd_acdb,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(A,C,D,B)).
+:- prop(asymmetric_abcd_adbc,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(A,D,B,C)).
+:- prop(asymmetric_abcd_adcb,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(A,D,C,B)).
+:- prop(asymmetric_abcd_bacd,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(B,A,C,D)).
+:- prop(asymmetric_abcd_badc,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(B,A,D,C)).
+:- prop(asymmetric_abcd_bcad,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(B,C,A,D)).
+:- prop(asymmetric_abcd_bcda,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(B,C,D,A)).
+:- prop(asymmetric_abcd_bdac,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(B,D,A,C)).
+:- prop(asymmetric_abcd_bdca,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(B,D,C,A)).
+:- prop(asymmetric_abcd_cabd,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(C,A,B,D)).
+:- prop(asymmetric_abcd_cadb,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(C,A,D,B)).
+:- prop(asymmetric_abcd_cbad,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(C,B,A,D)).
+:- prop(asymmetric_abcd_cbda,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(C,B,D,A)).
+:- prop(asymmetric_abcd_cdab,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(C,D,A,B)).
+:- prop(asymmetric_abcd_cdba,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(C,D,B,A)).
+:- prop(asymmetric_abcd_dabc,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(D,A,B,C)).
+:- prop(asymmetric_abcd_dacb,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(D,A,C,B)).
+:- prop(asymmetric_abcd_dbac,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(D,B,A,C)).
+:- prop(asymmetric_abcd_dbca,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(D,B,C,A)).
+:- prop(asymmetric_abcd_dcab,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(D,C,A,B)).
+:- prop(asymmetric_abcd_dcba,P), body_literal(Rule,P,_,(A,B,C,D)), body_literal(Rule,P,_,(D,C,B,A)).
+
+:- prop(unique_a_b,P), body_literal(Rule,P,_,(A,_)), #count{B : body_literal(Rule,P,_,(A,B))} > 1.
+:- prop(unique_a_bc,P), body_literal(Rule,P,_,(A,_,_)), #count{B,C : body_literal(Rule,P,_,(A,B,C))} > 1.
+:- prop(unique_a_bcd,P), body_literal(Rule,P,_,(A,_,_,_)), #count{B,C,D : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_ab_c,P), body_literal(Rule,P,_,(A,B,_)), #count{C : body_literal(Rule,P,_,(A,B,C))} > 1.
+:- prop(unique_ab_cd,P), body_literal(Rule,P,_,(A,B,_,_)), #count{C,D : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_abc_d,P), body_literal(Rule,P,_,(A,B,C,_)), #count{D : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_abd_c,P), body_literal(Rule,P,_,(A,B,_,D)), #count{C : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_ac_b,P), body_literal(Rule,P,_,(A,_,C)), #count{B : body_literal(Rule,P,_,(A,B,C))} > 1.
+:- prop(unique_ac_bd,P), body_literal(Rule,P,_,(A,_,C,_)), #count{B,D : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_acd_b,P), body_literal(Rule,P,_,(A,_,C,D)), #count{B : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_ad_bc,P), body_literal(Rule,P,_,(A,_,_,D)), #count{B,C : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_b_a,P), body_literal(Rule,P,_,(_,B)), #count{A : body_literal(Rule,P,_,(A,B))} > 1.
+:- prop(unique_b_ac,P), body_literal(Rule,P,_,(_,B,_)), #count{A,C : body_literal(Rule,P,_,(A,B,C))} > 1.
+:- prop(unique_b_acd,P), body_literal(Rule,P,_,(_,B,_,_)), #count{A,C,D : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_bc_a,P), body_literal(Rule,P,_,(_,B,C)), #count{A : body_literal(Rule,P,_,(A,B,C))} > 1.
+:- prop(unique_bc_ad,P), body_literal(Rule,P,_,(_,B,C,_)), #count{A,D : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_bcd_a,P), body_literal(Rule,P,_,(_,B,C,D)), #count{A : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_bd_ac,P), body_literal(Rule,P,_,(_,B,_,D)), #count{A,C : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_c_ab,P), body_literal(Rule,P,_,(_,_,C)), #count{A,B : body_literal(Rule,P,_,(A,B,C))} > 1.
+:- prop(unique_c_abd,P), body_literal(Rule,P,_,(_,_,C,_)), #count{A,B,D : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_cd_ab,P), body_literal(Rule,P,_,(_,_,C,D)), #count{A,B : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+:- prop(unique_d_abc,P), body_literal(Rule,P,_,(_,_,_,D)), #count{A,B,C : body_literal(Rule,P,_,(A,B,C,D))} > 1.
+
+:- prop(antitransitive,P), body_literal(Rule,P,_,(A,B)), body_literal(Rule,P,_,(B,C)), body_literal(Rule,P,_,(A,C)).
+
+:- prop(antitriangular,P), body_literal(Rule,P,_,(A,B)), body_literal(Rule,P,_,(B,C)), body_literal(Rule,P,_,(C,A)).
+
+:- prop(unsat_pair,P,Q), body_literal(Rule,P,_,Vars), body_literal(Rule,Q,_,Vars).
+
+:- prop(precon,P,Q), body_literal(Rule,P,_,(A,)), body_literal(Rule,Q,_,(A,B)).
+:- prop(postcon,P,Q), body_literal(Rule,P,_,(A,B)), body_literal(Rule,Q,_,(B,)).
+
+
+
+
+%% DEBUGGING
+
+%% {body_literal(0,P,A,Vars)}:-
+%%     body_aux(P,A),
+%%     vars(A,Vars),
+%%     not head_pred(P,A),
+%%     not type_mismatch(P,Vars).
