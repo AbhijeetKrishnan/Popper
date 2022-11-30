@@ -3,20 +3,35 @@
 import sys
 import chess
 
+def color_to_str(color: bool) -> str:
+    if color:
+        return 'white'
+    else:
+        return 'black'
+
 def fen_to_contents(fen: str) -> str:
     "Convert a FEN position into a contents predicate"
     board = chess.Board()
     board.set_fen(fen)
-    piece_str_list = []
+    contents = []
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece:
-            color = 'white' if piece.color else 'black'
+            color = color_to_str(piece.color)
             piece_name = chess.piece_name(piece.piece_type)
-            row = chess.square_rank(square) + 1
-            col = chess.square_file(square) + 1
-            piece_str_list.append(f'contents({color}, {piece_name}, {col}, {row})')
-    return f'[{", ".join(piece_str_list)}]'
+            square = chess.square_name(square)
+            contents.append(f'contents(piece({piece_name}, {color}), square({square}))')
+    contents.append(f'turn({color_to_str(board.turn)})')
+    for color in [chess.WHITE, chess.BLACK]:
+        if board.has_kingside_castling_rights(color):
+            contents.append(f'kingside_castle({color_to_str(color)})')
+        if board.has_queenside_castling_rights(color):
+            contents.append(f'queenside_castle({color_to_str(color)})')
+    contents.append(f'halfmove_number({board.halfmove_clock})')
+    contents.append(f'fullmove({board.fullmove_number})')
+    if board.ep_square:
+        contents.append(f'ep_square({chess.square_name(board.ep_square)})')
+    return f'[{", ".join(contents)}]'
 
 if __name__ == '__main__':
     fen = sys.argv[1]
