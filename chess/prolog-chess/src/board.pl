@@ -22,7 +22,7 @@
 :- ['base_board.pl'].
 
 /**
- * turn(+Board:board, Side:color) is det
+ * turn(+Board:board, -Side:color) is det
  *
  * Returns the side whose turn it is to play.
  *

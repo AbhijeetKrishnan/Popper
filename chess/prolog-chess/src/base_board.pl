@@ -34,7 +34,7 @@ pieces([_|T], Type, Color, SquareSet) :-
     pieces(T, Type, Color, SquareSet).
 
 /**
- * piece_at(+BaseBoard:baseboard, +At:square, -Piece:piece) is nondet
+ * piece_at(+BaseBoard:baseboard, -Piece:piece, +At:square) is nondet
  *
  * Gets the piece at a given square.
  * Returns a unique 'empty' atom if the given square is empty.
