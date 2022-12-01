@@ -92,19 +92,6 @@ attacks(BaseBoard, Square, SquareSet) :-
     attack_squares(Square, Type, Side, SquareSet).
 
 /**
- * attack_squares(+Square:square, +PieceType:p_type, +Side:color, -SquareSet:sqset) is nondet
- *
- * Find all possible attack squares for a piece.
- *
- * @param Square
- * @param PieceType
- * @param Side
- * @param SquareSet A square set representing all squares that the input piece attacks.
- */
-attack_squares(Square, PieceType, Side, SquareSet) :-
-    findall(AttackSquare, attack_square(Square, PieceType, Side, AttackSquare), SquareSet).
-
-/**
  * is_attacked(+BaseBoard:baseboard, +Square:square, -Piece:piece) is nondet
  *
  * Checks if any piece is attacking the given square.

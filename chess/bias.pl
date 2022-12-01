@@ -4,37 +4,19 @@ max_body(5).
 
 % enable_pi.
 
-head_pred(f, 3).
+head_pred(f, 2).
 type_limit(sq, 3).
 
-body_pred(attacks, 3).
-body_pred(make_move, 4).
-body_pred(different_pos, 2).
-body_pred(behind, 4).
-body_pred(piece_at, 4).
-body_pred(other_side, 2).
-body_pred(legal_move, 3).
+% body_pred(pseudo_legal_move, 2).
+% body_pred(into_check, 3).
+body_pred(legal_move, 2).
 
-type(f, (pos, sq, sq)).
-type(attacks, (sq, sq, pos)).
-type(make_move, (sq, sq, pos, pos)).
-type(different_pos, (sq, sq)).
-type(behind, (sq, sq, sq, pos)).
-type(piece_at, (sq, pos, side, piece)).
-type(other_side, (side, side)).
-type(legal_move, (sq, sq, pos)).
+type(f, (board, move)).
+% type(pseudo_legal_move, (board, move)).
+% type(into_check, (board, move, piece)).
+type(legal_move, (board, move)).
 
-direction(f, (in, in, in)).
-direction(attacks, (in, out, in)).
-direction(make_move, (in, in, in, out)).
-direction(different_pos, (in, in)).
-direction(behind, (in, out, out, in)).
-direction(piece_at, (in, in, in, out)).
-direction(other_side, (in, in)).
-direction(legal_move, (out, out, in)).
-
-irreflexive(different_pos, 2).
-irreflexive(other_side, 2).
-
-transitive(different_pos, 2).
-transitive(other_side, 2).
+direction(f, (in, in)).
+% direction(pseudo_legal_move, (in, out)).
+% direction(into_check, (in, in, out)).
+direction(legal_move, (in, out)).

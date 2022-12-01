@@ -30,7 +30,9 @@
  * @param Side
  */
 turn(Board, Side) :-
+    % write_term(Board, [quoted(true), brace_terms(true)]),
     member(turn(Side), Board),
+    % writeln(Board),
     color(Side).
 
 /**

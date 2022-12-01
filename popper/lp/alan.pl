@@ -339,41 +339,12 @@ head_connected(C,Var1):-
     body_var(C,Var),
     not head_connected(C,Var).
 
-%% IRREFLEXIVE
-%% prevents: head:-q(A,B),q(B,A)
-:-
-    irreflexive(P,2),
-    body_literal(C,P,2,Vars1),
-    body_literal(C,P,2,Vars2),
-    Vars1 = (Var1,Var2),
-    Vars2 = (Var2,Var1),
-    Vars1 < Vars2.
-
-%% TRANSITIVE
-%% prevents: head:-q(B,A) if head:-q(A,B) would also be correct
-:-
-    transitive(P,2),
-    body_literal(C,P,2,Vars),
-    Vars = (Var1,Var2),
-    Var1 > Var2.
-
-%% FORCE legal_move
-:-
-    head_literal(_, f, 3, (Pos, From, To)),
-    not body_literal(_, legal_move, 3, (From, To, Pos)).
-:-
-    #count{From : body_literal(C, legal_move, 3, (From,_,_))} > 1.
-:-
-    #count{To : body_literal(C, legal_move, _, (_,To,_))} > 1.
-
-%% AC TODO: GENERALISE THE BELOW
-%% DYADIC FUNCTIONAL
-%% CAN REPLICATE RECALL
-%% prevents: head:- q(+A,-B),q(+A,-C)
-:-
-    functional(P,2),
-    body_literal(C,P,2,(V1,_)),
-    #count{V2 : body_literal(C,P,2,(V1,V2))} > 1.
+% %% FORCE legal_move
+% :-
+%     head_literal(_, f, 2, (Board, Move)),
+%     not body_literal(_, legal_move, 2, (Board, Move)).
+% :-
+%     #count{Move : body_literal(C, legal_move, 2, (Board, Move))} > 1.
 
 %% ##################################################
 %% ROLF MOREL'S ORDERING CONSTRAINT

@@ -8,6 +8,7 @@ import chess
 import chess.engine
 import chess.pgn
 
+from fen_to_contents import fen_to_contents, uci_to_move
 from util import LICHESS_2013, STOCKFISH, PathLike, get_engine, get_top_n_moves
 
 
@@ -103,11 +104,16 @@ def main():
     random.seed(args.seed)
 
     with open(args.example_file, 'w') as output:
-        field_names = ['fen', 'uci', 'label']
-        writer = csv.DictWriter(output, fieldnames=field_names)
-        writer.writeheader()
         for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
-            writer.writerow(ex)
+            fen, move, label = ex['fen'], ex['uci'], ex['label']
+            # print(fen, move, label)
+            contents = fen_to_contents(fen)
+            prolog_move = uci_to_move(move)
+            if label == 1:
+                example = f'pos(f({contents}, {prolog_move})).\n'
+            else:
+                example = f'neg(f({contents}, {prolog_move})).\n'
+            output.write(example)
 
 if __name__ == '__main__':
     main()

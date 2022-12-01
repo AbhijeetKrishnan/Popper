@@ -33,6 +33,13 @@ def fen_to_contents(fen: str) -> str:
         contents.append(f'ep_square({chess.square_name(board.ep_square)})')
     return f'[{", ".join(contents)}]'
 
+def uci_to_move(uci: str) -> str:
+    move = chess.Move.from_uci(uci)
+    prolog_move = [chess.square_name(move.from_square), chess.square_name(move.to_square)]
+    if move.promotion:
+        prolog_move.append(chess.piece_name(move.promotion))
+    return f'[{", ".join(map(str, prolog_move))}]'
+
 if __name__ == '__main__':
     fen = sys.argv[1]
     # fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
