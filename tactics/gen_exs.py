@@ -68,7 +68,7 @@ def sample_pgn(handle: TextIO, num_games, pos_per_game) -> List[chess.Board]:
         result.extend(sampled_examples)
     return result
 
-def gen_exs(exs_pgn_path: PathLike, num_games, pos_per_game, neg_to_pos_ratio: int=0, use_engine: bool=False, engine_path: Optional[PathLike]=None):
+def gen_exs(exs_pgn_path: PathLike, num_games: int, pos_per_game: int, neg_to_pos_ratio: int=0, use_engine: bool=False, engine_path: Optional[PathLike]=None):
     
     with open(exs_pgn_path) as handle:
         sample_examples = sample_pgn(handle, num_games=num_games, pos_per_game=pos_per_game)
@@ -79,9 +79,9 @@ def gen_exs(exs_pgn_path: PathLike, num_games, pos_per_game, neg_to_pos_ratio: i
                 moves = get_top_n_moves(engine, position, neg_to_pos_ratio + 1)
                 if not moves:
                     continue
-                _, top_move = moves[0]
+                top_move = moves[0]
                 yield {'fen': position.fen(), 'uci': top_move.uci(), 'label': 1}
-                for _, move in moves[1:]:
+                for move in moves[1:]:
                     yield {'fen': position.fen(), 'uci': move.uci(), 'label': 0}
     else:
         for position, move in sample_examples:

@@ -14,13 +14,13 @@ body_pred(mirror, 2).
 type(mirror, (square, square)).
 direction(mirror, (in, out)).
 
-body_pred(distance, 3).
-type(distance, (square, square, int)).
-direction(distance, (in, in, out)).
+% body_pred(distance, 3).
+% type(distance, (square, square, int)).
+% direction(distance, (in, in, out)).
 
-body_pred(coords, 3).
-type(coords, (square, int, int)).
-direction(coords, (out, out, out)).
+% body_pred(coords, 3).
+% type(coords, (square, int, int)).
+% direction(coords, (out, out, out)).
 
 body_pred(sq_between, 4).
 type(sq_between, (square, square, int, square)).
@@ -74,13 +74,13 @@ body_pred(queenside_castle, 2).
 type(queenside_castle, (board, color)).
 direction(queenside_castle, (in, out)).
 
-body_pred(fullmove, 2).
-type(fullmove, (board, int)).
-direction(fullmove, (in, out)).
+% body_pred(fullmove, 2).
+% type(fullmove, (board, int)).
+% direction(fullmove, (in, out)).
 
-body_pred(halfmove_clock, 2).
-type(halfmove_clock, (board, int)).
-direction(halfmove_clock, (in, out)).
+% body_pred(halfmove_clock, 2).
+% type(halfmove_clock, (board, int)).
+% direction(halfmove_clock, (in, out)).
 
 body_pred(en_passant, 2).
 type(en_passant, (board, square)).
@@ -94,9 +94,9 @@ body_pred(is_zeroing, 2).
 type(is_zeroing, (board, move)).
 direction(is_zeroing, (in, in)).
 
-body_pred(ply, 2).
-type(ply, (board, int)).
-direction(ply, (in, out)).
+% body_pred(ply, 2).
+% type(ply, (board, int)).
+% direction(ply, (in, out)).
 
 body_pred(make_move, 3).
 type(make_move, (board, move, board)).
