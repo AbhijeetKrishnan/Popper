@@ -7,6 +7,7 @@
  * @license All rights reserved. Used with permission.
  */
 :- module(make_move, [
+    set_turn/3,
     make_move/3
 ]).
 
@@ -30,7 +31,6 @@
  */
 set_halfmove_clock(Board, NewN, NewBoard) :-
     delete(Board, halfmove_clock(_), Board_1),
-    %NewBoard = [halfmove_clock(NewN)|Board_1].
     append(Board_1, [halfmove_clock(NewN)], NewBoard).
 
 /**
@@ -220,6 +220,20 @@ swap_turn(Board, NewBoard) :-
     other_color(Side, Other),
     delete(Board, turn(Side), Board_1),
     append(Board_1, [turn(Other)], NewBoard).
+
+/**
+ * set_turn(+Board:board, +Side:color, -NewBoard:board) is det
+ *
+ * Sets the turn to play of the input board to the given side.
+ *
+ * @param Board
+ * @param Side
+ * @param NewBoard
+ */
+set_turn(Board, Side, NewBoard) :-
+    delete(Board, turn(_), Board_1),
+    append(Board_1, [turn(Side)], NewBoard).
+
 /**
  * perform_castling(+Board:board, +FromPred:sq_pred, +ToPred:sq_pred, +Piece:piece, -NewBoard:board) is det
  *

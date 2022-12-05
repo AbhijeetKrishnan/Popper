@@ -25,8 +25,9 @@
     can_capture/3, 
     is_zeroing/2, 
     ply/2, 
-    pseudo_legal_move/2, 
-    into_check/2, 
+    pseudo_legal_move/2,
+    in_check/3,
+    into_check/3, 
     legal_move/2
 ]).
 
@@ -48,9 +49,7 @@
  * @param Side
  */
 turn(Board, Side) :-
-    % write_term(Board, [quoted(true), brace_terms(true)]),
     member(turn(Side), Board),
-    % writeln(Board),
     color(Side).
 
 /**
@@ -396,6 +395,23 @@ pseudo_legal_move(Board, [From, To]) :-
     pseudo_legal_move_(Board, Type, Side, From, To).
 
 /**
+ * in_check(+Board:board, +Side:color, -CheckerSquare:square) is nondet
+ *
+ * Tests if the input side is in check.
+ * If there is an opposing piece which can "capture" the king of that side, then that side is in check.
+ *
+ * @param Board
+ * @param Side
+ * @param CheckerSquare
+ */
+in_check(Board, Side, CheckerSquare) :-
+    other_color(Side, OtherSide),
+    set_turn(Board, OtherSide, NewBoard),
+    piece_at(NewBoard, piece(king, Side), KingSq),
+    piece_at(Board, piece(_, OtherSide), CheckerSquare),
+    pseudo_legal_move(NewBoard, [CheckerSquare, KingSq|_]).
+
+/**
  * into_check(+Board:board, +Move:move, -Checker:piece) is nondet
  *
  * Check if a given move would put the king into check.
@@ -405,12 +421,10 @@ pseudo_legal_move(Board, [From, To]) :-
  * @param Move
  * @param Checker The piece which is checking the king after the move
  */
-into_check(Board, Move, Checker) :-
+into_check(Board, Move, CheckerSquare) :-
     turn(Board, Side),
     make_move(Board, Move, NewBoard),
-    piece_at(NewBoard, piece(king, Side), KingSq),
-    pseudo_legal_move(NewBoard, [From, KingSq|_]), % check if any piece can "capture" the king
-    piece_at(NewBoard, Checker, From).
+    in_check(NewBoard, Side, CheckerSquare).
 
 /**
  * legal_move(+Board:board, -Move:move) is nondet
@@ -427,10 +441,6 @@ legal_move(Board, Move) :-
 
 % % Gets the pieces currently giving check
 % checkers(Board, Checkers) :-
-%     fail.
-
-% % Tests if the current side to move is in check
-% in_check(Board) :-
 %     fail.
 
 % % Probes if the given move would put the opponent in check. The move must be at least pseudo-legal.

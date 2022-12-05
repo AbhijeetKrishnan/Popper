@@ -6,6 +6,12 @@
  *  @copyright (c)2022 Abhijeet Krishnan.
  *  @license All rights reserved. Used with permission.
  */
+:- module(piece_types, [
+    piece_type/1, 
+    promo_piece/1, 
+    piece_type_str/2,
+    sliding/1
+]).
 
 /**
  * piece_type(+PieceType:p_type) is det
@@ -14,18 +20,23 @@
  *
  * @param PieceType The piece type, which may be any one in {pawn, knight, bishop, rook, queen, king}.
  */
-:- module(piece_types, [
-    piece_type/1, 
-    promo_piece/1, 
-    piece_type_str/2
-]).
-
 piece_type(pawn).
 piece_type(knight).
 piece_type(bishop).
 piece_type(rook).
 piece_type(queen).
 piece_type(king).
+
+/**
+ * sliding(-PieceType:p_type) is det
+ *
+ * Defines a sliding piece i.e., a piece that can move multiple squares in a straight line
+ *
+ * @param PieceType The piece type, which may be any one in {bishop, rook, queen}
+ */
+sliding(bishop).
+sliding(rook).
+sliding(queen).
 
 /**
  * promo_piece(+PieceType:p_type) is det
