@@ -9,13 +9,23 @@
  * @copyright (c)2022 Abhijeet Krishnan.
  * @license All rights reserved. Used with permission.
  */
+:- module(base_board, [
+    piece_at/3, 
+    is_empty/2, 
+    can_attack/3, 
+    attacks/3, 
+    is_attacked/3, 
+    remove_piece_at/3, 
+    set_piece_at/4, 
+    set_board_contents/2
+]).
 
-:- ['colors.pl'].
-:- ['piece_types.pl'].
-:- ['squares.pl'].
-:- ['pieces.pl'].
-:- ['moves.pl'].
-:- ['square_set.pl'].
+:- use_module(colors).
+:- use_module(piece_types).
+:- use_module(squares).
+:- use_module(pieces).
+:- use_module(moves).
+:- use_module(square_set).
 
 /**
  * pieces(+BaseBoard:baseboard, +Type:p_type, +Color:color, -SquareSet:sqset) is nondet

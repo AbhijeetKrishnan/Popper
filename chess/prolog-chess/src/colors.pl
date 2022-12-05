@@ -6,6 +6,11 @@
  *  @copyright (c)2022 Abhijeet Krishnan.
  *  @license All rights reserved. Used with permission.
  */
+:- module(colors, [
+    color/1, 
+    other_color/2, 
+    color_str/2
+]).
 
 /**
  * color(-Color:color) is semidet

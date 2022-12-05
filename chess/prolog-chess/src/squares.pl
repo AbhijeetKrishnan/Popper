@@ -6,6 +6,14 @@
  *  @copyright (c)2022 Abhijeet Krishnan.
  *  @license All rights reserved. Used with permission.
  */
+:- module(squares, [
+    coords/3, 
+    square/1, 
+    distance/3, 
+    mirror/2, 
+    promo_rank/2, 
+    backrank/2
+]).
 
 /**
  * coords(-Square:square, -File:int, -Rank:int) is semidet

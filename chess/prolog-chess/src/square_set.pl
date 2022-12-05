@@ -8,12 +8,20 @@
  * @copyright (c)2022 Abhijeet Krishnan.
  * @license All rights reserved. Used with permission.
  */
+:- module(square_set, [
+    pawn_single_move/3,
+    pawn_double_move/4,
+    pawn_attack_delta/3,
+    attack_square/4, 
+    attack_squares/4, 
+    sq_between/4
+]).
 
-:- ['colors.pl'].
-:- ['piece_types.pl'].
-:- ['squares.pl'].
-:- ['pieces.pl'].
-:- ['moves.pl'].
+:- use_module(colors).
+:- use_module(piece_types).
+:- use_module(squares).
+:- use_module(pieces).
+:- use_module(moves).
 
 /**
  * pawn_single_move_(+Side:color, +FromFile:int, +FromRank:int, -ToFile:int, -ToRank:int) is det

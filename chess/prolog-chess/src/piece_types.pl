@@ -14,6 +14,12 @@
  *
  * @param PieceType The piece type, which may be any one in {pawn, knight, bishop, rook, queen, king}.
  */
+:- module(piece_types, [
+    piece_type/1, 
+    promo_piece/1, 
+    piece_type_str/2
+]).
+
 piece_type(pawn).
 piece_type(knight).
 piece_type(bishop).

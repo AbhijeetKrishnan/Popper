@@ -14,9 +14,13 @@
  * @copyright (c)2022 Abhijeet Krishnan.
  * @license All rights reserved. Used with permission.
  */
+:- module(moves, [
+    move/4,
+    is_promo/1
+]).
 
-:- ['piece_types.pl'].
-:- ['squares.pl'].
+:- use_module(piece_types).
+:- use_module(squares).
 
 /**
  * move(+Move:move, -From:sq_pred, -To:sq_pred, -Promo:list(piece_type)) is det

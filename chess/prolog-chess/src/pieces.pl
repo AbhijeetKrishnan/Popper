@@ -11,9 +11,14 @@
  * @copyright (c)2022 Abhijeet Krishnan.
  * @license All rights reserved. Used with permission.
  */
+:- module(pieces, [
+    piece/2, 
+    piece_char/2, 
+    pawn_start_rank/2
+]).
 
-:- ['colors.pl'].
-:- ['piece_types.pl'].
+:- use_module(colors).
+:- use_module(piece_types).
 
 /**
  * piece(+Type:p_type, +Color:color) is det
