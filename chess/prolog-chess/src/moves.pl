@@ -23,19 +23,19 @@
 :- use_module(squares).
 
 /**
- * move(+Move:move, -From:sq_pred, -To:sq_pred, -Promo:list(piece_type)) is det
+ * move(+Move:move, -From:square, -To:square, -Promo:list(piece_type)) is det
  *
  * Unpacks a move into its component parts represented as predicates.
  * A non-promotion move has the empty list as its Promo field output.
  *
  * @param Move
- * @param From A square/1 predicate representing the initial square
- * @param To A square/1 predicate representing the target square
+ * @param From
+ * @param To
  * @param Promo A list of 0 or 1 elements representing the promo piece type. If 0, it means the move was not a promotion.
  * If 1, the list contains a single piece_type/1 predicate representing the piece being promoted to.
  */
-move([From, To], square(From), square(To), []).
-move([From, To, Promo], square(From), square(To), [piece_type(Promo)]).
+move([From, To], From, To, []).
+move([From, To, Promo], From, To, [piece_type(Promo)]).
 
 /**
  * is_promo(+Move:move) is det

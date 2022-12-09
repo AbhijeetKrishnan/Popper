@@ -1,4 +1,5 @@
 :- module(tactics, [
+    fork_2/2,
     fork/3,
     pin/4,
     discovered_check/3
@@ -21,6 +22,17 @@ fork(Board, ForkerSquare, ForkedSquares) :- % TODO: how to allow/learn tactics w
     findall(ForkedSquare, can_capture(Board, ForkerSquare, ForkedSquare), ForkedSquares), % TODO: this also can't be used, and needs to be exposed
     length(ForkedSquares, Len), % TODO: this must be exposed too
     Len >= 2. % TODO: this must be exposed too
+
+fork_2(Board, Move) :-
+    legal_move(Board, Move),
+    move(Move, From, To, Promo),
+    turn(Board, Side),
+    piece_at(Board, Piece, From),
+    valid_piece(Piece, _, Side),
+    make_move(Board, [From, To], NewBoard),
+    can_capture(NewBoard, To, ForkSquare1),
+    can_capture(NewBoard, To, ForkSquare2),
+    different(ForkSquare1, ForkSquare2).
 
 % there is a pin on the board if a (sliding) piece (PinningPiece) attacks an opponent piece (PinnedPiece), which has another
 % opponent piece 'behind' it

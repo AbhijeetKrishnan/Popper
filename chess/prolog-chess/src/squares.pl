@@ -12,7 +12,8 @@
     distance/3, 
     mirror/2, 
     promo_rank/2, 
-    backrank/2
+    backrank/2,
+    different/2
 ]).
 
 /**
@@ -100,3 +101,6 @@ promo_rank(black, 2).
  */
 backrank(white, 1).
 backrank(black, 8).
+
+different(A, B) :-
+    A \== B.

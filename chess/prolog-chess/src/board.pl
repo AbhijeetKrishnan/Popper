@@ -192,7 +192,7 @@ is_capture(Board, [_, To|_]) :-
  * @param CaptureSquare
  */
 can_capture(Board, Square, CaptureSquare) :-
-    turn(Board, Side),
+    piece_at(Board, piece(_, Side), Square),
     other_color(Side, OtherSide),
     can_attack(Board, Square, CaptureSquare),
     piece_at(Board, piece(_, OtherSide), CaptureSquare).

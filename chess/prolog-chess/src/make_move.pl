@@ -269,7 +269,7 @@ perform_castling(Board, _, _, _, Board).
  * @param NewBoard
  */
 make_move(Board, Move, NewBoard) :-
-    move(Move, square(From), square(To), PromoList),
+    move(Move, From, To, PromoList),
 
     increment_fullmove(Board, Board_1),
     reset_if_zeroing(Board_1, Move, Board_2),

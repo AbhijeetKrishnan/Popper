@@ -14,7 +14,8 @@
 :- module(pieces, [
     piece/2, 
     piece_char/2, 
-    pawn_start_rank/2
+    pawn_start_rank/2,
+    valid_piece/3
 ]).
 
 :- use_module(colors).
@@ -65,3 +66,5 @@ piece_char('k', piece(king, black)).
  */
 pawn_start_rank(white, 2).
 pawn_start_rank(black, 7).
+
+valid_piece(piece(Type, Side), Type, Side).
