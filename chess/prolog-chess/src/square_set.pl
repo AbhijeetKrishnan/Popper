@@ -14,7 +14,9 @@
     pawn_attack_delta/3,
     attack_square/4, 
     attack_squares/4, 
-    sq_between/4
+    sq_between/4,
+    sq_between_incl/3,
+    sq_between_non_incl/3
 ]).
 
 :- use_module(colors).
@@ -396,3 +398,9 @@ sq_between(A, B, Inclusive, Bet) :-
     MagRank is abs(DelRank),
     between_(FileA, RankA, FileB, RankB, MagFile, MagRank, SignFile, SignRank, Inclusive, FileBet, RankBet),
     coords(Bet, FileBet, RankBet).
+
+sq_between_incl(A, B, Bet) :-
+    sq_between(A, B, 0, Bet).
+
+sq_between_non_incl(A, B, Bet) :-
+    sq_between(A, B, 1, Bet).

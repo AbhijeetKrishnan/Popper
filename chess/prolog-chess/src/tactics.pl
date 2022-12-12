@@ -2,7 +2,9 @@
     fork_2/2,
     fork/3,
     pin/4,
-    discovered_check/3
+    pin_2/2,
+    discovered_check/3,
+    discovered_check_2/2
 ]).
 
 :- use_module(colors).
@@ -18,14 +20,14 @@
 % there is a fork on the board if a piece (of the side to play) attacks two (or more) opponent pieces simultaneously
 fork(Board, ForkerSquare, ForkedSquares) :- % TODO: how to allow/learn tactics with varying rule heads like this?
     turn(Board, Side),
-    piece_at(Board, piece(_, Side), ForkerSquare), % TODO: this can't be used in Popper, piece_at needs to have all params exposed then
-    findall(ForkedSquare, can_capture(Board, ForkerSquare, ForkedSquare), ForkedSquares), % TODO: this also can't be used, and needs to be exposed
-    length(ForkedSquares, Len), % TODO: this must be exposed too
-    Len >= 2. % TODO: this must be exposed too
+    piece_at(Board, piece(_, Side), ForkerSquare),
+    findall(ForkedSquare, can_capture(Board, ForkerSquare, ForkedSquare), ForkedSquares),
+    length(ForkedSquares, Len),
+    Len >= 2.
 
 fork_2(Board, Move) :-
     legal_move(Board, Move),
-    move(Move, From, To, Promo),
+    move(Move, From, To, _),
     turn(Board, Side),
     piece_at(Board, Piece, From),
     valid_piece(Piece, _, Side),
@@ -38,20 +40,41 @@ fork_2(Board, Move) :-
 % opponent piece 'behind' it
 pin(Board, PinningPieceSq, PinnedPieceSq, BehindSq) :- % TODO: how to allow/learn tactics with varying rule heads like this?
     turn(Board, Side),
-    piece_at(Board, piece(Type, Side), PinningPieceSq), % TODO: needs to be exposed as only params
+    piece_at(Board, piece(Type, Side), PinningPieceSq),
     sliding(Type),
     can_capture(Board, PinningPieceSq, PinnedPieceSq),
-    remove_piece_at(Board, PinnedPieceSq, NewBoard), % TODO: minor fix, but I think I wasn't including this earlier
+    remove_piece_at(Board, PinnedPieceSq, NewBoard),
     can_capture(NewBoard, PinningPieceSq, BehindSq),
-    sq_between(PinningPieceSq, BehindSq, 1, PinnedPieceSq). % TODO: not sure this sq_between(..., 1/0, ...) is something that Popper will handle
+    sq_between(PinningPieceSq, BehindSq, 1, PinnedPieceSq).
+
+pin_2(Board, Move) :-
+    legal_move(Board, Move),
+    turn(Board, Side),
+    move(Move, From, PinningPieceSq, _),
+    piece_at(Board, Piece, From),
+    valid_piece(Piece, Type, Side),
+    sliding(Type),
+    make_move(Board, Move, NewBoard),
+    can_capture(NewBoard, PinningPieceSq, PinnedPieceSq),
+    remove_piece_at(NewBoard, PinnedPieceSq, NewerBoard),
+    can_capture(NewerBoard, PinningPieceSq, BehindSq),
+    sq_between_non_incl(PinningPieceSq, BehindSq, PinnedPieceSq).
 
 % discovered check is a move that leads to a check on the opponent by a piece which is not the moved piece
 discovered_check(Board, Move, CheckerSquare) :- % TODO: how to allow/learn tactics with varying rule heads like this?
-    [From, _|_] = Move, % TODO: no exposed function
+    [_, To|_] = Move,
     make_move(Board, Move, NewBoard),
     turn(NewBoard, Side),
     in_check(NewBoard, Side, CheckerSquare),
-    From \== CheckerSquare. % TODO: no exposed function
+    To \== CheckerSquare.
+
+discovered_check_2(Board, Move) :-
+    legal_move(Board, Move), % move must be legal
+    move(Move, _, To, _), % unpack move contents
+    make_move(Board, Move, NewBoard), % simulate the move on the board
+    turn(NewBoard, Side), % get the side to play
+    in_check(NewBoard, Side, CheckerSquare), % the side to play must be in check - get the checking piece
+    different(To, CheckerSquare). % the checking piece must not be the same as the piece that moved -> discovered check
 
 % battery
 % a battery exists on the board when a sliding piece (rook, bishop only) occupies an empty file/diagonal
