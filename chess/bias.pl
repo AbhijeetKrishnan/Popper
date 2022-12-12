@@ -14,6 +14,10 @@ body_pred(mirror, 2).
 type(mirror, (square, square)).
 direction(mirror, (in, out)).
 
+body_pred(different, 2).
+type(different, (square, square)).
+direction(different, (in, in)).
+
 % body_pred(distance, 3).
 % type(distance, (square, square, int)).
 % direction(distance, (in, in, out)).
@@ -22,9 +26,9 @@ direction(mirror, (in, out)).
 % type(coords, (square, int, int)).
 % direction(coords, (out, out, out)).
 
-body_pred(sq_between, 4).
-type(sq_between, (square, square, int, square)).
-direction(sq_between, (in, in, in, out)).
+body_pred(sq_between_non_incl, 3).
+type(sq_between_non_incl, (square, square, square)).
+direction(sq_between_non_incl, (in, in, out)).
 
 body_pred(attack_squares, 4).
 type(attack_squares, (square, p_type, color, sqset)).
@@ -38,6 +42,10 @@ body_pred(piece_type, 1).
 type(piece_type, (p_type,)).
 direction(piece_type, (out,)).
 
+body_pred(sliding, 1).
+type(sliding, (p_type,)).
+direction(sliding, (out,)).
+
 body_pred(color, 1).
 type(color, (color,)).
 direction(color, (out,)).
@@ -46,9 +54,21 @@ body_pred(other_color, 2).
 type(other_color, (color, color)).
 direction(other_color, (in, out)).
 
+body_pred(move, 4).
+type(move, (move, square, square, list)).
+direction(move, (in, out, out, out)).
+
 body_pred(piece_at, 3).
 type(piece_at, (board, piece, square)).
 direction(piece_at, (in, out, in)).
+
+body_pred(remove_piece_at, 3).
+type(remove_piece_at, (board, square, board)).
+direction(remove_piece_at, (in, in, out)).
+
+body_pred(valid_piece, 3).
+type(valid_piece, (piece, p_type, color)).
+direction(valid_piece, (in, out, out)).
 
 body_pred(is_empty, 2).
 type(is_empty, (board, sqset)).
@@ -90,6 +110,10 @@ body_pred(is_capture, 2).
 type(is_capture, (board, move)).
 direction(is_capture, (in, in)).
 
+body_pred(can_capture, 3).
+type(can_capture, (board, square, square)).
+direction(can_capture, (in, in, out)).
+
 body_pred(is_zeroing, 2).
 type(is_zeroing, (board, move)).
 direction(is_zeroing, (in, in)).
@@ -117,6 +141,10 @@ direction(pseudo_legal_ep, (in, out)).
 body_pred(pseudo_legal_move, 2).
 type(pseudo_legal_move, (board, move)).
 direction(pseudo_legal_move, (in, out)).
+
+body_pred(in_check, 3).
+type(in_check, (board, color, square)).
+direction(in_check, (in, in, out)).
 
 body_pred(into_check, 3).
 type(into_check, (board, move, piece)).

@@ -25,7 +25,10 @@
     can_capture/3, 
     is_zeroing/2, 
     ply/2, 
+    pseudo_legal_ep/2,
     pseudo_legal_move/2,
+    pawn_capture/2,
+    castling_move/2,
     in_check/3,
     into_check/3, 
     legal_move/2
