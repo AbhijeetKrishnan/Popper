@@ -25,13 +25,13 @@ fork(Board, ForkerSquare, ForkedSquares) :- % TODO: how to allow/learn tactics w
     length(ForkedSquares, Len),
     Len >= 2.
 
+% max_clauses(1).
+% max_vars(8).
+% max_body(6).
 fork_2(Board, Move) :-
     legal_move(Board, Move),
-    move(Move, From, To, _),
-    turn(Board, Side),
-    piece_at(Board, Piece, From),
-    valid_piece(Piece, _, Side),
-    make_move(Board, [From, To], NewBoard),
+    move(Move, _, To, _),
+    make_move(Board, Move, NewBoard),
     can_capture(NewBoard, To, ForkSquare1),
     can_capture(NewBoard, To, ForkSquare2),
     different(ForkSquare1, ForkSquare2).
@@ -47,18 +47,14 @@ pin(Board, PinningPieceSq, PinnedPieceSq, BehindSq) :- % TODO: how to allow/lear
     can_capture(NewBoard, PinningPieceSq, BehindSq),
     sq_between(PinningPieceSq, BehindSq, 1, PinnedPieceSq).
 
+% max_clauses(1).
+% max_vars(10).
+% max_body(4).
 pin_2(Board, Move) :-
     legal_move(Board, Move),
-    turn(Board, Side),
-    move(Move, From, PinningPieceSq, _),
-    piece_at(Board, Piece, From),
-    valid_piece(Piece, Type, Side),
-    sliding(Type),
+    move(Move, _, PinningPieceSq, _),
     make_move(Board, Move, NewBoard),
-    can_capture(NewBoard, PinningPieceSq, PinnedPieceSq),
-    remove_piece_at(NewBoard, PinnedPieceSq, NewerBoard),
-    can_capture(NewerBoard, PinningPieceSq, BehindSq),
-    sq_between_non_incl(PinningPieceSq, BehindSq, PinnedPieceSq).
+    xrays(NewBoard, PinningPieceSq, _, _).
 
 % discovered check is a move that leads to a check on the opponent by a piece which is not the moved piece
 discovered_check(Board, Move, CheckerSquare) :- % TODO: how to allow/learn tactics with varying rule heads like this?

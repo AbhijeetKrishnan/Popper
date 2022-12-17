@@ -17,7 +17,8 @@
     is_attacked/3, 
     remove_piece_at/3, 
     set_piece_at/4, 
-    set_board_contents/2
+    set_board_contents/2,
+    valid_piece_at/4
 ]).
 
 :- use_module(colors).
@@ -57,6 +58,20 @@ piece_at(BaseBoard, piece(Type, Side), At) :-
     member(contents(piece(Type, Side), square(At)), BaseBoard).
 piece_at(BaseBoard, empty, At) :-
     \+ member(contents(piece(_, _), square(At)), BaseBoard).
+
+/**
+ * valid_piece_at(+BaseBoard:baseboard, -Type:p_type, -Side:color, +At:square) is nondet
+ *
+ * Gets the piece at a given square.
+ * Fails to unify if no piece exists on the square
+ *
+ * @param BaseBoard
+ * @param Type
+ * @param Side
+ * @param At
+ */
+valid_piece_at(BaseBoard, Type, Side, At) :-
+    member(contents(piece(Type, Side), square(At)), BaseBoard).
 
 /**
  * is_empty(+BaseBoard:baseboard, +SquareSet:sqset) is det

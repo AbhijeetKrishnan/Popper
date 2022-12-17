@@ -58,17 +58,25 @@ body_pred(move, 4).
 type(move, (move, square, square, list)).
 direction(move, (in, out, out, out)).
 
-body_pred(piece_at, 3).
-type(piece_at, (board, piece, square)).
-direction(piece_at, (in, out, in)).
+% body_pred(piece_at, 3).
+% type(piece_at, (board, piece, square)).
+% direction(piece_at, (in, out, in)).
 
 body_pred(remove_piece_at, 3).
 type(remove_piece_at, (board, square, board)).
 direction(remove_piece_at, (in, in, out)).
 
-body_pred(valid_piece, 3).
-type(valid_piece, (piece, p_type, color)).
-direction(valid_piece, (in, out, out)).
+% body_pred(valid_piece, 3).
+% type(valid_piece, (piece, p_type, color)).
+% direction(valid_piece, (in, out, out)).
+
+body_pred(valid_piece_at, 4).
+type(valid_piece_at, (board, p_type, color, square)).
+direction(valid_piece_at, (in, out, out, in)).
+
+body_pred(xrays, 4).
+type(xrays, (board, square, square, square)).
+direction(xrays, (in, in, out, out)).
 
 body_pred(is_empty, 2).
 type(is_empty, (board, sqset)).

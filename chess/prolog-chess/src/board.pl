@@ -31,7 +31,8 @@
     castling_move/2,
     in_check/3,
     into_check/3, 
-    legal_move/2
+    legal_move/2,
+    xrays/4
 ]).
 
 :- use_module(colors).
@@ -199,6 +200,25 @@ can_capture(Board, Square, CaptureSquare) :-
     other_color(Side, OtherSide),
     can_attack(Board, Square, CaptureSquare),
     piece_at(Board, piece(_, OtherSide), CaptureSquare).
+
+/**
+ * xrays(+Board:board, +AttackSquare:square, -AttackedSquare:square, -BehindSquare:square) is nondet
+ *
+ * Generates an x-raying move on the board.
+ * An x-ray is when a sliding piece attacks another piece, and has another piece behind it
+ *
+ * @param Board
+ * @param AttackSquare
+ * @param AttackedSquare
+ * @param BehindSquare
+ */
+xrays(Board, AttackSquare, AttackedSquare, BehindSquare) :-
+    valid_piece_at(Board, Type, _, AttackSquare),
+    sliding(Type),
+    can_capture(Board, AttackSquare, AttackedSquare),
+    remove_piece_at(Board, AttackedSquare, NewBoard),
+    can_capture(NewBoard, AttackSquare, BehindSquare),
+    sq_between_non_incl(AttackSquare, BehindSquare, AttackedSquare).
 
 /**
  * is_zeroing(+Board:board, +Move:move) is semidet
