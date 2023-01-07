@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument('-o', '--output', dest='output_name', type=str, help='File to which to output graph')
     parser.add_argument('--title', dest='title', type=str, default='', help='Text to include in graph title')
     parser.add_argument('--xlabel', dest='xlabel', type=str)
-    parser.add_argument('--bins', dest='bins', type=int, default=20)
+    parser.add_argument('--bins', dest='bins', type=int, default=100)
     parser.add_argument('--left', dest='left', type=float, default=0)
     parser.add_argument('--right', dest='right', type=float, default=None)
     return parser.parse_args()

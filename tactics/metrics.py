@@ -4,7 +4,7 @@ import logging
 import math
 import random
 from collections.abc import Callable
-from typing import Generator, List, Optional, Tuple
+from typing import Generator, List, Optional, Tuple, Dict
 
 import chess
 import chess.engine
@@ -38,22 +38,17 @@ def evaluate(tactic_moves: List[Tuple[chess.Move, int]], ground_move: Tuple[ches
     metric /= len(tactic_moves) # implicit ς(a|s) as 1 / len(tactic_moves) for each move suggested
     return metric
 
-def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3, time_limit_sec: Optional[int]=None, use_foreign_predicate: bool=False) -> Tuple[Optional[bool], Optional[List[chess.Move]]]:
+def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3, time_limit_sec: Optional[int]=None) -> Tuple[Optional[bool], Optional[List[chess.Move]]]:
     "Given the text of a Prolog-based tactic, and a position, check whether the tactic matched in the given position or and if so, what were the suggested moves"
     
-    results = chess_query(prolog, text, board, limit=limit, time_limit_sec=time_limit_sec, use_foreign_predicate=use_foreign_predicate)
+    results = chess_query(prolog, text, board, limit=limit, time_limit_sec=time_limit_sec)
     if results is None:
         match, suggestions = None, None
     elif not results:
         match, suggestions = False, None
     else:
         match = True
-        # convert suggestions to chess.Moves
-        def suggestion_to_move(suggestion):
-            from_sq = chess.parse_square(suggestion['From'])
-            to_sq = chess.parse_square(suggestion['To'])
-            return chess.Move(from_sq, to_sq)
-        suggestions = list(map(suggestion_to_move, results))
+        suggestions = results
         assert suggestions # suggestions list is not empty if tactic matches
     
     return match, suggestions
@@ -61,7 +56,7 @@ def get_tactic_match(prolog: Prolog, text: str, board: chess.Board, limit: int=3
 def get_tactic_evals(prolog: Prolog, tactic_text: str, board: chess.Board, limit: int, engine: chess.engine.SimpleEngine, args) -> Tuple[bool, List[Tuple[chess.Move, int]]]:
     "Obtain tactic suggestions and return their engine evaluations for a given position"
     
-    match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=limit, time_limit_sec=args.eval_timeout, use_foreign_predicate=args.fpred)
+    match, suggestions = get_tactic_match(prolog, tactic_text, board, limit=limit, time_limit_sec=args.eval_timeout)
     logger.debug(f'Suggestions: {suggestions}')
     tactic_evals = []
     if match and suggestions:
@@ -124,7 +119,6 @@ def parse_args():
     parser.add_argument('--pos-per-game', dest='pos_per_game', type=int, default=10, help='Number of positions to use per game')
     parser.add_argument('--data-path', dest='data_path', type=str, default='tactics/data/stats/metrics_data.csv', help='File path to which metrics should be written')
     parser.add_argument('--pos-list', dest='pos_list', type=str, help='Path to file contatining list of positions to use for calculating divergence')
-    parser.add_argument('--fpred', default=False, action='store_true', help='Use legal_move as a foreign predicate')
     parser.add_argument('--eval-timeout', type=int, default=None, help='Prolog evaluation timeout in seconds')
     parser.add_argument('--mate-score', type=int, default=2000, help='Score to use to approximate a Mate in X evaluation')
     return parser.parse_args()
@@ -186,7 +180,7 @@ def main():
         tactics = tactic[:args.tactics_limit]
     
     # Calculate metrics for each tactic
-    prolog = get_prolog(BK_FILE, args.fpred)
+    prolog = get_prolog(BK_FILE)
     metrics_list = []
     with get_engine(engine_path) as engine:
         for board, move, label in tqdm(training_examples, desc='Positions', unit='position'):
@@ -194,7 +188,7 @@ def main():
             ground_metrics = calc_metrics([ground_eval], ground_eval, example=(board, move, label), match=1, tactic_text='ground', prefix='tactic_ground')
             metrics_list.append(ground_metrics)
 
-            random_move = random.choice(list(board.legal_moves))
+            random_move = random.choice(list(board.legal_moves)) # TODO: add fixed seed?
             random_eval = get_evals(engine, board, [random_move], mate_score=args.mate_score)[0]
             random_metrics = calc_metrics([random_eval], ground_eval, example=(board, move, label), match=1, tactic_text='random', prefix='tactic_ground')
             metrics_list.append(random_metrics)
