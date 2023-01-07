@@ -104,6 +104,7 @@ def main():
     random.seed(args.seed)
 
     with open(args.example_file, 'w') as output:
+        output.write(':- discontinuous pos/1.\n:- discontinuous neg/1.\n\n')
         for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
             fen, move, label = ex['fen'], ex['uci'], ex['label']
             # print(fen, move, label)
