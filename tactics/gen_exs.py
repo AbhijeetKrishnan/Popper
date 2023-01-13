@@ -1,6 +1,7 @@
 import argparse
 import csv
 import logging
+import os
 import random
 from typing import List, Optional, TextIO
 
@@ -101,20 +102,29 @@ def parse_args():
 
 def main():
     args = parse_args()
+    extension = os.path.splitext(args.example_file)[1]
     random.seed(args.seed)
 
     with open(args.example_file, 'w') as output:
-        output.write(':- discontinuous pos/1.\n:- discontinuous neg/1.\n\n')
-        for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
-            fen, move, label = ex['fen'], ex['uci'], ex['label']
-            # print(fen, move, label)
-            contents = fen_to_contents(fen)
-            prolog_move = uci_to_move(move)
-            if label == 1:
-                example = f'pos(f({contents}, {prolog_move})).\n'
-            else:
-                example = f'neg(f({contents}, {prolog_move})).\n'
-            output.write(example)
+        if extension == '.csv':
+            field_names = ['fen', 'uci', 'label']
+            writer = csv.DictWriter(output, fieldnames=field_names)
+            writer.writeheader()
+            for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
+                writer.writerow(ex)
+        else: # Prolog default for unknown file extension
+            output.write(':- discontinuous pos/1.\n:- discontinuous neg/1.\n\n')
+            for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
+                fen, move, label = ex['fen'], ex['uci'], ex['label']
+                # print(fen, move, label)
+                contents = fen_to_contents(fen)
+                prolog_move = uci_to_move(move)
+                if label == 1:
+                    example = f'pos(f({contents}, {prolog_move})).\n'
+                else:
+                    example = f'neg(f({contents}, {prolog_move})).\n'
+                output.write(example)
+
 
 if __name__ == '__main__':
     main()
