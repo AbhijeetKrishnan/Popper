@@ -1,6 +1,6 @@
 # Interpretable Chess Tactics
 
-This is the code release for the paper *Synthesizing Chess Tactics from Player Games* by Abhijeet Krishnan and Dr. Chris Martens.
+This is the code release for the paper *nductive Logic Programming for Chess Strategy Synthesis from Player Trajectories* under review at IJCAI 2023 by Abhijeet Krishnan, Dr. Chris Martens and Dr. Arnav Jhala.
 
 *Execution times are from executing the commands on Ubuntu 20.04 LTS via WSL2 on Windows 11 running on a Dell XPS 15 7590 with an Intel Core i7-9750H CPU @ 2.60GHz*
 
