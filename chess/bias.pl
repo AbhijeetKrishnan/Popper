@@ -1,8 +1,9 @@
-max_clauses(2).
+max_clauses(1).
 max_vars(6).
 max_body(6).
 
 % enable_pi.
+allow_singletons.
 
 type_limit(sq, 3).
 

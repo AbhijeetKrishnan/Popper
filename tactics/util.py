@@ -21,7 +21,8 @@ MAIA_1100 = os.path.join('tactics', 'bin', 'maia_weights', 'maia-1100.pb')
 MAIA_1600 = os.path.join('tactics', 'bin', 'maia_weights', 'maia-1600.pb')
 MAIA_1900 = os.path.join('tactics', 'bin', 'maia_weights', 'maia-1900.pb')
 
-STOCKFISH = os.path.join('tactics', 'bin', 'stockfish_14_x64')
+STOCKFISH_14 = os.path.join('tactics', 'bin', 'stockfish_14_x64')
+STOCKFISH_15 = os.path.join('tactics', 'bin', 'stockfish-ubuntu-20.04-x86-64-avx2')
 LC0 = os.path.join('tactics', 'bin', 'lc0', 'build', 'release', 'lc0')
 
 ILLEGAL_MOVE_SCORE = -1000

@@ -10,7 +10,7 @@ import chess.engine
 import chess.pgn
 
 from fen_to_contents import fen_to_contents, uci_to_move
-from util import LICHESS_2013, STOCKFISH, PathLike, get_engine, get_top_n_moves
+from util import LICHESS_2013, get_lc0_cmd, LC0, MAIA_1600, PathLike, get_engine, get_top_n_moves
 
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ def gen_exs(exs_pgn_path: PathLike, num_games: int, pos_per_game: int, neg_to_po
                 moves = get_top_n_moves(engine, position, neg_to_pos_ratio + 1)
                 if not moves:
                     continue
-                top_move = moves[0]
+                top_move = move
                 yield {'fen': position.fen(), 'uci': top_move.uci(), 'label': 1}
                 for move in moves[1:]:
                     yield {'fen': position.fen(), 'uci': move.uci(), 'label': 0}
@@ -92,10 +92,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Generate tactic training examples and write them to a csv file')
     parser.add_argument('example_file', type=str, help='File to write generated examples to')
     parser.add_argument('-i', '--pgn', dest='pgn_file', type=str, default=LICHESS_2013, help='PGN file containing games')
-    parser.add_argument('-e', '--engine', dest='engine_path', default=STOCKFISH, help='Path to engine executable to use for recommending moves')
+    parser.add_argument('-e', '--engine', dest='engine_path', default=get_lc0_cmd(LC0, MAIA_1600), help='Path to engine executable to use for recommending moves')
     parser.add_argument('-n', '--num-games', dest='num_games', type=int, default=10, help='Number of games to use')
     parser.add_argument('-p', '--pos-per-game', dest='pos_per_game', type=int, default=10, help='Number of positions to use per game')
-    parser.add_argument('-r', '--ratio', dest='neg_to_pos_ratio', type=int, default=3, help='Ratio of negative to positive examples to generate')
+    parser.add_argument('-r', '--ratio', dest='neg_to_pos_ratio', type=int, default=2, help='Ratio of negative to positive examples to generate')
     parser.add_argument('--seed', dest='seed', type=int, default=1, help='Seed to use for random generation')
     parser.add_argument('--use-engine', action='store_true', help='Use engine to generate moves for the examples')
     return parser.parse_args()
@@ -113,7 +113,7 @@ def main():
             for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
                 writer.writerow(ex)
         else: # Prolog default for unknown file extension
-            output.write(':- discontinuous pos/1.\n:- discontinuous neg/1.\n\n')
+            output.write(':- discontiguous pos/1.\n:- discontiguous neg/1.\n\n')
             for ex in gen_exs(args.pgn_file, args.num_games, args.pos_per_game, args.neg_to_pos_ratio, args.use_engine, args.engine_path):
                 fen, move, label = ex['fen'], ex['uci'], ex['label']
                 # print(fen, move, label)

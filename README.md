@@ -48,22 +48,22 @@ We use Lichess games databases for [2013 -
    bash get_pgns.sh
    ```
 
-7. Generate data for the training and validation datasets (~14s)
+7. Generate train dataset (~11s)
 
    ```bash
-   python tactics/gen_exs.py tactics/data/exs/examples.csv  \
+   python tactics/gen_exs.py chess/exs.pl  \
       -i tactics/data/lichess_db_standard_rated_2013-01.pgn \
-      -n 200 -p 1 --seed 1
+      -n 200 -p 1 --seed 1 --use-engine
    ```
 
-8. Split the examples into training ~~and validation~~ sets
+<!-- 8. Split the examples into training ~~and validation~~ sets
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples.csv \
       --trim=100 --split=100
-   ```
+   ``` -->
 
-9. Generate test data (~8s)
+9. Generate test dataset (~5s)
 
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples_test.csv \
@@ -80,19 +80,19 @@ We use Lichess games databases for [2013 -
 
 ## Engine(s)
 
-11. Download the latest x64 Stockfish 14 binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_14_linux_x64.zip) and move the binary named
-   `stockfish_14_x64` into the `tactics/bin/` folder. Delete any leftover files manually.
+11. Download the latest x64 Stockfish 15 binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_15.1_linux_x64_avx2.zip) and move the binary named
+   `stockfish-ubuntu-20.04-x86-64-avx2` into the `tactics/bin/` folder. Delete any leftover files manually.
 
    ```bash
-   wget https://stockfishchess.org/files/stockfish_14_linux_x64.zip
-   unzip stockfish_14_linux_x64.zip
-   mv stockfish_14_linux_x64/stockfish_14_x64 tactics/bin
+   wget https://stockfishchess.org/files/stockfish_15.1_linux_x64_avx2.zip
+   unzip stockfish_15.1_linux_x64_avx2.zip
+   mv stockfish_15.1_linux_x64_avx2/stockfish-ubuntu-20.04-x86-64-avx2 tactics/bin
    ```
 
 12. Give execution permission to the Stockfish binary 
 
    ```bash
-   chmod +x tactics/bin/stockfish_14_x64
+   chmod +x tactics/bin/stockfish-ubuntu-20.04-x86-64-avx2
    ```
 
 13. Clone the `maia-chess` and `lc0` submodules
@@ -122,7 +122,7 @@ We use Lichess games databases for [2013 -
       --eval-timeout 1 > tactics/data/hspace/hspace_tactics.txt
    ```
 
-22. Evaluate $T$ with Maia-1600 (~16m45s)
+22. Evaluate $T$ with Maia-1600 (~37m54s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -131,18 +131,18 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600
    ```
 
-23. Evaluate $T$ with Stockfish 14 (~14m34s)
+23. Evaluate $T$ with Stockfish 15 (~32m44s)
    
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
       --pos-list tactics/data/exs/examples_test.csv                \
-      --data-path tactics/data/stats/metrics_test_t_sf14.csv   \
+      --data-path tactics/data/stats/metrics_test_t_sf.csv   \
       --engine STOCKFISH
    ```
 
 ## Generate graphs
 
-26. Run `gen_graphs.sh` to generate all graphs reported in the paper (~9s)
+26. Run `gen_graphs.sh` to generate all graphs reported in the paper (~5s)
 
    ```bash
    bash gen_graphs.sh

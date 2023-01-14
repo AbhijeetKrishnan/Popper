@@ -121,6 +121,7 @@ def parse_args():
     parser.add_argument('--pos-list', dest='pos_list', type=str, help='Path to file contatining list of positions to use for calculating divergence')
     parser.add_argument('--eval-timeout', type=int, default=None, help='Prolog evaluation timeout in seconds')
     parser.add_argument('--mate-score', type=int, default=2000, help='Score to use to approximate a Mate in X evaluation')
+    parser.add_argument('--seed', type=int, default=1, help='Seed to use for random tactic')
     return parser.parse_args()
 
 def create_logger(log_level):
@@ -157,8 +158,12 @@ def get_tactics(tactics_file: str) -> Generator[str, None, None]:
 def main():
     # Create argument parser
     args = parse_args()
-    if args.engine_path == 'STOCKFISH':
-        engine_path = STOCKFISH
+    if args.engine_path == 'STOCKFISH_14':
+        engine_path = STOCKFISH_14
+    elif args.engine_path == 'STOCKFISH_15':
+        engine_path = STOCKFISH_15
+    elif args.engine_path == 'STOCKFISH':
+        engine_path = STOCKFISH_15
     elif args.engine_path == 'MAIA1100':
         engine_path = get_lc0_cmd(LC0, MAIA_1100)
     elif args.engine_path == 'MAIA1600':
@@ -182,13 +187,14 @@ def main():
     # Calculate metrics for each tactic
     prolog = get_prolog(BK_FILE)
     metrics_list = []
+    random.seed(args.seed)
     with get_engine(engine_path) as engine:
         for board, move, label in tqdm(training_examples, desc='Positions', unit='position'):
             ground_eval = get_evals(engine, board, [move], mate_score=args.mate_score)[0]
             ground_metrics = calc_metrics([ground_eval], ground_eval, example=(board, move, label), match=1, tactic_text='ground', prefix='tactic_ground')
             metrics_list.append(ground_metrics)
 
-            random_move = random.choice(list(board.legal_moves)) # TODO: add fixed seed?
+            random_move = random.choice(list(board.legal_moves))
             random_eval = get_evals(engine, board, [random_move], mate_score=args.mate_score)[0]
             random_metrics = calc_metrics([random_eval], ground_eval, example=(board, move, label), match=1, tactic_text='random', prefix='tactic_ground')
             metrics_list.append(random_metrics)
@@ -200,12 +206,12 @@ def main():
                     m1600_best_moves = get_top_n_moves(m1600, board, NUM_ENGINE_MOVES) 
                 sf_best_moves = get_top_n_moves(engine, board, NUM_ENGINE_MOVES) 
             elif args.engine_path == 'MAIA1600':
-                with get_engine(STOCKFISH) as sf:
+                with get_engine(STOCKFISH_15) as sf:
                     sf_best_moves = get_top_n_moves(sf, board, NUM_ENGINE_MOVES) 
                 m1600_best_moves = get_top_n_moves(engine, board, NUM_ENGINE_MOVES)
 
             sf_best_move_evals = get_evals(engine, board, sf_best_moves, mate_score=args.mate_score)
-            sf_best_move_metrics = calc_metrics(sf_best_move_evals, ground_eval, example=(board, move, label), match=1, tactic_text='sf14', prefix='tactic_ground')
+            sf_best_move_metrics = calc_metrics(sf_best_move_evals, ground_eval, example=(board, move, label), match=1, tactic_text='sf15', prefix='tactic_ground')
             metrics_list.append(sf_best_move_metrics)
 
             m1600_best_move_evals = get_evals(engine, board, m1600_best_moves, mate_score=args.mate_score)
