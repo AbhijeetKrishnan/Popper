@@ -129,13 +129,13 @@ def popper(settings):
             #     # if consistent, prune specialisations
             #     add_spec = True
 
-            # if consistent and partially complete test whether functional
-            if not inconsistent and settings.functional_test and len(pos_covered) > 0 and tester.is_non_functional(prog):
-                # if not functional, rule out generalisations and set as inconsistent
-                add_gen = True
-                # v.important: do not prune specialisations!
-                add_spec = False
-                inconsistent = True
+            # # if consistent and partially complete test whether functional
+            # if not inconsistent and settings.functional_test and len(pos_covered) > 0 and tester.is_non_functional(prog):
+            #     # if not functional, rule out generalisations and set as inconsistent
+            #     add_gen = True
+            #     # v.important: do not prune specialisations!
+            #     add_spec = False
+            #     inconsistent = True
 
             # if it does not cover any example, prune specialisations
             if len(pos_covered) == 0:
