@@ -1,19 +1,19 @@
-max_clauses(1).
+max_clauses(3).
 max_vars(6).
 max_body(6).
 
 % enable_pi.
 allow_singletons.
 
-type_limit(sq, 3).
+% type_limit(sq, 3).
 
 head_pred(f, 2).
 type(f, (board, move)).
 direction(f, (in, out)).
 
-body_pred(mirror, 2).
-type(mirror, (square, square)).
-direction(mirror, (in, out)).
+% body_pred(mirror, 2).
+% type(mirror, (square, square)).
+% direction(mirror, (in, out)).
 
 body_pred(different, 2).
 type(different, (square, square)).
@@ -123,9 +123,9 @@ body_pred(can_capture, 3).
 type(can_capture, (board, square, square)).
 direction(can_capture, (in, in, out)).
 
-body_pred(is_zeroing, 2).
-type(is_zeroing, (board, move)).
-direction(is_zeroing, (in, in)).
+% body_pred(is_zeroing, 2).
+% type(is_zeroing, (board, move)).
+% direction(is_zeroing, (in, in)).
 
 % body_pred(ply, 2).
 % type(ply, (board, int)).
@@ -143,13 +143,13 @@ body_pred(pawn_capture, 2).
 type(pawn_capture, (board, move)).
 direction(pawn_capture, (in, out)).
 
-body_pred(pseudo_legal_ep, 2).
-type(pseudo_legal_ep, (board, move)).
-direction(pseudo_legal_ep, (in, out)).
+% body_pred(pseudo_legal_ep, 2).
+% type(pseudo_legal_ep, (board, move)).
+% direction(pseudo_legal_ep, (in, out)).
 
-body_pred(pseudo_legal_move, 2).
-type(pseudo_legal_move, (board, move)).
-direction(pseudo_legal_move, (in, out)).
+% body_pred(pseudo_legal_move, 2).
+% type(pseudo_legal_move, (board, move)).
+% direction(pseudo_legal_move, (in, out)).
 
 body_pred(in_check, 3).
 type(in_check, (board, color, square)).

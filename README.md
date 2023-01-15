@@ -1,6 +1,6 @@
 # Interpretable Chess Tactics
 
-This is the code release for the paper *nductive Logic Programming for Chess Strategy Synthesis from Player Trajectories* under review at IJCAI 2023 by Abhijeet Krishnan, Dr. Chris Martens and Dr. Arnav Jhala.
+This is the code release for the paper *Inductive Logic Programming for Chess Strategy Synthesis from Player Trajectories* under review at IJCAI 2023 by Abhijeet Krishnan, Dr. Chris Martens and Dr. Arnav Jhala.
 
 *Execution times are from executing the commands on Ubuntu 20.04 LTS via WSL2 on Windows 11 running on a Dell XPS 15 7590 with an Intel Core i7-9750H CPU @ 2.60GHz*
 
@@ -63,19 +63,19 @@ We use Lichess games databases for [2013 -
       --trim=100 --split=100
    ``` -->
 
-9. Generate test dataset (~5s)
+9. Generate test dataset (~7s)
 
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples_test.csv \
       -i tactics/data/lichess_db_standard_rated_2013-02.pgn     \
-      -n 20 -p 1 --seed 1
+      -n 100 -p 1 --seed 1
    ```
 
-10. Trim the test data down to 10 test examples
+10. Trim the test data down to 50 test examples
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples_test.csv \
-      --trim=10 --test
+      --trim=50 --test
    ```
 
 ## Engine(s)
