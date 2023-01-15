@@ -113,21 +113,21 @@ def popper(settings):
             add_spec = False
             add_gen = False
 
-            if inconsistent:
-                # if inconsistent, prune generalisations
-                add_gen = True
-                # if the program has multiple rules, test the consistency of each non-recursive rule as we might not have seen it before
-                if len(prog) > 1:
-                    for rule in prog:
-                        if rule_is_recursive(rule):
-                            continue
-                        subprog = frozenset([rule])
-                        # TODO: ADD CACHING IF THIS STEP BECOMES TOO EXPENSIVE
-                        if tester.is_inconsistent(subprog):
-                            new_cons.add(generator.build_generalisation_constraint(subprog))
-            else:
-                # if consistent, prune specialisations
-                add_spec = True
+            # if inconsistent:
+            #     # if inconsistent, prune generalisations
+            #     add_gen = True
+            #     # if the program has multiple rules, test the consistency of each non-recursive rule as we might not have seen it before
+            #     if len(prog) > 1:
+            #         for rule in prog:
+            #             if rule_is_recursive(rule):
+            #                 continue
+            #             subprog = frozenset([rule])
+            #             # TODO: ADD CACHING IF THIS STEP BECOMES TOO EXPENSIVE
+            #             if tester.is_inconsistent(subprog):
+            #                 new_cons.add(generator.build_generalisation_constraint(subprog))
+            # else:
+            #     # if consistent, prune specialisations
+            #     add_spec = True
 
             # if consistent and partially complete test whether functional
             if not inconsistent and settings.functional_test and len(pos_covered) > 0 and tester.is_non_functional(prog):
