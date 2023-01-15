@@ -1,7 +1,7 @@
 import time
 import numbers
 from . combine import Combiner
-from . util import timeout, format_rule, rule_is_recursive, order_prog, prog_is_recursive
+from . util import timeout, format_rule, rule_is_recursive, order_prog, prog_is_recursive, format_prog
 from . tester import Tester
 from . generate import Generator, Grounder
 from . bkcons import deduce_bk_cons
@@ -68,7 +68,10 @@ def popper(settings):
     seen_incomplete_gen = set()
     seen_incomplete_spec = set()
 
-    with generator.solver.solve(yield_ = True) as handle:
+    with (
+        generator.solver.solve(yield_ = True) as handle,
+        open(settings.tactic_file, 'w') as tactic_file
+    ):
         handle = iter(handle)
 
         while True:
@@ -95,7 +98,9 @@ def popper(settings):
             settings.logger.debug(f'Program {settings.stats.total_programs}:')
             for rule in order_prog(prog):
                 settings.logger.debug(format_rule(rule))
-                settings.logger.debug(f'tp: {tp}, tn: {tn}, fp: {fp}, fn: {fn}')
+            settings.logger.debug(f'tp: {tp}, tn: {tn}, fp: {fp}, fn: {fn}')
+            
+            tactic_file.write(f'{format_prog(prog)}\n% tp: {tp}, tn: {tn}, fp: {fp}, fn: {fn}\n')
 
             if inconsistent and prog_is_recursive(prog):
                 combiner.add_inconsistent(prog)
@@ -104,8 +109,6 @@ def popper(settings):
             if last_size == None or k != last_size:
                 last_size = k
                 settings.logger.info(f'Searching programs of size: {k}')
-
-            print(prog)
 
             add_spec = False
             add_gen = False

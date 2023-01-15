@@ -119,7 +119,7 @@ We use Lichess games databases for [2013 -
 
    ```bash
    python popper.py chess --ex-file tactics/data/exs/examples_train.csv \
-      --eval-timeout 1 > tactics/data/hspace/hspace_tactics.txt
+      --eval-timeout 1 --tactic-file tactics/data/hspace/hspace_tactics.txt
    ```
 
 22. Evaluate $T$ with Maia-1600 (~37m54s)
