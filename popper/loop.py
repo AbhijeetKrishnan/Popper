@@ -144,7 +144,7 @@ def popper(settings):
             # check whether subsumed by an already seen program
             subsumed = False
             if len(pos_covered) > 0 and not prog_is_recursive(prog):
-                subsumed = pos_covered in success_sets or any(pos_covered.issubset(xs) for xs in success_sets)
+                subsumed = (pos_covered, neg_covered) in success_sets or any(pos_covered.issubset(xp) and neg_covered.issubset(xn) for xp, xn in success_sets)
                 # if so, prune specialisations
                 if subsumed:
                     add_spec = True
@@ -190,7 +190,7 @@ def popper(settings):
             # if consistent, covers at least one example, and is not subsumed, try to find a solution
             if not inconsistent and not subsumed and len(pos_covered) > 0:
                 # update success sets
-                success_sets[pos_covered] = prog
+                success_sets[(pos_covered, neg_covered)] = prog
 
                 with settings.stats.duration('combine'):
                     new_solution_found = combiner.update_best_prog(prog, pos_covered)
