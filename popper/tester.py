@@ -81,10 +81,12 @@ class Tester():
         with self.using(prog):
             pos_covered = frozenset(self.query('pos_covered(Xs)', 'Xs'))
             pos_covered = frozenset(self.pos_index[i] for i in pos_covered)
+            neg_covered = frozenset(next(self.prolog.query('neg_covered(Xs)'))['Xs'])
+            neg_covered = frozenset(self.neg_index[i] for i in neg_covered)
             inconsistent = False
             if len(self.neg_index):
                 inconsistent = len(list(self.prolog.query("inconsistent"))) > 0
-        return pos_covered, inconsistent
+        return pos_covered, neg_covered, inconsistent
 
     def is_inconsistent(self, prog):
         if len(self.neg_index) == 0:
@@ -128,7 +130,7 @@ class Tester():
     def reduce_solution(self, prog):
         if len(prog) < 3:
             return prog
-        pos_covered, _inconsistent = self.test_prog(prog)
+        pos_covered, _, _inconsistent = self.test_prog(prog)
         return self.reduce_solution_aux(prog, pos_covered)
 
     def reduce_solution_aux(self, prog, orignal_covered):
@@ -142,7 +144,7 @@ class Tester():
             # for rule in subprog:
                 # print('\t', format_rule(rule))
             with self.using(subprog):
-                pos_covered, inconsistent = self.test_prog(subprog)
+                pos_covered, _, inconsistent = self.test_prog(subprog)
                 # print(inconsistent, len(pos_covered), len(orignal_covered))
                 if inconsistent:
                     continue

@@ -84,12 +84,18 @@ def popper(settings):
             new_cons = set()
 
             with settings.stats.duration('test'):
-                pos_covered, inconsistent = tester.test_prog(prog)
+                pos_covered, neg_covered, inconsistent = tester.test_prog(prog)
+
+                tp = len(pos_covered)
+                fp = len(neg_covered)
+                fn = tester.num_pos - tp
+                tn = tester.num_neg - fp
 
             settings.stats.total_programs += 1
             settings.logger.debug(f'Program {settings.stats.total_programs}:')
             for rule in order_prog(prog):
                 settings.logger.debug(format_rule(rule))
+                settings.logger.debug(f'tp: {tp}, tn: {tn}, fp: {fp}, fn: {fn}')
 
             if inconsistent and prog_is_recursive(prog):
                 combiner.add_inconsistent(prog)
@@ -98,6 +104,8 @@ def popper(settings):
             if last_size == None or k != last_size:
                 last_size = k
                 settings.logger.info(f'Searching programs of size: {k}')
+
+            print(prog)
 
             add_spec = False
             add_gen = False
