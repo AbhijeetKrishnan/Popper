@@ -144,7 +144,7 @@ def popper(settings):
             # check whether subsumed by an already seen program
             subsumed = False
             if len(pos_covered) > 0 and not prog_is_recursive(prog):
-                subsumed = (pos_covered, neg_covered) in success_sets or any(pos_covered.issubset(xp) and neg_covered.issubset(xn) for xp, xn in success_sets)
+                subsumed = (pos_covered, neg_covered) in success_sets or any(pos_covered.issubset(xp) and xn.issubset(neg_covered) for xp, xn in success_sets)
                 # if so, prune specialisations
                 if subsumed:
                     add_spec = True
