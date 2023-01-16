@@ -19,12 +19,12 @@ def calculate_metrics(df): # TODO: refactor this and the method in analysis.py
     return agg
 
 def generate_frequency_graph(df, metric_fname: str, filename: str, title: str='?', xlabel: str=None, bins: int=20, left: int=0, right: Optional[int]=None):
-    mask = df['tactic_text'].isin(['ground', 'sf15', 'maia_1600', 'random'])
+    mask = df['tactic_text'].isin(['ground', 'sf14', 'maia_1600', 'random'])
     df_masked = df[~mask]
     plt.hist(df_masked[metric_fname], bins=bins) # exclude default tactics from histogram
     plt.axvline(df[df['tactic_text'] == "random"][metric_fname].values, linestyle='dashed', color='blue', label='random move tactic')
     plt.axvline(df[df['tactic_text'] == "ground"][metric_fname].values, linestyle='dashed', color='green', label='ground move tactic')
-    plt.axvline(df[df['tactic_text'] == "sf15"][metric_fname].values, linestyle='dashed', color='red', label='sf15 move tactic')
+    plt.axvline(df[df['tactic_text'] == "sf14"][metric_fname].values, linestyle='dashed', color='red', label='sf14 move tactic')
     plt.axvline(df[df['tactic_text'] == "maia_1600"][metric_fname].values, linestyle='dashed', color='magenta', label='maia-1600 move tactic')
     plt.title(f'Histogram of {title}')
     plt.xlabel(xlabel if xlabel else metric_fname)

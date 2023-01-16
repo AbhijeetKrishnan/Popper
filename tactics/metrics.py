@@ -113,7 +113,7 @@ def parse_args():
     parser.add_argument('tactics_file', type=str, help='file containing list of tactics')
     parser.add_argument('--log', dest='log_level', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], help='Set the logging level', default='INFO')
     parser.add_argument('-n', '--num_tactics', dest='tactics_limit', type=int, help='Number of tactics to analyze', default=None)
-    parser.add_argument('-e', '--engine', dest='engine_path', default='STOCKFISH', choices=['STOCKFISH', 'MAIA1100', 'MAIA1600', 'MAIA1900'], help='Path to engine executable to use for calculating divergence')
+    parser.add_argument('-e', '--engine', dest='engine_path', default='STOCKFISH', choices=['STOCKFISH', 'STOCKFISH_14', 'STOCKFISH_15', 'MAIA1100', 'MAIA1600', 'MAIA1900'], help='Path to engine executable to use for calculating divergence')
     parser.add_argument('--pgn', dest='pgn_file', default=LICHESS_2013, help='Path to PGN file of positions to use for calculating divergence')
     parser.add_argument('--num-games', dest='num_games', type=int, default=10, help='Number of games to use')
     parser.add_argument('--pos-per-game', dest='pos_per_game', type=int, default=10, help='Number of positions to use per game')
@@ -211,7 +211,7 @@ def main():
                 m1600_best_moves = get_top_n_moves(engine, board, NUM_ENGINE_MOVES)
 
             sf_best_move_evals = get_evals(engine, board, sf_best_moves, mate_score=args.mate_score)
-            sf_best_move_metrics = calc_metrics(sf_best_move_evals, ground_eval, example=(board, move, label), match=1, tactic_text='sf15', prefix='tactic_ground')
+            sf_best_move_metrics = calc_metrics(sf_best_move_evals, ground_eval, example=(board, move, label), match=1, tactic_text='sf14', prefix='tactic_ground')
             metrics_list.append(sf_best_move_metrics)
 
             m1600_best_move_evals = get_evals(engine, board, m1600_best_moves, mate_score=args.mate_score)
