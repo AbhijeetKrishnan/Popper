@@ -94,13 +94,21 @@ def popper(settings):
                 fn = tester.num_pos - tp
                 tn = tester.num_neg - fp
 
+                precision = None
+                recall = None
+                if tp + fp > 0:
+                    precision = tp / (tp + fp)
+                if tp + fn > 0:
+                    recall = tp / (tp + fn)
+
             settings.stats.total_programs += 1
             settings.logger.debug(f'Program {settings.stats.total_programs}:')
             for rule in order_prog(prog):
                 settings.logger.debug(format_rule(rule))
             settings.logger.debug(f'tp: {tp}, tn: {tn}, fp: {fp}, fn: {fn}')
             
-            tactic_file.write(f'{format_prog(prog)}\n% tp: {tp}, tn: {tn}, fp: {fp}, fn: {fn}\n')
+            if (not precision or precision >= settings.precision_bound) and (not recall or recall >= settings.recall_bound):
+                tactic_file.write(f'{format_prog(prog)}\n% tp: {tp}, tn: {tn}, fp: {fp}, fn: {fn}\n')
 
             if inconsistent and prog_is_recursive(prog):
                 combiner.add_inconsistent(prog)
@@ -148,6 +156,14 @@ def popper(settings):
                 # if so, prune specialisations
                 if subsumed:
                     add_spec = True
+
+            # precision constraint
+            if precision and precision < settings.precision_bound:
+                add_spec = True
+
+            # recall constraint
+            if recall and recall < settings.recall_bound:
+                add_gen = True
 
             # HACKY TMP IDEAS
             if not settings.recursion_enabled:

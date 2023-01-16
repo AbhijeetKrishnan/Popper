@@ -155,9 +155,9 @@ body_pred(in_check, 3).
 type(in_check, (board, color, square)).
 direction(in_check, (in, in, out)).
 
-body_pred(into_check, 3).
-type(into_check, (board, move, piece)).
-direction(into_check, (in, in, out)).
+% body_pred(into_check, 3).
+% type(into_check, (board, move, piece)).
+% direction(into_check, (in, in, out)).
 
 body_pred(legal_move, 2).
 type(legal_move, (board, move)).

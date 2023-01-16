@@ -118,7 +118,7 @@ We use Lichess games databases for [2013 -
 16. Learn tactics (~36m15s, 837 tactics)
 
    ```bash
-   python popper.py chess --ex-file tactics/data/exs/examples_train.csv \
+   python popper.py chess \
       --eval-timeout 1 --tactic-file tactics/data/hspace/hspace_tactics.txt
    ```
 
@@ -128,7 +128,7 @@ We use Lichess games databases for [2013 -
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
       --pos-list tactics/data/exs/examples_test.csv                \
       --data-path tactics/data/stats/metrics_test_t_m1600.csv  \
-      --engine MAIA1600
+      --engine MAIA1600 --eval-timeout 1
    ```
 
 23. Evaluate $T$ with Stockfish 15 (~32m44s)
@@ -137,7 +137,7 @@ We use Lichess games databases for [2013 -
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
       --pos-list tactics/data/exs/examples_test.csv                \
       --data-path tactics/data/stats/metrics_test_t_sf.csv   \
-      --engine STOCKFISH
+      --engine STOCKFISH --eval-timeout 1
    ```
 
 ## Generate graphs

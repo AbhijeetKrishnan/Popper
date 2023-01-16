@@ -435,14 +435,14 @@ in_check(Board, Side, CheckerSquare) :-
     pseudo_legal_move(NewBoard, [CheckerSquare, KingSq|_]).
 
 /**
- * into_check(+Board:board, +Move:move, -Checker:piece) is nondet
+ * into_check(+Board:board, +Move:move, -CheckerSquare:square) is nondet
  *
  * Check if a given move would put the king into check.
  * In the position after the move is played, search for a piece that could "capture" the king.
  *
  * @param Board
  * @param Move
- * @param Checker The piece which is checking the king after the move
+ * @param CheckerSquare The square containing the piece which is checking the king after the move
  */
 into_check(Board, Move, CheckerSquare) :-
     turn(Board, Side),

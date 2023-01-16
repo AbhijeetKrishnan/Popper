@@ -46,7 +46,10 @@ def parse_args():
     parser.add_argument('--bk-file', type=str, default='', help='Filename for the background knowledge')
     parser.add_argument('--bias-file', type=str, default='', help='Filename for the bias')
     parser.add_argument('--bkcons', default=False, action='store_true', help='EXPERIMENTAL FEATURE: deduce background constraints from Datalog background')
+
     parser.add_argument('--tactic-file', type=str, default='hspace_tactics.txt', help='Filename for the output tactics')
+    parser.add_argument('--precision-bound', type=float, default=0.1, help='Lower bound for allowed precision of tactics')
+    parser.add_argument('--recall-bound', type=float, default=0.1, help='Lower bound for allowed recall of tactics')
     return parser.parse_args()
 
 def timeout(settings, func, args=(), kwargs={}, timeout_duration=1):
@@ -236,7 +239,7 @@ def flatten(xs):
     return [item for sublist in xs for item in sublist]
 
 class Settings:
-    def __init__(self, kbpath=False, info=True, debug=False, show_stats=False, bkcons=False, max_literals=MAX_LITERALS, timeout=TIMEOUT, quiet=False, eval_timeout=EVAL_TIMEOUT, max_examples=MAX_EXAMPLES, max_body=MAX_BODY, max_rules=MAX_RULES, max_vars=MAX_VARS, functional_test=False, tactic_file=False):
+    def __init__(self, kbpath=False, info=True, debug=False, show_stats=False, bkcons=False, max_literals=MAX_LITERALS, timeout=TIMEOUT, quiet=False, eval_timeout=EVAL_TIMEOUT, max_examples=MAX_EXAMPLES, max_body=MAX_BODY, max_rules=MAX_RULES, max_vars=MAX_VARS, functional_test=False):
 
         if kbpath == False:
             args = parse_args()
@@ -255,6 +258,8 @@ class Settings:
             max_rules = args.max_rules
             functional_test = args.functional_test
             tactic_file = args.tactic_file
+            precision_bound = args.precision_bound
+            recall_bound = args.recall_bound
 
         self.logger = logging.getLogger("popper")
 
@@ -284,6 +289,8 @@ class Settings:
         self.max_vars = max_vars
         self.max_rules = max_rules
         self.tactic_file = tactic_file
+        self.precision_bound = precision_bound
+        self.recall_bound = recall_bound
 
         self.solution = None
         self.best_prog_score = None
