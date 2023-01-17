@@ -159,11 +159,11 @@ def popper(settings):
 
             # precision constraint
             if precision and precision < settings.precision_bound:
-                add_spec = True
+                add_gen = True
 
             # recall constraint
             if recall and recall < settings.recall_bound:
-                add_gen = True
+                add_spec = True
 
             # HACKY TMP IDEAS
             if not settings.recursion_enabled:
