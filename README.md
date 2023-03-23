@@ -53,7 +53,7 @@ We use Lichess games databases for [2013 -
    ```bash
    python tactics/gen_exs.py chess/exs.pl  \
       -i tactics/data/lichess_db_standard_rated_2013-01.pgn \
-      -n 200 -p 1 --seed 1 --use-engine
+      -n 500 -p 1 --seed 1 --use-engine
    ```
 
 <!-- 8. Split the examples into training ~~and validation~~ sets
@@ -71,11 +71,11 @@ We use Lichess games databases for [2013 -
       -n 100 -p 1 --seed 1
    ```
 
-10. Trim the test data down to 50 test examples
+10. Trim the test data down to 100 test examples
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples_test.csv \
-      --trim=50 --test
+      --trim=100 --test
    ```
 
 ## Engine(s)

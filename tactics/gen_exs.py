@@ -80,10 +80,11 @@ def gen_exs(exs_pgn_path: PathLike, num_games: int, pos_per_game: int, neg_to_po
                 moves = get_top_n_moves(engine, position, neg_to_pos_ratio + 1)
                 if not moves:
                     continue
-                top_move = move
+                top_move = move # pos example is ground truth move
                 yield {'fen': position.fen(), 'uci': top_move.uci(), 'label': 1}
                 for move in moves[1:]:
-                    yield {'fen': position.fen(), 'uci': move.uci(), 'label': 0}
+                    if move != top_move:
+                        yield {'fen': position.fen(), 'uci': move.uci(), 'label': 0} # neg examples are engine moves
     else:
         for position, move in sample_examples:
             yield {'fen': position.fen(), 'uci': move.uci(), 'label': 1}
