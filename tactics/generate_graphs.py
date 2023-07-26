@@ -8,7 +8,16 @@ logger = logging.getLogger(__name__)
 
 import numpy as np
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
+
+matplotlib.use("pgf")
+matplotlib.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    'font.family': 'serif',
+    'text.usetex': True,
+    'pgf.rcfonts': False,
+})
 
 
 def calculate_metrics(df): # TODO: refactor this and the method in analysis.py
