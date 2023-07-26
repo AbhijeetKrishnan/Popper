@@ -4,6 +4,3 @@
 [submodule "tactics/bin/lc0"]
 	path = tactics/bin/lc0
 	url = git@github.com:LeelaChessZero/lc0.git
-[submodule "chess/prolog-chess"]
-	path = chess/prolog-chess
-	url = git@github.com:AbhijeetKrishnan/prolog-chess.git
