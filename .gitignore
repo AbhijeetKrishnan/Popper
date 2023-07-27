@@ -3,9 +3,9 @@
 *.log
 *.zip
 stockfish_14_x64/*
-tactics/bin/stockfish*
-tactics/bin/maia_weights/*
+tactics/bin/*
 tactics/data/*
+chess/prolog-chess/*
 *.pickle
 
 # Byte-compiled / optimized / DLL files

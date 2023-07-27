@@ -1,0 +1,1 @@
+:- ['prolog-chess/load.pl'].
