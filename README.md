@@ -8,25 +8,25 @@ This is the code release for the paper *Inductive Logic Programming for Chess St
 
 1. Install [Python v3.10.4](https://www.python.org/downloads/)
 
-2. Clone the repository locally
+1. Clone the repository locally
 
    ```bash
-   git clone https://github.com/AbhijeetKrishnan/interpretable-chess-tactics.git
+   git clone --recurse-submodules -j 8 https://github.com/AbhijeetKrishnan/interpretable-chess-tactics.git
    ```
 
-3. Install the necessary Python dependencies
+1. Install the necessary Python dependencies
 
    ```bash
    python3 -m pip install -r requirements.txt
    ```
 
-4. Navigate to the root folder of the cloned repository
+1. Navigate to the root folder of the cloned repository
 
    ```bash
    mv interpretable-chess-tactics
    ```
 
-5. Create the data directory structure assumed in the rest of the project
+1. Create the data directory structure assumed in the rest of the project
 
    ```bash
    mkdir tactics/data
@@ -42,13 +42,13 @@ We use Lichess games databases for [2013 -
    January](https://database.lichess.org/standard/lichess_db_standard_rated_2013-01.pgn.bz2) and [2013 - February](https://database.lichess.org/standard/lichess_db_standard_rated_2013-02.pgn.bz2) from
    the [lichess.org open database](https://database.lichess.org/) for our train/validation and test datasets respectively. 
 
-6. Run the `get_pgns.sh` script to download, unzip and move the games database files to the necessary locations
+1. Run the `get_pgns.sh` script to download, unzip and move the games database files to the necessary locations
 
    ```bash
    bash get_pgns.sh
    ```
 
-7. Generate train dataset (~11s)
+1. Generate train dataset (~11s)
 
    ```bash
    python tactics/gen_exs.py chess/exs.pl  \
@@ -63,7 +63,7 @@ We use Lichess games databases for [2013 -
       --trim=100 --split=100
    ``` -->
 
-9. Generate test dataset (~7s)
+1. Generate test dataset (~7s)
 
    ```bash
    python tactics/gen_exs.py tactics/data/exs/examples_test.csv \
@@ -71,7 +71,7 @@ We use Lichess games databases for [2013 -
       -n 100 -p 1 --seed 1
    ```
 
-10. Trim the test data down to 100 test examples
+1. Trim the test data down to 100 test examples
 
    ```bash
    python tactics/generate_train_valid.py tactics/data/exs/examples_test.csv \
@@ -80,7 +80,7 @@ We use Lichess games databases for [2013 -
 
 ## Engine(s)
 
-11. Download the latest x64 Stockfish 15 binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_15.1_linux_x64_avx2.zip) and move the binary named
+1. Download the latest x64 Stockfish 15 binary for Linux from the [Stockfish Downloads page](https://stockfishchess.org/files/stockfish_15.1_linux_x64_avx2.zip) and move the binary named
    `stockfish-ubuntu-20.04-x86-64-avx2` into the `tactics/bin/` folder. Delete any leftover files manually.
 
    ```bash
@@ -89,22 +89,15 @@ We use Lichess games databases for [2013 -
    mv stockfish_15.1_linux_x64_avx2/stockfish-ubuntu-20.04-x86-64-avx2 tactics/bin
    ```
 
-12. Give execution permission to the Stockfish binary 
+1. Give execution permission to the Stockfish binary 
 
    ```bash
    chmod +x tactics/bin/stockfish-ubuntu-20.04-x86-64-avx2
    ```
 
-13. Clone the `maia-chess` and `lc0` submodules
+1. Build the `lc0` source code (~1m9s). Build instructions can be found in the [project README](https://github.com/LeelaChessZero/lc0/blob/master/README.md)
 
-   ```bash
-   git submodule init
-   git submodule update
-   ```
-
-14. Build the `lc0` source code (~1m9s). Build instructions can be found in the [project README](https://github.com/LeelaChessZero/lc0/blob/master/README.md)
-
-15. Unzip the Maia-Chess weights for ELO 1600 and move it outside the `maia-chess` submodule into a `maia_weights` folder
+1. Unzip the Maia-Chess weights for ELO 1600 and move it outside the `maia-chess` submodule into a `maia_weights` folder
 
    ```bash
    gzip -dk tactics/bin/maia-chess/maia_weights/maia-1600.pb.gz
@@ -115,14 +108,14 @@ We use Lichess games databases for [2013 -
 
 ## Running the experiments
 
-16. Learn tactics (~10m7s, 73 tactics)
+1. Learn tactics (~10m7s, 73 tactics)
 
    ```bash
    python popper.py chess \
       --eval-timeout 1 --tactic-file tactics/data/hspace/hspace_tactics.txt
    ```
 
-22. Evaluate $T$ with Maia-1600 (~6s)
+1. Evaluate $T$ with Maia-1600 (~6s)
 
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -131,7 +124,7 @@ We use Lichess games databases for [2013 -
       --engine MAIA1600 --eval-timeout 1
    ```
 
-23. Evaluate $T$ with Stockfish 15 (~3s)
+1. Evaluate $T$ with Stockfish 15 (~3s)
    
    ```bash
    python tactics/metrics.py tactics/data/hspace/hspace_tactics.txt \
@@ -142,7 +135,7 @@ We use Lichess games databases for [2013 -
 
 ## Generate graphs
 
-26. Run `gen_graphs.sh` to generate all graphs reported in the paper (~5s)
+1. Run `gen_graphs.sh` to generate all graphs reported in the paper (~5s)
 
    ```bash
    bash gen_graphs.sh
